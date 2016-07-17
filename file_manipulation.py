@@ -1,8 +1,4 @@
-#
-# find '.jpg' string among each file name and convert the filename according to it
-#
-# List files are assumed to be stored in _list directory
-#
+# rename the files that are downloaded from Getty to have appropriate .jpg names
 
 import os
 import glob

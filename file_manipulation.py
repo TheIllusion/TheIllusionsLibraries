@@ -8,10 +8,12 @@ import re
 path = glob.glob( '*.*' )
 
 # for each item
-i = 1
+i = 0
 for list_file in path:
     name = list_file[0:]
 
+    # find .jpg from the file name and discard the all following characters
+    '''
     match = re.search(".jpg", name)
     if match:
         end_index = match.end()
@@ -23,3 +25,16 @@ for list_file in path:
             os.rename(name, new_name)
         else:
             print 'skipped'
+    '''
+
+    # find the specific pattern from the filename and replace it with the new pattern
+    match = re.search(".txt", name)
+    if match:
+        new_name = name.replace('training2', '')
+
+        if i % 100 == 0:
+            print name, ' -> ', new_name
+
+        os.rename(name, new_name)
+
+    i = i + 1

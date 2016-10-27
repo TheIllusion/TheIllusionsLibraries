@@ -3,7 +3,7 @@ import glob
 from scipy.spatial import distance
 
 def calculate_l2_distance(img1, img2):
-    l2_distance = distance.euclidean(img1,img2)
+    l2_distance = distance.euclidean(img1.flatten(), img2.flatten())
     print "L2 distance = ", str(l2_distance)
     return l2_distance
 

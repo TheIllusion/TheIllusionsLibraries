@@ -25,9 +25,13 @@ if __name__ == '__main__':
     a = caffe.io.caffe_pb2.BlobProto.FromString(proto_data)
     mean = caffe.io.blobproto_to_array(a)[0]
 
-    palm_pretrained = '/home/illusion/caffe/models/bvlc_reference_caffenet/caffenet_train_palm_classification_iter_50000.caffemodel'
-    
-    palm_model_file = '/home/illusion/caffe/models/bvlc_reference_caffenet/deploy_palm_classification.prototxt'
+    # Reference Caffenet
+    #palm_pretrained = '/home/illusion/caffe/models/bvlc_reference_caffenet/caffenet_train_palm_classification_iter_50000.caffemodel'
+    #palm_model_file = '/home/illusion/caffe/models/bvlc_reference_caffenet/deploy_palm_classification.prototxt'
+
+    # Resnet-101
+    palm_pretrained = '/home/illusion/caffe/models/resnet/se_train_resnet101_palm_classification_fine_iter_50000.caffemodel'
+    palm_model_file = '/home/illusion/caffe/models/resnet/ResNet-101-deploy_palm_classification.prototxt'
 
     palm_net = caffe.Classifier(palm_model_file,
                                      palm_pretrained,

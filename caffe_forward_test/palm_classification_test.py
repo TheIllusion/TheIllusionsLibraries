@@ -6,7 +6,7 @@ import numpy as np
 import os
 import re
 
-test_file_path = '/media/illusion/ML_DATA_HDD/Data/hand_detection/test_set/'
+test_file_path = '/media/illusion/ML_DATA_HDD/Data/hand_detection/test_set_3/'
 
 os.chdir(test_file_path)
 
@@ -15,11 +15,9 @@ JPG_files = glob.glob( '*.JPG' )
 
 if __name__ == '__main__':
 
-    '''
     GPU_ID = 0
     caffe.set_mode_gpu()
     caffe.set_device(GPU_ID)
-    '''
 
     mean_filename = '/home/illusion/caffe/data/palm_classification_caffenet/palm_classification_mean.binaryproto'
     
@@ -31,16 +29,16 @@ if __name__ == '__main__':
     #palm_pretrained = '/media/illusion/ML_DATA_HDD/caffe_model_snapshots/bvlc_reference_caffenet/caffenet_train_palm_classification_iter_10000.caffemodel'
     #palm_model_file = '/home/illusion/caffe/models/bvlc_reference_caffenet/deploy_palm_classification.prototxt'
 
-    #palm_pretrained = '/home/illusion/caffe/models/bvlc_reference_caffenet/caffenet_train_palm_classification_iter_50000.caffemodel'
-    #palm_model_file = '/home/illusion/caffe/models/bvlc_reference_caffenet/deploy_palm_classification.prototxt'
+    palm_pretrained = '/home/illusion/caffe/models/bvlc_reference_caffenet/1st_trial_caffenet_train_palm_classification_iter_50000.caffemodel'
+    palm_model_file = '/home/illusion/caffe/models/bvlc_reference_caffenet/deploy_palm_classification.prototxt'
 
     # Resnet-101
     #palm_pretrained = '/home/illusion/caffe/models/resnet/se_train_resnet101_palm_classification_fine_iter_50000.caffemodel'
     #palm_model_file = '/home/illusion/caffe/models/resnet/ResNet-101-deploy_palm_classification.prototxt'
 
     # VGG16
-    palm_pretrained = '/media/illusion/ML_DATA_HDD/caffe_model_snapshots/bvlc_vggnet/se_train_vggnet_fine_palm_classification_iter_30000.caffemodel'
-    palm_model_file = '/home/illusion/caffe/models/bvlc_vggnet/VGG_ILSVRC_16_layers_deploy_palm_classification.prototxt'
+    #palm_pretrained = '/media/illusion/ML_DATA_HDD/caffe_model_snapshots/bvlc_vggnet/se_train_vggnet_fine_palm_classification_iter_100000.caffemodel'
+    #palm_model_file = '/home/illusion/caffe/models/bvlc_vggnet/VGG_ILSVRC_16_layers_deploy_palm_classification.prototxt'
 
     palm_net = caffe.Classifier(palm_model_file,
                                      palm_pretrained,

@@ -2,34 +2,40 @@ import time
 import os
 import urllib2
 import datetime
+import re
+
+REQUEST_SENDING_INTERVAL = 60
+REQUEST_TIMEOUT_THRESHOLD_SEC = 20
+RESPONSE_TIME_WARINING_THRESHOLD = 5
+
+FILE_PATH_FOR_ALL_LOG = '/Users/Illusion/Temp/response_all_log.txt'
+FILE_PATH_FOR_WARNING_LOG = '/Users/Illusion/Temp/response_warning.log'
 
 #rest_api_address = 'http://vincent.nhnent.com:8979/hand'
 hand_rest_api_address = 'http://10.165.128.51:8979/hand'
 face_rest_api_address = 'http://10.165.128.51:8989/face'
 
-hand_img_path = '/Users/Illusion/Documents/Data/palm_data/test_set/crop_resize_512_512'
-face_img_path = '/Users/Illusion/Documents/Data/toast_faces'
+hand_img_path = '/Users/Illusion/Documents/Data/palm_data/test_set/crop_resize_512_512/rk.jpg'
+face_img_path = '/Users/Illusion/Documents/Data/toast_faces/rk.jpg'
 
-f_hand = open(hand_img_path + '/rk.jpg', 'rb')
+f_hand = open(hand_img_path, 'rb')
 hand_image = f_hand.read()
 f_hand.close()
 
-f_face = open(face_img_path + '/rk.jpg', 'rb')
+f_face = open(face_img_path, 'rb')
 face_image = f_face.read()
 f_face.close()
 
-#all_log_file = open('/Users/Illusion/Temp/response_all_log.txt', 'w')
-
 while True:
-
+    ###########################################################################
     # Check response time for hand recognition
     req = urllib2.Request(hand_rest_api_address, data = hand_image)
-    req.add_header('Content-Length', '%d' % os.path.getsize(hand_img_path + '/rk.jpg'))
+    req.add_header('Content-Length', '%d' % os.path.getsize(hand_img_path))
     req.add_header('Content-Type', 'application/octet-stream')
 
     start_time = time.time()
 
-    res = urllib2.urlopen(req).read().strip()
+    res = urllib2.urlopen(req, timeout=REQUEST_TIMEOUT_THRESHOLD_SEC).read().strip()
 
     elapsed_time = time.time() - start_time
 
@@ -37,27 +43,49 @@ while True:
 
     line_string = current_time + ' Elapsed time(hand) = ' + str(elapsed_time) + '\n'
     print line_string
-    #all_log_file.write(line_string)
 
-    if elapsed_time > 0.3:
-        warning_log_file = open('/Users/Illusion/Temp/response_warning.log', 'a')
-        line_string = current_time + ' Warning!! Response time for hand recognition is slower than 0.4s. Response Time = ' + str(elapsed_time) + '\n'
+    all_log_file = open(FILE_PATH_FOR_ALL_LOG, 'a')
+    all_log_file.write(line_string)
+    all_log_file.close()
+
+    if elapsed_time > RESPONSE_TIME_WARINING_THRESHOLD:
+        warning_log_file = open(FILE_PATH_FOR_WARNING_LOG, 'a')
+
+        line_string = current_time + ' Warning!! Response time for hand recognition is slower than ' \
+                      + str(RESPONSE_TIME_WARINING_THRESHOLD) + 's. Response Time = ' + str(elapsed_time) + '\n'
+
+        print line_string
+        warning_log_file.write(line_string)
+        warning_log_file.close()
+
+    # Check the validity of the response string
+    match = re.search('"Status": "OK"', res)
+    match_2 = re.search('"Gamjeong": 2001', res)
+    if match and match_2:
+        print "Valid response data"
+    else:
+        print "Invalid response data"
+        warning_log_file = open(FILE_PATH_FOR_WARNING_LOG, 'a')
+
+        line_string = current_time + ' Warning!! Invalid response detected from the hand response' + '\n'
+
         print line_string
         warning_log_file.write(line_string)
         warning_log_file.close()
 
     #print res
 
-    time.sleep(10)
+    time.sleep(REQUEST_SENDING_INTERVAL)
 
+    ###########################################################################
     # Check response time for face recognition
     req = urllib2.Request(face_rest_api_address, data=face_image)
-    req.add_header('Content-Length', '%d' % os.path.getsize(face_img_path + '/rk.jpg'))
+    req.add_header('Content-Length', '%d' % os.path.getsize(face_img_path))
     req.add_header('Content-Type', 'application/octet-stream')
 
     start_time = time.time()
 
-    res = urllib2.urlopen(req).read().strip()
+    res = urllib2.urlopen(req, timeout=REQUEST_TIMEOUT_THRESHOLD_SEC).read().strip()
 
     elapsed_time = time.time() - start_time
 
@@ -65,19 +93,37 @@ while True:
 
     line_string = current_time + ' Elapsed time(face) = ' + str(elapsed_time) + '\n'
     print line_string
-    # all_log_file.write(line_string)
 
-    if elapsed_time > 0.3:
-        warning_log_file = open('/Users/Illusion/Temp/response_warning.log', 'a')
-        line_string = current_time + ' Warning!! Response time for face recognition is slower than 0.4s. Response Time = ' + str(
-            elapsed_time) + '\n'
+    all_log_file = open(FILE_PATH_FOR_ALL_LOG, 'a')
+    all_log_file.write(line_string)
+    all_log_file.close()
+
+    if elapsed_time > RESPONSE_TIME_WARINING_THRESHOLD:
+        warning_log_file = open(FILE_PATH_FOR_WARNING_LOG, 'a')
+
+        line_string = current_time + ' Warning!! Response time for face recognition is slower than ' \
+                      + str(RESPONSE_TIME_WARINING_THRESHOLD) + 's. Response Time = ' + str(elapsed_time) + '\n'
+
+        print line_string
+        warning_log_file.write(line_string)
+        warning_log_file.close()
+
+    # Check the validity of the response string
+    match = re.search('"Status": "OK"', res)
+    match_2 = re.search('"eyebrows": 1010', res)
+    if match and match_2:
+        print "Valid response data"
+    else:
+        print "Invalid response data"
+        warning_log_file = open(FILE_PATH_FOR_WARNING_LOG, 'a')
+
+        line_string = current_time + ' Warning!! Invalid response detected from the face response' + '\n'
+
         print line_string
         warning_log_file.write(line_string)
         warning_log_file.close()
 
     #print res
 
-    time.sleep(10)
+    time.sleep(REQUEST_SENDING_INTERVAL)
 
-
-#all_log_file.close()

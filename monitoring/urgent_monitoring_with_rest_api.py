@@ -127,6 +127,8 @@ while True:
                       + str(RESPONSE_TIME_WARINING_THRESHOLD) + 's. Response Time = ' + str(elapsed_time) + '\n'
 
         print line_string
+        print '!!!!===================================================================!!!!'
+
         warning_log_file.write(line_string)
         warning_log_file.close()
 
@@ -140,7 +142,7 @@ while True:
         warning_log_file = open(FILE_PATH_FOR_WARNING_LOG, 'a')
 
         line_string = current_time + ' Warning!! Invalid response detected from the face response' + '\n'
-
+        print '!!!!===================================================================!!!!'
         print line_string
         warning_log_file.write(line_string)
         warning_log_file.close()

@@ -4,7 +4,7 @@ import urllib2
 import datetime
 import re
 
-REQUEST_SENDING_INTERVAL = 15
+REQUEST_SENDING_INTERVAL = 30
 REQUEST_TIMEOUT_THRESHOLD_SEC = 20
 RESPONSE_TIME_WARINING_THRESHOLD = 5
 
@@ -153,5 +153,5 @@ while True:
     time.sleep(REQUEST_SENDING_INTERVAL)
 
     index = index + 1
-    if index == 4:
+    if index == 3:
         index = 0

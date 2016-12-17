@@ -4,7 +4,7 @@ import urllib2
 import datetime
 import re
 
-REQUEST_SENDING_INTERVAL = 3
+REQUEST_SENDING_INTERVAL = 5
 REQUEST_TIMEOUT_THRESHOLD_SEC = 20
 RESPONSE_TIME_WARINING_THRESHOLD = 5
 
@@ -45,6 +45,7 @@ while True:
     ###########################################################################
     # Check response time for hand recognition
 
+    print '==================================================================='
     print 'hand ip = ', hand_rest_api_address[index]
     req = urllib2.Request(hand_rest_api_address[index], data = hand_image)
     req.add_header('Content-Length', '%d' % os.path.getsize(hand_img_path))
@@ -97,6 +98,7 @@ while True:
     ###########################################################################
     # Check response time for face recognition
 
+    print '==================================================================='
     print 'face ip = ', face_rest_api_address[index]
 
     req = urllib2.Request(face_rest_api_address[index], data=face_image)

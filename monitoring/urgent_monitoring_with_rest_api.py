@@ -27,7 +27,8 @@ face_rest_api_address.append('http://10.161.31.23:8989/face')
 face_rest_api_address.append('http://10.161.31.24:8989/face')
 face_rest_api_address.append('http://10.161.31.25:8989/face')
 
-hand_img_path = '/Users/Illusion/Documents/Palm_Data/random_hands/IMG_0703.jpg'
+#hand_img_path = '/Users/Illusion/Documents/Palm_Data/random_hands/IMG_0703.jpg'
+hand_img_path = '/Users/Illusion/Documents/rk.jpg'
 face_img_path = '/Users/Illusion/Pictures/sulhwa.png'
 
 f_hand = open(hand_img_path, 'rb')

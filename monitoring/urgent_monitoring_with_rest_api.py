@@ -153,5 +153,5 @@ while True:
     time.sleep(REQUEST_SENDING_INTERVAL)
 
     index = index + 1
-    if index == 3:
+    if index == 4:
         index = 0

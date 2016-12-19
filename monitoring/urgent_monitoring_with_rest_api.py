@@ -28,8 +28,14 @@ face_rest_api_address.append('http://10.161.31.24:8989/face')
 face_rest_api_address.append('http://10.161.31.25:8989/face')
 
 #hand_img_path = '/Users/Illusion/Documents/Palm_Data/random_hands/IMG_0703.jpg'
-hand_img_path = '/Users/Illusion/Documents/rk.jpg'
-face_img_path = '/Users/Illusion/Pictures/sulhwa.png'
+
+#12' Macbook
+#hand_img_path = '/Users/Illusion/Documents/rk.jpg'
+#face_img_path = '/Users/Illusion/Pictures/sulhwa.png'
+
+#Macbook Pro
+hand_img_path = '/Users/Illusion/Documents/Data/palm_data/test_set/crop_resize_512_512/rk.jpg'
+face_img_path = '/Users/Illusion/Documents/Data/toast_faces/rk.jpg'
 
 f_hand = open(hand_img_path, 'rb')
 hand_image = f_hand.read()
@@ -135,7 +141,7 @@ while True:
 
     # Check the validity of the response string
     match = re.search('"Status": "OK"', res)
-    match_2 = re.search('"eyebrows": 1007', res)
+    match_2 = re.search('"eyebrows": 1010', res)
     if match and match_2:
         print "Valid response data"
     else:

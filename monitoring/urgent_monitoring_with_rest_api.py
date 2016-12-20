@@ -10,6 +10,7 @@ RESPONSE_TIME_WARINING_THRESHOLD = 5
 
 FILE_PATH_FOR_ALL_LOG = '/Users/Illusion/Temp/response_all_log.txt'
 FILE_PATH_FOR_WARNING_LOG = '/Users/Illusion/Temp/response_warning.log'
+FILE_PATH_FOR_ERROR_LOG = '/Users/Illusion/Temp/response_error.log'
 
 #rest_api_address = 'http://vincent.nhnent.com:8979/hand'
 #hand_rest_api_address = 'http://10.165.128.51:8979/hand'
@@ -103,7 +104,7 @@ while True:
             # print res
 
     except:
-        warning_log_file = open(FILE_PATH_FOR_WARNING_LOG, 'a')
+        warning_log_file = open(FILE_PATH_FOR_ERROR_LOG, 'a')
 
         current_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
         line_string = current_time + ' Error!! Exception occurred in hand! ' + hand_rest_api_address[index] + '\n'
@@ -170,7 +171,7 @@ while True:
         #print res
 
     except:
-        warning_log_file = open(FILE_PATH_FOR_WARNING_LOG, 'a')
+        warning_log_file = open(FILE_PATH_FOR_ERROR_LOG, 'a')
 
         current_time = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d %H:%M:%S')
         line_string = current_time + ' Error!! Exception Occurred in face! ' + face_rest_api_address[index] + '\n'

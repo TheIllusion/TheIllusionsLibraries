@@ -25,9 +25,6 @@ else
   cd $date
   find ./* -size -180k -size +178k -exec rm -rf {} \;
 
-  cp -ap $date* /home/nhnent/H2/users/mskang/web_result/server_data/original_resized_face
-  cp -ap output_$date* /home/nhnent/H2/users/mskang/web_result/server_data/result_face
-
   for file in $date*; do cp "$file" /home/nhnent/H2/users/mskang/web_result/server_data/original_resized_face/; done
   for file in output_$date*; do cp "$file" /home/nhnent/H2/users/mskang/web_result/server_data/result_face/; done
 

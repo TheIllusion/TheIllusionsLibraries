@@ -8,8 +8,9 @@ import random
 import os
 import glob
 
-IS_TRAINING = True
-TRAINED_MODEL_NAME = 'the_simplest_hand_classifier_v1_400.ckpt.index'
+IS_TRAINING = False
+# TRAINED_MODEL_NAME = 'the_simplest_hand_classifier_v1_9000.ckpt.index'
+TRAINED_MODEL_NAME = 'the_simplest_hand_classifier_v1_16000.ckpt'
 
 # Macbook Pro
 # ROOT_DIRECTORY = '/Users/Illusion/Documents/Data/palm_data/hand_classifier/'
@@ -32,9 +33,11 @@ ROOT_DIRECTORY = '/data/users/rklee/the_simplest_hand_classifier_v1/'
 # SVC003
 TRAINING_LIST_FILE_NAME = ROOT_DIRECTORY + 'shuffle_training_list.txt'
 SOURCE_IMAGE_DIRECTORY = ROOT_DIRECTORY + 'training_data/'
-TEST_IMAGE_DIRECTORY = ROOT_DIRECTORY + 'test_sets/test_set/'
+TEST_IMAGE_DIRECTORY = ROOT_DIRECTORY + 'test_sets/test_set_3/'
 
 PSEUDO_MEAN_PIXEL_VALUE = 100
+
+LEARNING_RATE = 0.00001
 
 if IS_TRAINING:
     BATCH_SIZE = 20
@@ -54,7 +57,8 @@ test_JPG_files = glob.glob('*.JPG')
 # image buffers
 image_buffer_size = 200
 input_buff = np.empty(shape=(image_buffer_size, 512, 512, 3))
-answer_buff = np.empty(shape=(image_buffer_size, 2))
+# answer_buff = np.empty(shape=(image_buffer_size, 1))
+answer_buff = np.empty(shape=(image_buffer_size))
 
 buff_status = []
 for i in range(image_buffer_size):
@@ -147,12 +151,16 @@ def image_buffer_loader():
 
         input_buff[current_buff_index] = cv2.resize(input_img, (512, 512), interpolation=cv2.INTER_LINEAR)
         classifying_string = filename_[end_index + 1]
-        answer_buff[current_buff_index][1] = float(classifying_string)
 
-        if classifying_string == '0':
-            answer_buff[current_buff_index][0] = 1.0
-        else:
-            answer_buff[current_buff_index][0] = 0.0
+        # answer_buff[current_buff_index][0] = float(classifying_string)
+        answer_buff[current_buff_index] = float(classifying_string)
+
+        '''
+            if classifying_string == '0':
+                answer_buff[current_buff_index][0] = 1.0
+            else:
+                answer_buff[current_buff_index][0] = 0.0
+        '''
 
         buff_status[current_buff_index] = 'filled'
 
@@ -191,7 +199,7 @@ def max_pool_2x2(x):
 
 
 X = tf.placeholder(tf.float32, [BATCH_SIZE, 512, 512, 3])
-Y = tf.placeholder(tf.float32, [BATCH_SIZE, 2])
+Y = tf.placeholder(tf.float32, [BATCH_SIZE, 1])
 
 CONV_W1_HAND = tf.get_variable("CNN_W1_HAND", shape=[5, 5, 3, 32], initializer=tf.contrib.layers.xavier_initializer())
 CONV_W2_HAND = tf.get_variable("CNN_W2_HAND", shape=[5, 5, 32, 32], initializer=tf.contrib.layers.xavier_initializer())
@@ -203,7 +211,7 @@ CONV_W6_HAND = tf.get_variable("CNN_W6_HAND", shape=[3, 3, 128, 128],
 
 FC_W1 = tf.get_variable("FC_W1_HAND", shape=[16 * 16 * 128, 500], initializer=tf.contrib.layers.xavier_initializer())
 FC_W2 = tf.get_variable("FC_W2_HAND", shape=[500, 500], initializer=tf.contrib.layers.xavier_initializer())
-FC_W3 = tf.get_variable("FC_W3_HAND", shape=[500, 2], initializer=tf.contrib.layers.xavier_initializer())
+FC_W3 = tf.get_variable("FC_W3_HAND", shape=[500, 1], initializer=tf.contrib.layers.xavier_initializer())
 
 BIAS_CONV_W1_HAND = tf.Variable(tf.zeros([1, 32]), name="ConvBiasHand1")
 BIAS_CONV_W2_HAND = tf.Variable(tf.zeros([1, 32]), name="ConvBiasHand2")
@@ -214,7 +222,7 @@ BIAS_CONV_W6_HAND = tf.Variable(tf.zeros([1, 128]), name="ConvBiasHand6")
 
 BIAS_FC_W1 = tf.Variable(tf.zeros([1, 500]), name="FCBiasHand1")
 BIAS_FC_W2 = tf.Variable(tf.zeros([1, 500]), name="FCBiasHand2")
-BIAS_FC_W3 = tf.Variable(tf.zeros([1, 2]), name="FCBiasHand3")
+BIAS_FC_W3 = tf.Variable(tf.zeros([1, 1]), name="FCBiasHand3")
 
 X_IN = tf.reshape(X, [-1, 512, 512, 3])
 
@@ -238,7 +246,8 @@ FC_IN = tf.reshape(conv6_pool, [-1, 16 * 16 * 128])
 FC1 = tf.nn.relu(tf.matmul(FC_IN, FC_W1) + BIAS_FC_W1)
 FC2 = tf.nn.relu(tf.matmul(FC1, FC_W2) + BIAS_FC_W2)
 
-hypothesis_hand = tf.nn.softmax(tf.matmul(FC2, FC_W3) + BIAS_FC_W3)
+# hypothesis_hand = tf.nn.softmax(tf.matmul(FC2, FC_W3) + BIAS_FC_W3)
+hypothesis_hand = tf.nn.sigmoid(tf.matmul(FC2, FC_W3) + BIAS_FC_W3)
 
 if IS_TRAINING:
     regularization_term = 0.000005 * (tf.nn.l2_loss(CONV_W1_HAND)
@@ -252,13 +261,11 @@ if IS_TRAINING:
                                       + tf.nn.l2_loss(FC_W3))
 
     # cost_hand = tf.reduce_mean( (-tf.reduce_sum(Y*tf.log(hypothesis_hand) , reduction_indices=1)) + regularization_term )
-    cost_hand = tf.reduce_mean(-tf.reduce_sum(Y * tf.log(hypothesis_hand)) + regularization_term)
+    # cost_hand = tf.reduce_mean( -tf.reduce_sum(Y*tf.log(hypothesis_hand)) + regularization_term )
 
-    '''
     cost_hand = (-tf.reduce_mean(Y * tf.log(tf.clip_by_value(hypothesis_hand, 1e-30, 1.0))
-                     + (1 - Y) * tf.log(tf.clip_by_value(1 - hypothesis_hand, 1e-30, 1.0)))
-                     + regularization_term)
-    '''
+                                 + (1 - Y) * tf.log(tf.clip_by_value(1 - hypothesis_hand, 1e-30, 1.0)))
+                 + regularization_term)
 
     '''
     cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(Y, hypothesis_hand))
@@ -266,7 +273,7 @@ if IS_TRAINING:
     '''
 
     # learning rate
-    learning_rate_hand = tf.Variable(0.00001)
+    learning_rate_hand = tf.Variable(LEARNING_RATE)
 
     optimizer_hand = tf.train.AdamOptimizer(learning_rate_hand)
     train_hand = optimizer_hand.minimize(cost_hand)
@@ -274,7 +281,7 @@ if IS_TRAINING:
     # dropout rate
     dropout_rate_hand = tf.placeholder("float")
 
-init_hand = tf.initialize_all_variables()
+    init_hand = tf.initialize_all_variables()
 
 # tf.global_variables_initializer()
 
@@ -287,12 +294,12 @@ config.gpu_options.allow_growth = True
 
 with tf.Session(config=config) as sess:
     if IS_TRAINING:
-        sess.run(init_hand)
+        # sess.run(init_hand)
 
         # train the model
         for step in xrange(20001):
             x_data = np.empty(shape=(BATCH_SIZE, 512, 512, 3))
-            y_data = np.empty(shape=(BATCH_SIZE, 2))
+            y_data = np.empty(shape=(BATCH_SIZE, 1))
 
             for batchIdx in xrange(BATCH_SIZE):
                 # read image from buffer
@@ -317,6 +324,7 @@ with tf.Session(config=config) as sess:
                 print 'step = ', step
                 print 'regularization cost = ', sess.run(regularization_term)
                 print 'total cost = ', sess.run(cost_hand, feed_dict={X: x_data, Y: y_data})
+                print 'hypothesis = ', sess.run(hypothesis_hand, feed_dict={X: x_data, Y: y_data})
                 print '-------------------------------'
 
             if step % 500 == 0:
@@ -328,12 +336,12 @@ with tf.Session(config=config) as sess:
     # Feed-forward Test
     else:
         # Load the pre-trained model from file
-        # saver = tf.train.Saver()
-        # saver.restore(sess, ROOT_DIRECTORY + "models/the_simplest_hand_classifier_v1_400.ckpt.data-00000-of-00001")
+        saver = tf.train.Saver()
+        saver.restore(sess, ROOT_DIRECTORY + "models/" + TRAINED_MODEL_NAME)
 
-        sess.run(init_hand)
+        # sess.run(init_hand)
 
-        reader = tf.train.NewCheckpointReader(ROOT_DIRECTORY + 'models/' + TRAINED_MODEL_NAME)
+        # reader = tf.train.NewCheckpointReader(ROOT_DIRECTORY + 'models/' + TRAINED_MODEL_NAME)
 
         print("Model restored.")
 
@@ -357,29 +365,36 @@ with tf.Session(config=config) as sess:
             input_image = cv2.resize(img, (512, 512), interpolation=cv2.INTER_LINEAR)
 
             network_output = tf.to_float(hypothesis_hand)
-
-            input_image = input_image - PSEUDO_MEAN_PIXEL_VALUE
+            print 'after mean subtraction. PSEUDO_MEAN = ', PSEUDO_MEAN_PIXEL_VALUE
             x_test_data[0] = input_image
-
+            x_test_data = x_test_data - PSEUDO_MEAN_PIXEL_VALUE
+            # print x_test_data
+            # print input_image
             prediction = sess.run([network_output], feed_dict={X: x_test_data})
 
             print 'test_idx = ', str(idx)
             print 'input filename: ', file_name
             print 'prediction = ', prediction
-            print 'type = ', np.argmax(prediction)
+            # print 'type = ', np.argmax(prediction)
 
             match = re.search("non_hand", jpg_file)
-            if match:
-                if np.argmax(prediction) == 0:
-                    count_correct = count_correct + 1
-                else:
-                    count_incorrect = count_incorrect + 1
-            else:
-                if np.argmax(prediction) == 1:
-                    count_correct = count_correct + 1
-                else:
-                    count_incorrect = count_incorrect + 1
 
+            if match:
+                # if np.argmax(prediction) == 0:
+                if prediction[0] < 0.5:
+                    count_correct = count_correct + 1
+                    print 'result: correct'
+                else:
+                    count_incorrect = count_incorrect + 1
+                    print 'result: incorrect'
+            else:
+                # if np.argmax(prediction) == 1:
+                if prediction[0] >= 0.5:
+                    count_correct = count_correct + 1
+                    print 'result: correct'
+                else:
+                    count_incorrect = count_incorrect + 1
+                    print 'result: incorrect'
             idx = idx + 1
 
         for JPG_file in test_JPG_files:
@@ -391,27 +406,33 @@ with tf.Session(config=config) as sess:
 
             network_output = tf.to_float(hypothesis_hand)
 
-            input_image = input_image - PSEUDO_MEAN_PIXEL_VALUE
             x_test_data[0] = input_image
-
+            x_test_data = x_test_data - PSEUDO_MEAN_PIXEL_VALUE
+            # print x_test_data
             prediction = sess.run([network_output], feed_dict={X: x_test_data})
 
             print 'test_idx = ', str(idx)
             print 'input filename: ', file_name
             print 'prediction = ', prediction
-            print 'type = ', np.argmax(prediction)
+            # print 'type = ', np.argmax(prediction)
 
             match = re.search("non_hand", jpg_file)
             if match:
-                if np.argmax(prediction) == 0:
+                # if np.argmax(prediction) == 0:
+                if prediction < 0.5:
                     count_correct = count_correct + 1
+                    print 'result: correct'
                 else:
                     count_incorrect = count_incorrect + 1
+                    print 'result: incorrect'
             else:
-                if np.argmax(prediction) == 1:
+                # if np.argmax(prediction) == 1:
+                if prediction >= 0.5:
                     count_correct = count_correct + 1
+                    print 'result: correct'
                 else:
                     count_incorrect = count_incorrect + 1
+                    print 'result: incorrect'
 
             idx = idx + 1
 

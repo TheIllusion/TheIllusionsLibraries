@@ -67,6 +67,8 @@ training_list_file = open(TRAINING_LIST_FILE_NAME)
 training_list = training_list_file.readlines()
 max_training_index = len(training_list)
 
+exit_notification = False
+
 
 def image_buffer_loader():
     global current_buff_index
@@ -112,11 +114,17 @@ def image_buffer_loader():
         # answer_file_name = answer_image_directory + filename
 
         while buff_status[current_buff_index] == 'filled':
+            if exit_notification == True:
+                break
+
             # print 'sleep start'
             time.sleep(1)
             # print 'sleep end'
             if buff_status[current_buff_index] == 'empty':
                 break
+
+        if exit_notification == True:
+            break
 
         input_img = cv2.imread(training_file_name, cv2.IMREAD_COLOR)
         # answer_img = cv2.imread(answer_file_name, cv2.IMREAD_GRAYSCALE)
@@ -243,7 +251,8 @@ if IS_TRAINING:
                                       + tf.nn.l2_loss(FC_W2)
                                       + tf.nn.l2_loss(FC_W3))
 
-    cost_hand = tf.reduce_mean((-tf.reduce_sum(Y * tf.log(hypothesis_hand), reduction_indices=1)) + regularization_term)
+    # cost_hand = tf.reduce_mean( (-tf.reduce_sum(Y*tf.log(hypothesis_hand) , reduction_indices=1)) + regularization_term )
+    cost_hand = tf.reduce_mean(-tf.reduce_sum(Y * tf.log(hypothesis_hand)) + regularization_term)
 
     '''
     cost_hand = (-tf.reduce_mean(Y * tf.log(tf.clip_by_value(hypothesis_hand, 1e-30, 1.0))
@@ -281,7 +290,7 @@ with tf.Session(config=config) as sess:
         sess.run(init_hand)
 
         # train the model
-        for step in xrange(2001):
+        for step in xrange(20001):
             x_data = np.empty(shape=(BATCH_SIZE, 512, 512, 3))
             y_data = np.empty(shape=(BATCH_SIZE, 2))
 
@@ -312,8 +321,7 @@ with tf.Session(config=config) as sess:
 
             if step % 500 == 0:
                 saver = tf.train.Saver(tf.trainable_variables())
-                file_name = ROOT_DIRECTORY + "models/the_simplest_hand_classifier_v1_" + str(
-                    step) + ".ckpt"
+                file_name = ROOT_DIRECTORY + "models/the_simplest_hand_classifier_v1_" + str(step) + ".ckpt"
                 save_path = saver.save(sess, file_name)
                 print("Model saved in file: %s" % save_path)
 
@@ -328,6 +336,8 @@ with tf.Session(config=config) as sess:
         reader = tf.train.NewCheckpointReader(ROOT_DIRECTORY + 'models/' + TRAINED_MODEL_NAME)
 
         print("Model restored.")
+
+    exit_notification = True
 
     ##############################################################################################
     # Test the trained model

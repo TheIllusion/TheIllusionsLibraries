@@ -8,6 +8,9 @@ import random
 import os
 import glob
 
+IS_TRAINING = True
+TRAINED_MODEL_NAME = 'the_simplest_hand_classifier_v1_400.ckpt.index'
+
 # Macbook Pro
 # ROOT_DIRECTORY = '/Users/Illusion/Documents/Data/palm_data/hand_classifier/'
 
@@ -33,10 +36,8 @@ TEST_IMAGE_DIRECTORY = ROOT_DIRECTORY + 'test_sets/test_set/'
 
 PSEUDO_MEAN_PIXEL_VALUE = 100
 
-IS_TRAINING = True
-
 if IS_TRAINING:
-    BATCH_SIZE = 50
+    BATCH_SIZE = 20
 else:
     BATCH_SIZE = 1
 
@@ -138,12 +139,12 @@ def image_buffer_loader():
 
         input_buff[current_buff_index] = cv2.resize(input_img, (512, 512), interpolation=cv2.INTER_LINEAR)
         classifying_string = filename_[end_index + 1]
-        answer_buff[current_buff_index][0] = float(classifying_string)
+        answer_buff[current_buff_index][1] = float(classifying_string)
 
         if classifying_string == '0':
-            answer_buff[current_buff_index][1] = 1.0
+            answer_buff[current_buff_index][0] = 1.0
         else:
-            answer_buff[current_buff_index][1] = 0.0
+            answer_buff[current_buff_index][0] = 0.0
 
         buff_status[current_buff_index] = 'filled'
 
@@ -192,9 +193,9 @@ CONV_W5_HAND = tf.get_variable("CNN_W5_HAND", shape=[3, 3, 64, 128], initializer
 CONV_W6_HAND = tf.get_variable("CNN_W6_HAND", shape=[3, 3, 128, 128],
                                initializer=tf.contrib.layers.xavier_initializer())
 
-FC_W1 = tf.get_variable("FC_W1_HAND", shape=[32 * 32 * 128, 300], initializer=tf.contrib.layers.xavier_initializer())
-FC_W2 = tf.get_variable("FC_W2_HAND", shape=[300, 300], initializer=tf.contrib.layers.xavier_initializer())
-FC_W3 = tf.get_variable("FC_W3_HAND", shape=[300, 2], initializer=tf.contrib.layers.xavier_initializer())
+FC_W1 = tf.get_variable("FC_W1_HAND", shape=[16 * 16 * 128, 500], initializer=tf.contrib.layers.xavier_initializer())
+FC_W2 = tf.get_variable("FC_W2_HAND", shape=[500, 500], initializer=tf.contrib.layers.xavier_initializer())
+FC_W3 = tf.get_variable("FC_W3_HAND", shape=[500, 2], initializer=tf.contrib.layers.xavier_initializer())
 
 BIAS_CONV_W1_HAND = tf.Variable(tf.zeros([1, 32]), name="ConvBiasHand1")
 BIAS_CONV_W2_HAND = tf.Variable(tf.zeros([1, 32]), name="ConvBiasHand2")
@@ -203,47 +204,52 @@ BIAS_CONV_W4_HAND = tf.Variable(tf.zeros([1, 64]), name="ConvBiasHand4")
 BIAS_CONV_W5_HAND = tf.Variable(tf.zeros([1, 128]), name="ConvBiasHand5")
 BIAS_CONV_W6_HAND = tf.Variable(tf.zeros([1, 128]), name="ConvBiasHand6")
 
-BIAS_FC_W1 = tf.Variable(tf.zeros([1, 300]), name="FCBiasHand1")
-BIAS_FC_W2 = tf.Variable(tf.zeros([1, 300]), name="FCBiasHand2")
+BIAS_FC_W1 = tf.Variable(tf.zeros([1, 500]), name="FCBiasHand1")
+BIAS_FC_W2 = tf.Variable(tf.zeros([1, 500]), name="FCBiasHand2")
 BIAS_FC_W3 = tf.Variable(tf.zeros([1, 2]), name="FCBiasHand3")
 
 X_IN = tf.reshape(X, [-1, 512, 512, 3])
 
 # 512->256
 conv1 = tf.nn.relu(tf.nn.conv2d(X_IN, CONV_W1_HAND, strides=[1, 2, 2, 1], padding='SAME') + BIAS_CONV_W1_HAND)
+conv2 = tf.nn.relu(tf.nn.conv2d(conv1, CONV_W2_HAND, strides=[1, 1, 1, 1], padding='SAME') + BIAS_CONV_W2_HAND)
 # 256->128
-conv2 = tf.nn.relu(tf.nn.conv2d(conv1, CONV_W2_HAND, strides=[1, 2, 2, 1], padding='SAME') + BIAS_CONV_W2_HAND)
-conv3 = tf.nn.relu(tf.nn.conv2d(conv2, CONV_W3_HAND, strides=[1, 1, 1, 1], padding='SAME') + BIAS_CONV_W3_HAND)
+conv2_pool = max_pool_2x2(conv2)
+conv3 = tf.nn.relu(tf.nn.conv2d(conv2_pool, CONV_W3_HAND, strides=[1, 1, 1, 1], padding='SAME') + BIAS_CONV_W3_HAND)
 # 128->64
 conv3_pool = max_pool_2x2(conv3)
 conv4 = tf.nn.relu(tf.nn.conv2d(conv3_pool, CONV_W4_HAND, strides=[1, 1, 1, 1], padding='SAME') + BIAS_CONV_W4_HAND)
-conv5 = tf.nn.relu(tf.nn.conv2d(conv4, CONV_W5_HAND, strides=[1, 1, 1, 1], padding='SAME') + BIAS_CONV_W5_HAND)
-conv6 = tf.nn.relu(tf.nn.conv2d(conv5, CONV_W6_HAND, strides=[1, 1, 1, 1], padding='SAME') + BIAS_CONV_W6_HAND)
 # 64->32
+conv4_pool = max_pool_2x2(conv4)
+conv5 = tf.nn.relu(tf.nn.conv2d(conv4_pool, CONV_W5_HAND, strides=[1, 1, 1, 1], padding='SAME') + BIAS_CONV_W5_HAND)
+conv6 = tf.nn.relu(tf.nn.conv2d(conv5, CONV_W6_HAND, strides=[1, 1, 1, 1], padding='SAME') + BIAS_CONV_W6_HAND)
+# 32->16
 conv6_pool = max_pool_2x2(conv6)
 
-FC_IN = tf.reshape(conv6_pool, [-1, 32 * 32 * 128])
+FC_IN = tf.reshape(conv6_pool, [-1, 16 * 16 * 128])
 FC1 = tf.nn.relu(tf.matmul(FC_IN, FC_W1) + BIAS_FC_W1)
 FC2 = tf.nn.relu(tf.matmul(FC1, FC_W2) + BIAS_FC_W2)
 
 hypothesis_hand = tf.nn.softmax(tf.matmul(FC2, FC_W3) + BIAS_FC_W3)
 
 if IS_TRAINING:
-    regularization_term = 0.00001 * (tf.nn.l2_loss(CONV_W1_HAND)
-                                     + tf.nn.l2_loss(CONV_W2_HAND)
-                                     + tf.nn.l2_loss(CONV_W3_HAND)
-                                     + tf.nn.l2_loss(CONV_W4_HAND)
-                                     + tf.nn.l2_loss(CONV_W5_HAND)
-                                     + tf.nn.l2_loss(CONV_W6_HAND)
-                                     + tf.nn.l2_loss(FC_W1)
-                                     + tf.nn.l2_loss(FC_W2)
-                                     + tf.nn.l2_loss(FC_W3))
+    regularization_term = 0.000005 * (tf.nn.l2_loss(CONV_W1_HAND)
+                                      + tf.nn.l2_loss(CONV_W2_HAND)
+                                      + tf.nn.l2_loss(CONV_W3_HAND)
+                                      + tf.nn.l2_loss(CONV_W4_HAND)
+                                      + tf.nn.l2_loss(CONV_W5_HAND)
+                                      + tf.nn.l2_loss(CONV_W6_HAND)
+                                      + tf.nn.l2_loss(FC_W1)
+                                      + tf.nn.l2_loss(FC_W2)
+                                      + tf.nn.l2_loss(FC_W3))
 
-    # cost_hand = tf.reduce_mean(-tf.reduce_sum(Y*tf.log(hypothesis_hand), reduction_indices=1))
+    cost_hand = tf.reduce_mean((-tf.reduce_sum(Y * tf.log(hypothesis_hand), reduction_indices=1)) + regularization_term)
 
+    '''
     cost_hand = (-tf.reduce_mean(Y * tf.log(tf.clip_by_value(hypothesis_hand, 1e-30, 1.0))
-                                 + (1 - Y) * tf.log(tf.clip_by_value(1 - hypothesis_hand, 1e-30, 1.0)))
-                 + regularization_term)
+                     + (1 - Y) * tf.log(tf.clip_by_value(1 - hypothesis_hand, 1e-30, 1.0)))
+                     + regularization_term)
+    '''
 
     '''
     cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(Y, hypothesis_hand))
@@ -266,7 +272,11 @@ init_hand = tf.initialize_all_variables()
 image_buff_read_index = 0
 
 ##############################################################################################
-with tf.Session() as sess:
+
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+
+with tf.Session(config=config) as sess:
     if IS_TRAINING:
         sess.run(init_hand)
 
@@ -292,12 +302,15 @@ with tf.Session() as sess:
                 if image_buff_read_index >= image_buffer_size:
                     image_buff_read_index = 0
 
-            sess.run(train_hand, feed_dict={X: x_data, Y: y_data, dropout_rate_hand: 0.7})
-            if step % 1 == 0:
-                print 'step = ', step, ' cost = ', sess.run(cost_hand, feed_dict={X: x_data, Y: y_data})
+            sess.run(train_hand, feed_dict={X: x_data, Y: y_data})
+            # sess.run(train_hand, feed_dict={X: x_data, Y: y_data, dropout_rate_hand: 0.7})
+            if step % 10 == 0:
+                print 'step = ', step
                 print 'regularization cost = ', sess.run(regularization_term)
+                print 'total cost = ', sess.run(cost_hand, feed_dict={X: x_data, Y: y_data})
+                print '-------------------------------'
 
-            if step % 100 == 0:
+            if step % 500 == 0:
                 saver = tf.train.Saver(tf.trainable_variables())
                 file_name = ROOT_DIRECTORY + "models/the_simplest_hand_classifier_v1_" + str(
                     step) + ".ckpt"
@@ -312,91 +325,91 @@ with tf.Session() as sess:
 
         sess.run(init_hand)
 
-        reader = tf.train.NewCheckpointReader(ROOT_DIRECTORY + 'models/the_simplest_hand_classifier_v1_400.ckpt.index')
+        reader = tf.train.NewCheckpointReader(ROOT_DIRECTORY + 'models/' + TRAINED_MODEL_NAME)
 
         print("Model restored.")
 
     ##############################################################################################
     # Test the trained model
     # Read the test data
+    if not IS_TRAINING:
+        idx = 0
+        count_correct = 0
+        count_incorrect = 0
 
-    idx = 0
-    count_correct = 0
-    count_incorrect = 0
+        x_test_data = np.empty(shape=(1, 512, 512, 3))
 
-    x_test_data = np.empty(shape=(1, 512, 512, 3))
+        for jpg_file in test_jpg_files:
+            file_name = TEST_IMAGE_DIRECTORY + jpg_file
+            print '#######################################################################'
 
-    for jpg_file in test_jpg_files:
-        file_name = TEST_IMAGE_DIRECTORY + jpg_file
-        print '#######################################################################'
+            img = cv2.imread(file_name, cv2.IMREAD_COLOR)
+            input_image = cv2.resize(img, (512, 512), interpolation=cv2.INTER_LINEAR)
 
-        img = cv2.imread(file_name, cv2.IMREAD_COLOR)
-        input_image = cv2.resize(img, (512, 512), interpolation=cv2.INTER_LINEAR)
+            network_output = tf.to_float(hypothesis_hand)
 
-        network_output = tf.to_float(hypothesis_hand)
+            input_image = input_image - PSEUDO_MEAN_PIXEL_VALUE
+            x_test_data[0] = input_image
 
-        input_image = input_image - PSEUDO_MEAN_PIXEL_VALUE
-        x_test_data[0] = input_image
+            prediction = sess.run([network_output], feed_dict={X: x_test_data})
 
-        prediction = sess.run([network_output], feed_dict={X: x_test_data})
+            print 'test_idx = ', str(idx)
+            print 'input filename: ', file_name
+            print 'prediction = ', prediction
+            print 'type = ', np.argmax(prediction)
 
-        print 'test_idx = ', str(idx)
-        print 'input filename: ', file_name
-        print 'prediction = ', prediction
-        print 'type = ', np.argmax(prediction)
-
-        match = re.search("non_hand", jpg_file)
-        if match:
-            if np.argmax(prediction) == 0:
-                count_correct = count_correct + 1
+            match = re.search("non_hand", jpg_file)
+            if match:
+                if np.argmax(prediction) == 0:
+                    count_correct = count_correct + 1
+                else:
+                    count_incorrect = count_incorrect + 1
             else:
-                count_incorrect = count_incorrect + 1
-        else:
-            if np.argmax(prediction) == 1:
-                count_correct = count_correct + 1
+                if np.argmax(prediction) == 1:
+                    count_correct = count_correct + 1
+                else:
+                    count_incorrect = count_incorrect + 1
+
+            idx = idx + 1
+
+        for JPG_file in test_JPG_files:
+            file_name = TEST_IMAGE_DIRECTORY + JPG_file
+            print '#######################################################################'
+
+            img = cv2.imread(file_name, cv2.IMREAD_COLOR)
+            input_image = cv2.resize(img, (512, 512), interpolation=cv2.INTER_LINEAR)
+
+            network_output = tf.to_float(hypothesis_hand)
+
+            input_image = input_image - PSEUDO_MEAN_PIXEL_VALUE
+            x_test_data[0] = input_image
+
+            prediction = sess.run([network_output], feed_dict={X: x_test_data})
+
+            print 'test_idx = ', str(idx)
+            print 'input filename: ', file_name
+            print 'prediction = ', prediction
+            print 'type = ', np.argmax(prediction)
+
+            match = re.search("non_hand", jpg_file)
+            if match:
+                if np.argmax(prediction) == 0:
+                    count_correct = count_correct + 1
+                else:
+                    count_incorrect = count_incorrect + 1
             else:
-                count_incorrect = count_incorrect + 1
+                if np.argmax(prediction) == 1:
+                    count_correct = count_correct + 1
+                else:
+                    count_incorrect = count_incorrect + 1
 
-        idx = idx + 1
+            idx = idx + 1
 
-    for JPG_file in test_JPG_files:
-        file_name = TEST_IMAGE_DIRECTORY + JPG_file
-        print '#######################################################################'
-
-        img = cv2.imread(file_name, cv2.IMREAD_COLOR)
-        input_image = cv2.resize(img, (512, 512), interpolation=cv2.INTER_LINEAR)
-
-        network_output = tf.to_float(hypothesis_hand)
-
-        input_image = input_image - PSEUDO_MEAN_PIXEL_VALUE
-        x_test_data[0] = input_image
-
-        prediction = sess.run([network_output], feed_dict={X: x_test_data})
-
-        print 'test_idx = ', str(idx)
-        print 'input filename: ', file_name
-        print 'prediction = ', prediction
-        print 'type = ', np.argmax(prediction)
-
-        match = re.search("non_hand", jpg_file)
-        if match:
-            if np.argmax(prediction) == 0:
-                count_correct = count_correct + 1
-            else:
-                count_incorrect = count_incorrect + 1
-        else:
-            if np.argmax(prediction) == 1:
-                count_correct = count_correct + 1
-            else:
-                count_incorrect = count_incorrect + 1
-
-        idx = idx + 1
-
-    print 'count_correct', count_correct
-    print 'count_incorrect', count_incorrect
-    print 'total_test_index', idx
-    print 'Accuracy = ', str(100.0 * count_correct / idx)
-    print 'End'
+        print 'count_correct', count_correct
+        print 'count_incorrect', count_incorrect
+        print 'total_test_index', idx
+        print 'Accuracy = ', str(100.0 * count_correct / idx)
+        print 'End'
 
 
-    ##############################################################################################
+        ##############################################################################################

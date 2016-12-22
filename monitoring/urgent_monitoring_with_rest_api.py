@@ -4,7 +4,7 @@ import urllib2
 import datetime
 import re
 
-REQUEST_SENDING_INTERVAL = 0.1
+REQUEST_SENDING_INTERVAL = 5
 REQUEST_TIMEOUT_THRESHOLD_SEC = 30
 RESPONSE_TIME_WARINING_THRESHOLD = 5
 
@@ -20,12 +20,12 @@ face_rest_api_address = []
 
 hand_rest_api_address.append('http://10.161.31.22:8979/hand')
 hand_rest_api_address.append('http://10.161.31.23:8979/hand')
-hand_rest_api_address.append('http://10.161.31.24:8979/hand')
+#hand_rest_api_address.append('http://10.161.31.24:8979/hand')
 hand_rest_api_address.append('http://10.161.31.25:8979/hand')
 
 face_rest_api_address.append('http://10.161.31.22:8989/face')
 face_rest_api_address.append('http://10.161.31.23:8989/face')
-face_rest_api_address.append('http://10.161.31.24:8989/face')
+#face_rest_api_address.append('http://10.161.31.24:8989/face')
 face_rest_api_address.append('http://10.161.31.25:8989/face')
 
 #hand_img_path = '/Users/Illusion/Documents/Palm_Data/random_hands/IMG_0703.jpg'
@@ -48,6 +48,11 @@ f_face.close()
 
 index = 0
 
+hand_server_num = len(hand_rest_api_address)
+face_server_num = len(face_rest_api_address)
+
+print 'Total number of hand servers = ', str(hand_server_num)
+print 'Total number of face servers = ', str(face_server_num)
 while True:
 
     ###########################################################################
@@ -79,7 +84,7 @@ while True:
         if elapsed_time > RESPONSE_TIME_WARINING_THRESHOLD:
             warning_log_file = open(FILE_PATH_FOR_WARNING_LOG, 'a')
 
-            line_string = current_time + ' Warning!! Response time for hand recognition is slower than ' \
+            line_string = current_time + ' Warning!!!!! Response time for hand recognition is slower than ' \
                           + str(RESPONSE_TIME_WARINING_THRESHOLD) + 's. Response Time = ' + str(elapsed_time) + '\n'
 
             print line_string
@@ -95,7 +100,7 @@ while True:
             print "Invalid response data"
             warning_log_file = open(FILE_PATH_FOR_WARNING_LOG, 'a')
 
-            line_string = current_time + ' Warning!! Invalid response detected from the hand response' + '\n'
+            line_string = current_time + ' Warning!!!!! Invalid response detected from the hand response' + '\n'
 
             print line_string
             warning_log_file.write(line_string)
@@ -144,7 +149,7 @@ while True:
         if elapsed_time > RESPONSE_TIME_WARINING_THRESHOLD:
             warning_log_file = open(FILE_PATH_FOR_WARNING_LOG, 'a')
 
-            line_string = current_time + ' Warning!! Response time for face recognition is slower than ' \
+            line_string = current_time + ' Warning!!!!! Response time for face recognition is slower than ' \
                           + str(RESPONSE_TIME_WARINING_THRESHOLD) + 's. Response Time = ' + str(elapsed_time) + '\n'
 
             print line_string
@@ -162,7 +167,7 @@ while True:
             print "Invalid response data"
             warning_log_file = open(FILE_PATH_FOR_WARNING_LOG, 'a')
 
-            line_string = current_time + ' Warning!! Invalid response detected from the face response' + '\n'
+            line_string = current_time + ' Warning!!!!! Invalid response detected from the face response' + '\n'
             print '!!!!===================================================================!!!!'
             print line_string
             warning_log_file.write(line_string)
@@ -185,5 +190,5 @@ while True:
     time.sleep(REQUEST_SENDING_INTERVAL)
 
     index = index + 1
-    if index == 4:
+    if index == hand_server_num:
         index = 0

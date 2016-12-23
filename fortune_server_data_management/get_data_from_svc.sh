@@ -25,7 +25,7 @@ else
   cd $date
 
   #erase rk.jpg
-  find . -size 92691c -exec rm -rf {} \;
+  #find . -size 92691c -exec rm -rf {} \;
 
   cd /home/nhnent/H1/users/rklee/palmdemo_flask_dev
   python local_feed_forward_test.py /home/nhnent/H1/users/rklee/Data/server_data/server_hand_data/$date/

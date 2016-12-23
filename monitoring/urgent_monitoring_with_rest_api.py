@@ -20,23 +20,23 @@ face_rest_api_address = []
 
 hand_rest_api_address.append('http://10.161.31.22:8979/hand')
 hand_rest_api_address.append('http://10.161.31.23:8979/hand')
-#hand_rest_api_address.append('http://10.161.31.24:8979/hand')
+hand_rest_api_address.append('http://10.161.31.24:8979/hand')
 hand_rest_api_address.append('http://10.161.31.25:8979/hand')
 
 face_rest_api_address.append('http://10.161.31.22:8989/face')
 face_rest_api_address.append('http://10.161.31.23:8989/face')
-#face_rest_api_address.append('http://10.161.31.24:8989/face')
+face_rest_api_address.append('http://10.161.31.24:8989/face')
 face_rest_api_address.append('http://10.161.31.25:8989/face')
 
 #hand_img_path = '/Users/Illusion/Documents/Palm_Data/random_hands/IMG_0703.jpg'
 
 #12' Macbook
-#hand_img_path = '/Users/Illusion/Documents/rk.jpg'
-#face_img_path = '/Users/Illusion/Pictures/sulhwa.png'
+hand_img_path = '/Users/Illusion/Documents/rk.jpg'
+face_img_path = '/Users/Illusion/Documents/rk_face.jpg'
 
 #Macbook Pro
-hand_img_path = '/Users/Illusion/Documents/Data/palm_data/test_set/crop_resize_512_512/rk.jpg'
-face_img_path = '/Users/Illusion/Documents/Data/toast_faces/rk.jpg'
+#hand_img_path = '/Users/Illusion/Documents/Data/palm_data/test_set/crop_resize_512_512/rk.jpg'
+#face_img_path = '/Users/Illusion/Documents/Data/toast_faces/rk.jpg'
 
 f_hand = open(hand_img_path, 'rb')
 hand_image = f_hand.read()

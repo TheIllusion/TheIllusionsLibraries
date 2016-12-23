@@ -294,7 +294,7 @@ config.gpu_options.allow_growth = True
 
 with tf.Session(config=config) as sess:
     if IS_TRAINING:
-        # sess.run(init_hand)
+        sess.run(init_hand)
 
         # train the model
         for step in xrange(20001):

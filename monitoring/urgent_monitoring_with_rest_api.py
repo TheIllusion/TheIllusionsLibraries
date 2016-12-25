@@ -20,12 +20,12 @@ face_rest_api_address = []
 
 hand_rest_api_address.append('http://10.161.31.22:8979/hand')
 hand_rest_api_address.append('http://10.161.31.23:8979/hand')
-hand_rest_api_address.append('http://10.161.31.24:8979/hand')
+#hand_rest_api_address.append('http://10.161.31.24:8979/hand')
 hand_rest_api_address.append('http://10.161.31.25:8979/hand')
 
 face_rest_api_address.append('http://10.161.31.22:8989/face')
 face_rest_api_address.append('http://10.161.31.23:8989/face')
-face_rest_api_address.append('http://10.161.31.24:8989/face')
+#face_rest_api_address.append('http://10.161.31.24:8989/face')
 face_rest_api_address.append('http://10.161.31.25:8989/face')
 
 #hand_img_path = '/Users/Illusion/Documents/Palm_Data/random_hands/IMG_0703.jpg'

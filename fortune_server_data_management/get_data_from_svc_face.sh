@@ -22,6 +22,14 @@ else
   tar -xvf $date.tar
   mv $date.tar $date.svc002.tar
 
+  wget http://10.161.31.26:8985/server_face_data/$date.tar
+  tar -xvf $date.tar
+  mv $date.tar $date.svc004.tar
+
+  wget http://10.161.31.27:8985/server_face_data/$date.tar
+  tar -xvf $date.tar
+  mv $date.tar $date.svc005.tar
+
   cd $date
   #erase rk.jpg
   #find . -size 182936c -exec rm -rf {} \;

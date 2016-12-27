@@ -24,19 +24,17 @@ else
 
   cd $date
   #erase rk.jpg
-  find . -size 182936c -exec rm -rf {} \;
+  #find . -size 182936c -exec rm -rf {} \;
   #erase output_rk.jpg
-  find . -size 83815c -exec rm -rf {} \;
+  #find . -size 83815c -exec rm -rf {} \;
 
   for file in $date*; do cp "$file" /home/nhnent/H2/users/mskang/web_result/server_data/original_resized_face/; done
   for file in output_$date*; do cp "$file" /home/nhnent/H2/users/mskang/web_result/server_data/result_face/; done
 
   cd /home/nhnent/H2/users/mskang/web_result/server_data/
+
+  python delete_duplicate_file.py $date
   python update_file_list_face.py
   python update_guest_file_list.py
 
-  #cd /home/nhnent/H1/users/rklee/palmdemo_flask_dev
-  #python local_feed_forward_test.py /home/nhnent/H1/users/rklee/Data/server_data/server_hand_data/$date/
-  #cd /home/nhnent/H2/users/mskang/web_result/server_data/
-  #python update_file_list.py
 fi

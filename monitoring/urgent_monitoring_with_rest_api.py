@@ -85,7 +85,7 @@ while True:
             warning_log_file = open(FILE_PATH_FOR_WARNING_LOG, 'a')
 
             line_string = current_time + ' Warning!!!!! Response time for hand recognition is slower than ' \
-                          + str(RESPONSE_TIME_WARINING_THRESHOLD) + 's. Response Time = ' + str(elapsed_time) + '\n'
+                          + str(RESPONSE_TIME_WARINING_THRESHOLD) + 's. Response Time = ' + str(elapsed_time) + hand_rest_api_address[index] + '\n'
 
             print line_string
             warning_log_file.write(line_string)
@@ -100,7 +100,7 @@ while True:
             print "Invalid response data"
             warning_log_file = open(FILE_PATH_FOR_WARNING_LOG, 'a')
 
-            line_string = current_time + ' Warning!!!!! Invalid response detected from the hand response' + '\n'
+            line_string = current_time + ' Warning!!!!! Invalid response detected from the hand response' + hand_rest_api_address[index] + '\n'
 
             print line_string
             warning_log_file.write(line_string)
@@ -150,7 +150,7 @@ while True:
             warning_log_file = open(FILE_PATH_FOR_WARNING_LOG, 'a')
 
             line_string = current_time + ' Warning!!!!! Response time for face recognition is slower than ' \
-                          + str(RESPONSE_TIME_WARINING_THRESHOLD) + 's. Response Time = ' + str(elapsed_time) + '\n'
+                          + str(RESPONSE_TIME_WARINING_THRESHOLD) + 's. Response Time = ' + str(elapsed_time) + face_rest_api_address[index] + '\n'
 
             print line_string
             print '!!!!===================================================================!!!!'
@@ -167,7 +167,7 @@ while True:
             print "Invalid response data"
             warning_log_file = open(FILE_PATH_FOR_WARNING_LOG, 'a')
 
-            line_string = current_time + ' Warning!!!!! Invalid response detected from the face response' + '\n'
+            line_string = current_time + ' Warning!!!!! Invalid response detected from the face response' + face_rest_api_address[index] + '\n'
             print '!!!!===================================================================!!!!'
             print line_string
             warning_log_file.write(line_string)

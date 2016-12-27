@@ -31,4 +31,5 @@ else
   python local_feed_forward_test.py /home/nhnent/H1/users/rklee/Data/server_data/server_hand_data/$date/
   cd /home/nhnent/H2/users/mskang/web_result/server_data/
   python update_file_list.py
+  python update_guest_file_list.py
 fi

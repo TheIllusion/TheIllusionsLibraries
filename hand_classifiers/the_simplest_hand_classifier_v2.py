@@ -236,11 +236,15 @@ conv6 = tf.nn.relu(tf.nn.conv2d(conv5, CONV_W6_HAND, strides=[1, 1, 1, 1], paddi
 # 32->16
 conv6_pool = max_pool_2x2(conv6)
 
-FC_IN = tf.reshape(conv6_pool, [-1, 16 * 16 * 128])
-FC1 = tf.nn.relu(tf.matmul(FC_IN, FC_W1) + BIAS_FC_W1)
-FC2 = tf.nn.relu(tf.matmul(FC1, FC_W2) + BIAS_FC_W2)
-
 keep_prob = tf.placeholder(tf.float32) #dropout (keep probability)
+
+FC_IN = tf.reshape(conv6_pool, [-1, 16 * 16 * 128])
+FC_IN_DROPOUT = tf.nn.dropout(FC_IN, keep_prob)
+
+FC1 = tf.nn.relu(tf.matmul(FC_IN_DROPOUT, FC_W1) + BIAS_FC_W1)
+FC1_DROPOUT = tf.nn.dropout(FC1, keep_prob)
+
+FC2 = tf.nn.relu(tf.matmul(FC1, FC_W2) + BIAS_FC_W2)
 FC2_DROPOUT = tf.nn.dropout(FC2, keep_prob)
 
 # hypothesis_hand = tf.nn.softmax(tf.matmul(FC2, FC_W3) + BIAS_FC_W3)

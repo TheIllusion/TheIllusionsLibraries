@@ -116,7 +116,7 @@ def image_buffer_loader():
             end_index = match.end()
             filename = filename_[0:end_index]
         
-	if end_index == 0:
+        if end_index == 0:
             lineIdx = lineIdx + 1
             if lineIdx >= max_training_index:
                 lineIdx = 0

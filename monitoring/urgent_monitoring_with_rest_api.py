@@ -20,15 +20,15 @@ face_rest_api_address = []
 
 hand_rest_api_address.append('http://10.161.31.22:8979/hand')
 #hand_rest_api_address.append('http://10.161.31.23:8979/hand')
-#hand_rest_api_address.append('http://10.161.31.24:8979/hand')
-hand_rest_api_address.append('http://10.161.31.25:8979/hand')
+hand_rest_api_address.append('http://10.161.31.24:8979/hand')
+#hand_rest_api_address.append('http://10.161.31.25:8979/hand')
 hand_rest_api_address.append('http://10.161.31.26:8979/hand')
 hand_rest_api_address.append('http://10.161.31.27:8979/hand')
 
 face_rest_api_address.append('http://10.161.31.22:8989/face')
 #face_rest_api_address.append('http://10.161.31.23:8989/face')
-#face_rest_api_address.append('http://10.161.31.24:8989/face')
-face_rest_api_address.append('http://10.161.31.25:8989/face')
+face_rest_api_address.append('http://10.161.31.24:8989/face')
+#face_rest_api_address.append('http://10.161.31.25:8989/face')
 face_rest_api_address.append('http://10.161.31.26:8989/face')
 face_rest_api_address.append('http://10.161.31.27:8989/face')
 

@@ -8,9 +8,14 @@ import random
 import os
 import glob
 
-IS_TRAINING = True
+IS_TRAINING = False 
 
-TRAINED_MODEL_NAME = 'the_simplest_hand_classifier_v2_16000.ckpt'
+#TRAINED_MODEL_NAME = 'the_simplest_hand_classifier_v2_100000.ckpt'
+TRAINED_MODEL_NAME = 'the_simplest_hand_classifier_v2_small_regular_100000.ckpt'
+#TRAINED_MODEL_NAME = 'the_simplest_hand_classifier_v2_small_learning_rate_100000.ckpt'
+#TRAINED_MODEL_NAME = 'the_simplest_hand_classifier_v2_no_dropout_100000.ckpt'
+#TRAINED_MODEL_NAME = 'the_simplest_hand_classifier_v2_dropout_0.5_100000.ckpt'
+#TRAINED_MODEL_NAME = 'the_simplest_hand_classifier_v2_large_regular_100000.ckpt'
 
 # Macbook Pro
 #ROOT_DIRECTORY = '/Users/Illusion/Documents/Data/palm_data/hand_classifier/'
@@ -33,7 +38,7 @@ ROOT_DIRECTORY = '/data/users/rklee/hand_classifier/'
 # SVC003
 TRAINING_LIST_FILE_NAME = ROOT_DIRECTORY + 'shuffle_training_list.txt'
 SOURCE_IMAGE_DIRECTORY = ROOT_DIRECTORY + 'training_data/'
-TEST_IMAGE_DIRECTORY = ROOT_DIRECTORY + 'test_set/'
+TEST_IMAGE_DIRECTORY = ROOT_DIRECTORY + 'test_set_2/'
 
 PSEUDO_MEAN_PIXEL_VALUE = 100
 
@@ -371,7 +376,7 @@ with tf.Session(config=config) as sess:
             x_test_data = x_test_data - PSEUDO_MEAN_PIXEL_VALUE
             # print x_test_data
             # print input_image
-            prediction = sess.run([network_output], feed_dict={X: x_test_data})
+            prediction = sess.run([network_output], feed_dict={X: x_test_data, keep_prob: 1.0})
 
             print 'test_idx = ', str(idx)
             print 'input filename: ', file_name
@@ -410,7 +415,7 @@ with tf.Session(config=config) as sess:
             x_test_data[0] = input_image
             x_test_data = x_test_data - PSEUDO_MEAN_PIXEL_VALUE
             # print x_test_data
-            prediction = sess.run([network_output], feed_dict={X: x_test_data})
+            prediction = sess.run([network_output], feed_dict={X: x_test_data, keep_prob: 1.0})
 
             print 'test_idx = ', str(idx)
             print 'input filename: ', file_name

@@ -5,14 +5,14 @@ import os
 import glob
 import cv2
 
-img_path = '/Users/Illusion/Documents/Data/palm_data/NEW_DATA_2017/1st_processed/sm/refined'
+img_path = '/Users/Illusion/Documents/Data/palm_data/NEW_DATA_2017/2nd_processed/sm'
 
 os.chdir(img_path)
 
 jpg_files = glob.glob( '*.jpg' )
 
 MINIMUM_THRESHOLD_FOR_PIXEL = 150
-MINIMUM_WHITE_PIXELS_COUNT = 100
+MINIMUM_WHITE_PIXELS_COUNT = 50
 
 for jpg in jpg_files:
     #Load image as grayscale
@@ -28,4 +28,8 @@ for jpg in jpg_files:
         print 'White pixels = ', np.sum(high_values_indices)
         print 'Weired file = ', jpg
         print '---------------------------------------------'
+
+    print 'White pixels = ', np.sum(high_values_indices)
+    print 'Weired file = ', jpg
+    print '---------------------------------------------'
 

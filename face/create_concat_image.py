@@ -8,7 +8,7 @@ import glob
 
 INPUT_DIRECTORY = "/home/nhnent/H1/users/rklee/Data/face_dcgan/canny/"
 ANSWER_DIRECTORY = "/home/nhnent/H1/users/rklee/Data/face_dcgan/extracted_face/"
-
+OUTPUT_DIRECTORY = "/home/nhnent/H1/users/rklee/Data/face_dcgan/trn_data/"
 if __name__ == "__main__":
 
     os.chdir(ANSWER_DIRECTORY)
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
         concated_img = np.hstack((canny_img, answer_img))
 
-        cv2.imwrite('trn_' + jpg_file, concated_img)
+        cv2.imwrite(OUTPUT_DIRECTORY + 'trn_' + jpg_file, concated_img)
 
 
 

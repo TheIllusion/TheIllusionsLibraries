@@ -7,14 +7,14 @@ import cv2
 
 #img_path = '/Users/Illusion/Documents/Data/palm_data/NEW_DATA_2017/sm/extracted_result'
 #img_path = '/Users/Illusion/Documents/Data/palm_data/NEW_DATA_2017/gj/extracted_result'
-img_path = '/Users/Illusion/Documents/Data/palm_data/NEW_DATA_2017/jn/extracted_result'
+img_path = '/Users/Illusion/Documents/Data/palm_data/NEW_DATA_2017/wm/extracted_result'
 
 os.chdir(img_path)
 
 jpg_files = glob.glob( '*.jpg' )
 
 MINIMUM_THRESHOLD_FOR_PIXEL = 150
-MINIMUM_WHITE_PIXELS_COUNT = 300
+MINIMUM_WHITE_PIXELS_COUNT = 100
 
 for jpg in jpg_files:
     #Load image as grayscale

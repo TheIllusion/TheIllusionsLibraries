@@ -3,6 +3,7 @@ import os
 import urllib2
 import datetime
 import re
+import sys
 
 REQUEST_SENDING_INTERVAL = 0.1
 REQUEST_TIMEOUT_THRESHOLD_SEC = 30
@@ -19,12 +20,12 @@ hand_rest_api_address = []
 face_rest_api_address = []
 
 hand_rest_api_address.append('http://10.161.31.22:8979/hand')
-hand_rest_api_address.append('http://10.161.31.24:8979/hand')
+#hand_rest_api_address.append('http://10.161.31.24:8979/hand')
 hand_rest_api_address.append('http://10.161.31.26:8979/hand')
 hand_rest_api_address.append('http://10.161.31.27:8979/hand')
 
 face_rest_api_address.append('http://10.161.31.22:8989/face')
-face_rest_api_address.append('http://10.161.31.24:8989/face')
+#face_rest_api_address.append('http://10.161.31.24:8989/face')
 face_rest_api_address.append('http://10.161.31.26:8989/face')
 face_rest_api_address.append('http://10.161.31.27:8989/face')
 
@@ -104,6 +105,7 @@ while True:
 
             print line_string
             warning_log_file.write(line_string)
+
             warning_log_file.close()
 
             # print res
@@ -116,6 +118,11 @@ while True:
 
         print line_string
         warning_log_file.write(line_string)
+
+        exception_string = "Unexpected error:" + str(sys.exc_info()[0]) + '\n'
+        print exception_string
+        warning_log_file.write(exception_string)
+
         warning_log_file.close()
 
     time.sleep(REQUEST_SENDING_INTERVAL)
@@ -185,6 +192,11 @@ while True:
         print '!!!!===================================================================!!!!'
 
         warning_log_file.write(line_string)
+
+        exception_string = "Unexpected error:" + str(sys.exc_info()[0]) + '\n'
+        print exception_string
+        warning_log_file.write(exception_string)
+
         warning_log_file.close()
 
     time.sleep(REQUEST_SENDING_INTERVAL)

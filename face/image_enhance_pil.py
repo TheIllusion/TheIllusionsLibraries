@@ -14,7 +14,7 @@ for filename in image_files:
 
     enhancer_sharpness = ImageEnhance.Sharpness(image)
 
-    enhancer_contrast = ImageEnhance.Contrast(enhancer_sharpness.enhance(2))
+    enhancer_contrast = ImageEnhance.Contrast(enhancer_sharpness.enhance(1.5))
 
     enhancer_color = ImageEnhance.Color(enhancer_contrast.enhance(2))
 

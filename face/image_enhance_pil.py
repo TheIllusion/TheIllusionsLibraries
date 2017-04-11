@@ -12,9 +12,11 @@ for filename in image_files:
 
     image = Image.open(filename)
 
-    enhancer_sharpness = ImageEnhance.Sharpness(image)
+    #enhancer_sharpness = ImageEnhance.Sharpness(image)
 
-    enhancer_contrast = ImageEnhance.Contrast(enhancer_sharpness.enhance(1.5))
+    #enhancer_contrast = ImageEnhance.Contrast(enhancer_sharpness.enhance(1.1))
+
+    enhancer_contrast = ImageEnhance.Contrast(image)
 
     enhancer_color = ImageEnhance.Color(enhancer_contrast.enhance(2))
 

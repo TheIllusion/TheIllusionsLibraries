@@ -6,9 +6,9 @@ import os
 import glob
 #import copy
 
-INPUT_DIRECTORY = "/Users/Illusion/Documents/Data/palm_data/NEW_DATA_2017/caricature/lab_dlib_extracted_face/extracted_face/"
-ANSWER_DIRECTORY = "/Users/Illusion/Documents/Data/palm_data/NEW_DATA_2017/caricature/lab_dlib_extracted_face/drawings/"
-OUTPUT_DIRECTORY = "/Users/Illusion/Documents/Data/palm_data/NEW_DATA_2017/caricature/lab_dlib_extracted_face/val_data/"
+INPUT_DIRECTORY = "/Users/Illusion/Pictures/Hair_Creation/"
+ANSWER_DIRECTORY = "/Users/Illusion/Pictures/Hair_Creation/"
+OUTPUT_DIRECTORY = "/Users/Illusion/Pictures/Hair_Creation/concatenated/"
 
 if __name__ == "__main__":
 

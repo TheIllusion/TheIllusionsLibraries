@@ -35,8 +35,12 @@ class SimpleGenerator:
         self.TRANS_CONV_3 = tf.nn.relu(tf.nn.conv2d_transpose(self.TRANS_CONV_2, self.TRANSPOSED_CONV_W3,
                                                               output_shape=[BATCH_SIZE, 80, 80, 1]) + self.BIAS_3)
 
+        self.hypothesis = tf.sigmoid(self.TRANS_CONV_3)
+
 class SimpleDiscriminator:
-    pass
+    def __init__(self):
+        # placeholder
+        self.X = tf.placeholder(tf.float32, [BATCH_SIZE, NOISE_VECTOR_WIDTH * NOISE_VECTOR_HEIGHT * NOISE_VECTOR_DEPTH])
 
 if __name__ == '__main__':
     print 'ok'

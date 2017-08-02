@@ -9,7 +9,11 @@ NOISE_VECTOR_WIDTH = 10
 NOISE_VECTOR_HEIGHT = 10
 NOISE_VECTOR_DEPTH = 16
 
-INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/face_data/20_female/"
+# Macbook Pro
+#INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/face_data/20_female/"
+
+# Macbook 12
+INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Caricature/face_refined_1/"
 
 class SimpleGenerator:
     def __init__(self):

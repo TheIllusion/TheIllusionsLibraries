@@ -54,41 +54,17 @@ PIXEL_THRESHOLD = 127
 
 def thresholding_images(gt_img, result_img):
 
-    # thresholding gt_img (first color elements)
-    lower_valued_color_elements = gt_img[..., 0] < PIXEL_THRESHOLD
+    # thresholding gt_img
+    lower_valued_color_elements = gt_img < PIXEL_THRESHOLD
     higher_valued_color_elements = np.invert(lower_valued_color_elements)
-    gt_img[lower_valued_color_elements, 0] = 0
-    gt_img[higher_valued_color_elements, 0] = 1
+    gt_img[lower_valued_color_elements] = 0
+    gt_img[higher_valued_color_elements] = 1
 
-    # thresholding gt_img (second color elements)
-    lower_valued_color_elements = gt_img[..., 1] < PIXEL_THRESHOLD
+    # thresholding result_img
+    lower_valued_color_elements = result_img < PIXEL_THRESHOLD
     higher_valued_color_elements = np.invert(lower_valued_color_elements)
-    gt_img[lower_valued_color_elements, 1] = 0
-    gt_img[higher_valued_color_elements, 1] = 1
-
-    # thresholding gt_img (third color elements)
-    lower_valued_color_elements = gt_img[..., 2] < PIXEL_THRESHOLD
-    higher_valued_color_elements = np.invert(lower_valued_color_elements)
-    gt_img[lower_valued_color_elements, 2] = 0
-    gt_img[higher_valued_color_elements, 2] = 1
-
-    # thresholding result_img (first color elements)
-    lower_valued_color_elements = result_img[..., 0] < PIXEL_THRESHOLD
-    higher_valued_color_elements = np.invert(lower_valued_color_elements)
-    result_img[lower_valued_color_elements, 0] = 0
-    result_img[higher_valued_color_elements, 0] = 1
-
-    # thresholding result_img (second color elements)
-    lower_valued_color_elements = result_img[..., 1] < PIXEL_THRESHOLD
-    higher_valued_color_elements = np.invert(lower_valued_color_elements)
-    result_img[lower_valued_color_elements, 1] = 0
-    result_img[higher_valued_color_elements, 1] = 1
-
-    # thresholding result_img (third color elements)
-    lower_valued_color_elements = result_img[..., 2] < PIXEL_THRESHOLD
-    higher_valued_color_elements = np.invert(lower_valued_color_elements)
-    result_img[lower_valued_color_elements, 2] = 0
-    result_img[higher_valued_color_elements, 2] = 1
+    result_img[lower_valued_color_elements] = 0
+    result_img[higher_valued_color_elements] = 1
 
     return gt_img, result_img
 

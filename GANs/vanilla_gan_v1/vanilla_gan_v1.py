@@ -1,19 +1,176 @@
 import tensorflow as tf
 import numpy as np
-import os
+import os, re
+import time
 import glob
 import random
+import cv2
+import threading
+
+IS_TRAINING = True
 
 BATCH_SIZE = 30
 NOISE_VECTOR_WIDTH = 10
 NOISE_VECTOR_HEIGHT = 10
 NOISE_VECTOR_DEPTH = 16
 
+INPUT_IMAGE_WIDTH = 80
+INPUT_IMAGE_HEIGHT = 80
+INPUT_IMAGE_DEPTH = 3
+
+PSEUDO_MEAN_PIXEL_VALUE = 100
+
 # Macbook Pro
 #INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/face_data/20_female/"
 
 # Macbook 12
-INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Caricature/face_refined_1/"
+#INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Caricature/face_refined_1/"
+
+# i7-2600k (Ubuntu)
+INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/KCeleb-v1/kim.yuna/"
+
+##############################################################################################
+# Image Buffer Management
+
+# image buffers
+image_buffer_size = 200
+input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
+#answer_buff = np.empty(shape=(image_buffer_size))
+
+buff_status = []
+for i in range(image_buffer_size):
+    buff_status.append('empty')
+
+current_buff_index = 0
+lineIdx = 0
+
+# load the filelist
+os.chdir(INPUT_IMAGE_DIRECTORY_PATH)
+jpg_files = glob.glob('*.jpg')
+random.shuffle(jpg_files)
+
+#training_list_file = open(TRAINING_LIST_FILE_NAME)
+#training_list = training_list_file.readlines()
+max_training_index = len(jpg_files)
+
+exit_notification = False
+
+def image_buffer_loader():
+    global current_buff_index
+    global lineIdx
+
+    print 'image_buffer_loader'
+
+    while True:
+        filename_ = jpg_files[lineIdx]
+
+        end_index = 0
+
+        match = re.search(".jpg", filename_)
+        if match:
+            end_index = match.end()
+            filename = filename_[0:end_index]
+
+        match = re.search(".JPG", filename_)
+        if match:
+            end_index = match.end()
+            filename = filename_[0:end_index]
+
+        match = re.search(".jpeg", filename_)
+        if match:
+            end_index = match.end()
+            filename = filename_[0:end_index]
+
+        match = re.search(".JPEG", filename_)
+        if match:
+            end_index = match.end()
+            filename = filename_[0:end_index]
+
+        match = re.search(".png", filename_)
+        if match:
+            end_index = match.end()
+            filename = filename_[0:end_index]
+
+        match = re.search(".PNG", filename_)
+
+        if match:
+            end_index = match.end()
+            filename = filename_[0:end_index]
+
+        if end_index == 0:
+            lineIdx = lineIdx + 1
+            if lineIdx >= max_training_index:
+                lineIdx = 0
+
+            print 'skip this jpg file. continue.'
+            continue
+
+        training_file_name = filename
+        # answer_file_name = answer_image_directory + filename
+
+        while buff_status[current_buff_index] == 'filled':
+            if exit_notification == True:
+                break
+
+            # print 'sleep start'
+            time.sleep(1)
+            # print 'sleep end'
+            if buff_status[current_buff_index] == 'empty':
+                break
+
+        if exit_notification == True:
+            break
+
+        input_img = cv2.imread(training_file_name, cv2.IMREAD_COLOR)
+        # answer_img = cv2.imread(answer_file_name, cv2.IMREAD_GRAYSCALE)
+
+        if (type(input_img) is not np.ndarray):
+            lineIdx = lineIdx + 1
+            if lineIdx >= max_training_index:
+                lineIdx = 0
+
+            print 'skip this jpg file. continue.'
+            continue
+
+        input_buff[current_buff_index] = cv2.resize(input_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT), interpolation=cv2.INTER_LINEAR)
+        # classifying_string = filename_[end_index + 1]
+
+        '''
+        match = re.search("right_hand", filename_)
+        if match:
+            classifying_string = "0"
+        else:
+            classifying_string = "1"
+
+        answer_buff[current_buff_index] = float(classifying_string)
+        '''
+
+        buff_status[current_buff_index] = 'filled'
+
+        # pseudo_mean_value = np.mean(input_buff[current_buff_index])
+        input_buff[current_buff_index] = input_buff[current_buff_index] - PSEUDO_MEAN_PIXEL_VALUE
+
+        if lineIdx % 10 == 0:
+            # print 'mean = ' + str(pseudo_mean_value)
+            print 'training_jpg_line_idx=', str(lineIdx)
+            # print 'mean_y) = ' + str(y_mean_value)
+
+        lineIdx = lineIdx + 1
+        if lineIdx >= max_training_index:
+            lineIdx = 0
+
+        # print 'current_buff_index=', current_buff_index
+
+        current_buff_index = current_buff_index + 1
+        if current_buff_index >= image_buffer_size:
+            current_buff_index = 0
+
+
+# Launch image buffer loader
+if IS_TRAINING:
+    timer = threading.Timer(1, image_buffer_loader)
+    timer.start()
+##############################################################################################
 
 class SimpleGenerator:
     def __init__(self):
@@ -56,10 +213,6 @@ class SimpleGenerator:
                                                               padding="SAME") + self.BIAS_3)
 
         self.hypothesis = tf.sigmoid(self.TRANS_CONV_3)
-
-INPUT_IMAGE_WIDTH = 80
-INPUT_IMAGE_HEIGHT = 80
-INPUT_IMAGE_DEPTH = 3
 
 class SimpleDiscriminator:
     def __init__(self):
@@ -104,11 +257,6 @@ if __name__ == '__main__':
 
     # create a discriminator
     discriminator = SimpleDiscriminator()
-
-    # load the filelist
-    os.chdir(INPUT_IMAGE_DIRECTORY_PATH)
-    jpg_files = glob.glob('*.jpg')
-    random.shuffle(jpg_files)
 
     print 'ok'
 

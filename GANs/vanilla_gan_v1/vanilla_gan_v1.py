@@ -173,7 +173,9 @@ if IS_TRAINING:
 ##############################################################################################
 
 class SimpleGenerator:
-    def __init__(self):
+    def __init__(self, sess):
+
+        self.sess = sess
         #self.z = np.random.normal(size=1000)
 
         # placeholder
@@ -214,8 +216,25 @@ class SimpleGenerator:
 
         self.hypothesis = tf.sigmoid(self.TRANS_CONV_3)
 
+    def generate_fake_imgs(self):
+        # Random noise vector
+
+        noise_z = np.random.uniform(-1, 1, [BATCH_SIZE, NOISE_VECTOR_WIDTH, NOISE_VECTOR_HEIGHT, NOISE_VECTOR_DEPTH]).astype(np.float32)
+
+        network_output = self.sess.run(self.hypothesis, feed_dict={self.X: noise_z})
+
+        # network_output = tf.to_float(self.hypothesis)
+
+        # scale to 0~255
+        fake_imgs = network_output * 255
+
+        return fake_imgs
+
 class SimpleDiscriminator:
-    def __init__(self):
+    def __init__(self, sess):
+
+        self.sess = sess
+
         # placeholder
         self.X = tf.placeholder(tf.float32, [BATCH_SIZE, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, INPUT_IMAGE_DEPTH])
 
@@ -252,11 +271,19 @@ class SimpleDiscriminator:
 
 if __name__ == '__main__':
 
-    # create a generator
-    generator = SimpleGenerator()
+    # Create a Tensorflow session
+    with tf.Session() as sess:
+        # create a generator
+        generator = SimpleGenerator(sess)
 
-    # create a discriminator
-    discriminator = SimpleDiscriminator()
+        # create a discriminator
+        discriminator = SimpleDiscriminator(sess)
+
+        #
+        init = tf.initialize_all_variables()
+        sess.run(init)
+
+        fake_imgs = generator.generate_fake_imgs()
 
     print 'ok'
 

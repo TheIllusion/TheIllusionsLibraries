@@ -6,8 +6,13 @@ import cv2
 import numpy as np
 
 # paths (filenames in GT_IMAGE_DIRECTORY and FEEDFORWARD_IMAGE_DIRECTORY must be the same)
-GT_IMAGE_DIRECTORY = '/Users/Illusion/Temp/seg_test/seg_gt/'
-FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Temp/seg_test/seg_modified/'
+#GT_IMAGE_DIRECTORY = '/Users/Illusion/Temp/seg_test/seg_gt/'
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Temp/seg_test/seg_modified/'
+
+# Custom Network (250x250)
+GT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_test_set/resized_250_250_for_custom_nn/gt_image_without_cloth/'
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/custom_net_v1/forward_result/'
+FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/custom_net_v1_without_augmentation/results/'
 
 # Dictionary of answer colors in BGR. Values must be thresholded to 0 or 1.
 
@@ -23,7 +28,7 @@ answer_classes['face_and_skin'] = [0, 1, 0]
 answer_classes['background'] = [1, 0, 0]
 
 # clothe (pink)
-answer_classes['clothe'] = [1, 0, 1]
+#answer_classes['clothe'] = [1, 0, 1]
 
 def load_file_names():
     try:
@@ -87,6 +92,8 @@ def calculate_accuracy(gt_img, result_img):
 
     return accuracy
 
+iou_for_answer_classes = {}
+
 def calculate_iou(gt_img, result_img):
 
     result_area = np.empty([gt_img.shape[0], gt_img.shape[1]], bool)
@@ -132,6 +139,14 @@ def calculate_iou(gt_img, result_img):
         else:
             intersection_over_union = 100
 
+        #saving the sum of iou for each class
+        if not (each_class_name in iou_for_answer_classes.keys()):
+            iou_for_answer_classes[each_class_name] = intersection_over_union
+        else:
+            iou_for_answer_classes[each_class_name] = iou_for_answer_classes[each_class_name] + intersection_over_union
+
+        iou_for_answer_classes[each_class_name]
+
         print 'intersection over union = ', str(intersection_over_union)
         iou_sum = iou_sum + intersection_over_union
 
@@ -144,7 +159,11 @@ if __name__ == "__main__":
     iou_total = 0
     accuracy_total = 0
 
+    check_loop_cnt = 0
+
     for filename in filenames:
+
+        print 'Filename: ', filename
 
         # load the pair of ground truth and feedforward result image
         gt_img, result_img = load_pair_images(filename)
@@ -165,10 +184,17 @@ if __name__ == "__main__":
         accuracy_total = accuracy_total + accuracy
         iou_total = iou_total + iou
 
-        print 'Filename: ', filename
+        check_loop_cnt = check_loop_cnt + 1
+
         print 'Mean IoU: ', iou
         print 'Pixel Accuracy: ', accuracy
         print '#################################################'
+
+    print 'Number of files: ', str(check_loop_cnt)
+
+    # iterate through classes (eg. face, hair, background ... )
+    for each_class_name in iou_for_answer_classes.keys():
+        print 'Iou[' + each_class_name + ']: ', iou_for_answer_classes[each_class_name] / len(filenames)
 
     print 'Overall Mean IoU = ', float(iou_total) / len(filenames)
     print 'Overall Pixel Accuracy = ', float(accuracy_total) / len(filenames)

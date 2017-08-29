@@ -11,11 +11,12 @@ import random
 TRAINING_IMAGE_DIR = '/Users/Illusion/Documents/Data/background_augmentation/input_imgs/'
 TRAINING_IMAGE_SEMANTIC_MAPS_DIR = '/Users/Illusion/Documents/Data/background_augmentation/semantic_maps/'
 
-BACKGROUND_IMAGE_DIR = '/Users/Illusion/Documents/Data/background_augmentation/background_imgs/social_events/'
+BACKGROUND_IMAGE_DIR = '/Users/Illusion/Documents/Data/background_augmentation/background_imgs/refined/'
 RESULT_AUGMENTED_IMAGE_DIR = '/Users/Illusion/Documents/Data/background_augmentation/result_imgs/'
+RESULT_SEMANTIC_MAPS_DIR = '/Users/Illusion/Documents/Data/background_augmentation/result_semantic_maps/'
 
 # Number of desired images per input image (background image will be chosen randomly from 'BACKGROUND_IMAGE_DIR')
-NUMBER_OF_AUGMENTED_IMAGES_PER_INPUT = 5
+NUMBER_OF_AUGMENTED_IMAGES_PER_INPUT = 50
 
 # Dictionary for background colors in BGR. Values must be thresholded to 0 or 1.
 background_classes = {}
@@ -55,7 +56,9 @@ def load_pair_images(filename):
 
     return sem_map, result_img
 
-def thresholding_images(sem_map):
+def thresholding_images(sem_map_original):
+
+    sem_map = sem_map_original.copy()
 
     # thresholding sem_map
     lower_valued_color_elements = sem_map < PIXEL_THRESHOLD
@@ -67,7 +70,7 @@ def thresholding_images(sem_map):
 
 ##########################################################################################
 # load the filenames
-input_img_filenames = load_file_names(TRAINING_IMAGE_DIR)
+input_img_filenames = load_file_names(TRAINING_IMAGE_SEMANTIC_MAPS_DIR)
 background_img_filenames = load_file_names(BACKGROUND_IMAGE_DIR)
 ##########################################################################################
 
@@ -79,7 +82,7 @@ def get_a_random_img_from_background_imgs():
 
     filename = background_img_filenames[random_pick]
 
-    print 'background img filename: ', filename
+    #print 'background img filename: ', filename
 
     background_img = cv2.imread(BACKGROUND_IMAGE_DIR + filename, cv2.IMREAD_COLOR)
     if type(background_img) is not np.ndarray:
@@ -88,12 +91,15 @@ def get_a_random_img_from_background_imgs():
 
     return background_img
 
-def augment_background_images(sem_map, input_img, input_img_filename):
+def augment_background_images(sem_map, sem_map_original, input_img, input_img_filename):
 
     sem_background_area = np.full((sem_map.shape[0], sem_map.shape[1]), fill_value=False, dtype=bool)
 
     # save the original image
     cv2.imwrite(RESULT_AUGMENTED_IMAGE_DIR + input_img_filename, input_img)
+
+    # save the semantic map for convenience
+    cv2.imwrite(RESULT_SEMANTIC_MAPS_DIR + input_img_filename, sem_map_original)
 
     for each_class_name in background_classes.keys():
 
@@ -117,7 +123,10 @@ def augment_background_images(sem_map, input_img, input_img_filename):
             input_img[sem_background_area] = background_img[sem_background_area]
 
             # save the augmented image
-            cv2.imwrite(RESULT_AUGMENTED_IMAGE_DIR + input_img_filename[:-5] + '_augmented_' + str(i) + '.jpg', input_img)
+            cv2.imwrite(RESULT_AUGMENTED_IMAGE_DIR + input_img_filename[:-4] + '_augmented_' + str(i) + '.jpg', input_img)
+
+            # save the semantic map for convenience
+            cv2.imwrite(RESULT_SEMANTIC_MAPS_DIR + input_img_filename[:-4] + '_augmented_' + str(i) + '.jpg', sem_map_original)
 
 if __name__ == "__main__":
 
@@ -125,15 +134,15 @@ if __name__ == "__main__":
 
         print 'filename: ', input_img_filename
 
-        sem_map, input_img = load_pair_images(input_img_filename)
+        sem_map_original, input_img = load_pair_images(input_img_filename)
 
-        if (type(sem_map) is not np.ndarray) or (type(input_img) is not np.ndarray):
+        if (type(sem_map_original) is not np.ndarray) or (type(input_img) is not np.ndarray):
             print 'Image loading failed'
             break
 
         # thresholding pixel values to 0 or 1
-        sem_map = thresholding_images(sem_map)
+        sem_map = thresholding_images(sem_map_original)
 
-        augment_background_images(sem_map, input_img, input_img_filename)
+        augment_background_images(sem_map, sem_map_original, input_img, input_img_filename)
 
     print 'process finished'

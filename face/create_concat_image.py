@@ -6,9 +6,9 @@ import os
 import glob
 #import copy
 
-INPUT_DIRECTORY = "/Users/Illusion/Pictures/Hair_Creation/"
-ANSWER_DIRECTORY = "/Users/Illusion/Pictures/Hair_Creation/"
-OUTPUT_DIRECTORY = "/Users/Illusion/Pictures/Hair_Creation/concatenated/"
+INPUT_DIRECTORY = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/original_all/"
+ANSWER_DIRECTORY = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/seg_result_until_20170823/"
+OUTPUT_DIRECTORY = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/concatenated/"
 
 if __name__ == "__main__":
 
@@ -16,6 +16,8 @@ if __name__ == "__main__":
     jpg_files = glob.glob( '*.jpg' )
 
     for jpg_file in jpg_files:
+
+        print 'filename: ', jpg_file
 
         canny_img = cv2.imread( INPUT_DIRECTORY + jpg_file, cv2.IMREAD_COLOR)
         if (type(canny_img) is not np.ndarray):

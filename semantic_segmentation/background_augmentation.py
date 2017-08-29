@@ -119,8 +119,6 @@ def augment_background_images(sem_map, input_img, input_img_filename):
             # save the augmented image
             cv2.imwrite(RESULT_AUGMENTED_IMAGE_DIR + input_img_filename[:-5] + '_augmented_' + str(i) + '.jpg', input_img)
 
-        print 'ok'
-
 if __name__ == "__main__":
 
     for input_img_filename in input_img_filenames:

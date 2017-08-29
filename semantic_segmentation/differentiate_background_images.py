@@ -5,7 +5,7 @@ import dlib
 from skimage import io
 
 # Directory settings
-BACKGROUND_IMAGE_DIR = '/Users/Illusion/Documents/Data/background_augmentation/background_imgs/social_events/'
+BACKGROUND_IMAGE_DIR = '/Users/Illusion/Documents/Data/background_augmentation/background_imgs/travel/'
 RESULT_AUGMENTED_IMAGE_DIR = '/Users/Illusion/Documents/Data/background_augmentation/background_imgs/refined/'
 
 detector = dlib.get_frontal_face_detector()
@@ -56,4 +56,4 @@ if __name__ == '__main__':
 
         idx = idx + 1
         if idx % 100 == 0:
-            print 'indxt = ', str(idx)
+            print 'index = ', str(idx)

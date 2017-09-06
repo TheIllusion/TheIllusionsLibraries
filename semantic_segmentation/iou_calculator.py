@@ -10,9 +10,18 @@ import numpy as np
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Temp/seg_test/seg_modified/'
 
 # Custom Network (250x250)
+'''
 GT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_test_set/resized_250_250_for_custom_nn/gt_image_without_cloth/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/custom_net_v1/forward_result/'
 FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/custom_net_v1_without_augmentation/results/'
+'''
+
+# unet pix2pix (256x256)
+GT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/gt_image_without_cloth/'
+#with gan
+FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/hair_semantic_segmentation_pix2pix/'
+#withoug gan
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/hair_semantic_segmentation_pix2pix_without_GAN/'
 
 # Dictionary of answer colors in BGR. Values must be thresholded to 0 or 1.
 
@@ -29,6 +38,10 @@ answer_classes['background'] = [1, 0, 0]
 
 # clothe (pink)
 #answer_classes['clothe'] = [1, 0, 1]
+
+# input size
+INPUT_GT_IMAGE_SIZE_WIDTH = 256
+INPUT_GT_IMAGE_SIZE_HEIGHT = 256
 
 def load_file_names():
     try:
@@ -172,6 +185,10 @@ if __name__ == "__main__":
             print filename + ' load failed!'
             break
 
+        if (gt_img.shape[1] is not INPUT_GT_IMAGE_SIZE_WIDTH) or (gt_img.shape[0] is not INPUT_GT_IMAGE_SIZE_HEIGHT):
+            gt_img = cv2.resize(gt_img,
+                       (INPUT_GT_IMAGE_SIZE_WIDTH, INPUT_GT_IMAGE_SIZE_HEIGHT), cv2.INTER_CUBIC)
+
         # thresholding pixel values to 0 or 1
         gt_img, result_img = thresholding_images(gt_img, result_img)
 
@@ -194,8 +211,8 @@ if __name__ == "__main__":
 
     # iterate through classes (eg. face, hair, background ... )
     for each_class_name in iou_for_answer_classes.keys():
-        print 'Iou[' + each_class_name + ']: ', iou_for_answer_classes[each_class_name] / len(filenames)
+        print 'IoU[' + each_class_name + ']: ', iou_for_answer_classes[each_class_name] / len(filenames)
 
-    print 'Overall Mean IoU = ', float(iou_total) / len(filenames)
-    print 'Overall Pixel Accuracy = ', float(accuracy_total) / len(filenames)
+    print 'Per Class IoU = ', float(iou_total) / len(filenames)
+    print 'Per Pixel Accuracy = ', float(accuracy_total) / len(filenames)
     print 'process finished'

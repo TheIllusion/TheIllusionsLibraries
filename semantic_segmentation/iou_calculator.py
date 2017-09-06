@@ -213,6 +213,6 @@ if __name__ == "__main__":
     for each_class_name in iou_for_answer_classes.keys():
         print 'IoU[' + each_class_name + ']: ', iou_for_answer_classes[each_class_name] / len(filenames)
 
-    print 'Per Class IoU = ', float(iou_total) / len(filenames)
-    print 'Per Pixel Accuracy = ', float(accuracy_total) / len(filenames)
+    print 'Class IoU = ', float(iou_total) / len(filenames)
+    print 'Per-Pixel Accuracy = ', float(accuracy_total) / len(filenames)
     print 'process finished'

@@ -10,18 +10,30 @@ import numpy as np
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Temp/seg_test/seg_modified/'
 
 # Custom Network (250x250)
-'''
+# without cloth
 GT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_test_set/resized_250_250_for_custom_nn/gt_image_without_cloth/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/custom_net_v1/forward_result/'
-FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/custom_net_v1_without_augmentation/results/'
-'''
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/custom_net_v1_without_augmentation/results/'
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_and_lfw_aug/'
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_aug/'
+
+# pink to blue by photoshop
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_background_and_geometry_aug_pink_to_blue/'
+FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_background_aug_pink_to_blue/'
+
+# with cloth
+#GT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_test_set/resized_250_250_for_custom_nn/gt_image/'
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_background_and_geometry_aug/'
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_background_aug/'
 
 # unet pix2pix (256x256)
+'''
 GT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/gt_image_without_cloth/'
 #with gan
 FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/hair_semantic_segmentation_pix2pix/'
 #withoug gan
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/hair_semantic_segmentation_pix2pix_without_GAN/'
+'''
 
 # Dictionary of answer colors in BGR. Values must be thresholded to 0 or 1.
 
@@ -37,11 +49,11 @@ answer_classes['face_and_skin'] = [0, 1, 0]
 answer_classes['background'] = [1, 0, 0]
 
 # clothe (pink)
-#answer_classes['clothe'] = [1, 0, 1]
+#answer_classes['cloth'] = [1, 0, 1]
 
 # input size
-INPUT_GT_IMAGE_SIZE_WIDTH = 256
-INPUT_GT_IMAGE_SIZE_HEIGHT = 256
+INPUT_GT_IMAGE_SIZE_WIDTH = 250
+INPUT_GT_IMAGE_SIZE_HEIGHT = 250
 
 def load_file_names():
     try:

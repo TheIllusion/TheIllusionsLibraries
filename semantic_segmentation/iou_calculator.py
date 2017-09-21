@@ -27,7 +27,9 @@ GT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_background_aug/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until0823_without_aug_with_pink/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until0823_aug_with_pink/'
-FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Downloads/forward_result/'
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Downloads/forward_result/'
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/hair_semantic_segmentation_pix2pix_without_GAN_until0911_lfw_aug/'
+FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/hair_semantic_segmentation_pix2pix_with_gan_until0911_lfw_aug/'
 
 # unet pix2pix (256x256)
 '''
@@ -55,8 +57,8 @@ answer_classes['background'] = [1, 0, 0]
 #answer_classes['cloth'] = [1, 0, 1]
 
 # input size
-INPUT_GT_IMAGE_SIZE_WIDTH = 250
-INPUT_GT_IMAGE_SIZE_HEIGHT = 250
+INPUT_GT_IMAGE_SIZE_WIDTH = 256
+INPUT_GT_IMAGE_SIZE_HEIGHT = 256
 
 def load_file_names():
     try:

@@ -16,7 +16,7 @@ RESULT_AUGMENTED_IMAGE_DIR = '/Users/Illusion/Documents/Data/background_augmenta
 RESULT_SEMANTIC_MAPS_DIR = '/Users/Illusion/Documents/Data/background_augmentation/result_semantic_maps/'
 
 # Number of desired images per input image (background image will be chosen randomly from 'BACKGROUND_IMAGE_DIR')
-NUMBER_OF_AUGMENTED_IMAGES_PER_INPUT = 100
+NUMBER_OF_AUGMENTED_IMAGES_PER_INPUT = 10
 
 # Dictionary for background colors in BGR. Values must be thresholded to 0 or 1.
 background_classes = {}

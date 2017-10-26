@@ -9,6 +9,8 @@ import threading
 
 IS_TRAINING = True
 
+TOTAL_ITERATION = 100
+
 BATCH_SIZE = 30
 NOISE_VECTOR_WIDTH = 10
 NOISE_VECTOR_HEIGHT = 10
@@ -24,16 +26,16 @@ PSEUDO_MEAN_PIXEL_VALUE = 100
 #INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/face_data/20_female/"
 
 # Macbook 12
-#INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Caricature/face_refined_1/"
+INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Caricature/face_refined_1/original/"
 
 # i7-2600k (Ubuntu)
-INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/KCeleb-v1/kim.yuna/"
+#INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/KCeleb-v1/kim.yuna/"
 
 ##############################################################################################
 # Image Buffer Management
 
 # image buffers
-image_buffer_size = 200
+image_buffer_size = 60
 input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
 #answer_buff = np.empty(shape=(image_buffer_size))
 
@@ -187,7 +189,7 @@ class SimpleGenerator:
                                                   initializer=tf.contrib.layers.xavier_initializer())
         self.TRANSPOSED_CONV_W2 = tf.get_variable("TRANSPOSED_CONV_W2", shape=[2, 2, 4, 8],
                                                   initializer=tf.contrib.layers.xavier_initializer())
-        self.TRANSPOSED_CONV_W3 = tf.get_variable("TRANSPOSED_CONV_W3", shape=[2, 2, 1, 4],
+        self.TRANSPOSED_CONV_W3 = tf.get_variable("TRANSPOSED_CONV_W3", shape=[2, 2, 3, 4],
                                                   initializer=tf.contrib.layers.xavier_initializer())
 
         # biases
@@ -210,7 +212,7 @@ class SimpleGenerator:
 
         self.TRANS_CONV_3 = tf.nn.relu(tf.nn.conv2d_transpose(self.TRANS_CONV_2,
                                                               self.TRANSPOSED_CONV_W3,
-                                                              output_shape=[BATCH_SIZE, 80, 80, 1],
+                                                              output_shape=[BATCH_SIZE, 80, 80, 3],
                                                               strides=[1, 2, 2, 1],
                                                               padding="SAME") + self.BIAS_3)
 
@@ -232,6 +234,8 @@ class SimpleGenerator:
 
 class SimpleDiscriminator:
     def __init__(self, sess):
+
+        self.disc_img_buff = np.empty(shape=(BATCH_SIZE, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
 
         self.sess = sess
 
@@ -269,6 +273,10 @@ class SimpleDiscriminator:
 
         self.hypothesis = tf.nn.sigmoid(tf.matmul(self.FC2, self.FC_W3) + self.BIAS_FC_W3)
 
+    def feed_images(self, img):
+        network_outputs = self.sess.run(self.hypothesis, feed_dict={self.X: img})
+        return network_outputs
+
 if __name__ == '__main__':
 
     # Create a Tensorflow session
@@ -283,7 +291,46 @@ if __name__ == '__main__':
         init = tf.initialize_all_variables()
         sess.run(init)
 
-        fake_imgs = generator.generate_fake_imgs()
+        # read real imgs
+        image_buff_read_index = 0
+
+        for iter in range(TOTAL_ITERATION):
+
+            print 'iter: ', str(iter)
+
+            for i in range(BATCH_SIZE):
+                while buff_status[image_buff_read_index] == 'empty':
+                    if exit_notification == True:
+                        break
+
+                    # print 'sleep start'
+                    time.sleep(1)
+                    # print 'sleep end'
+                    if buff_status[image_buff_read_index] == 'filled':
+                        break
+
+                if exit_notification == True:
+                    break
+
+                discriminator.disc_img_buff[i] = input_buff[image_buff_read_index]
+
+                image_buff_read_index = image_buff_read_index + 1
+                if image_buff_read_index >= image_buffer_size:
+                    image_buff_read_index = 0
+
+            fake_imgs = generator.generate_fake_imgs()
+
+            disc_outs_fake = discriminator.feed_images(fake_imgs)
+            #print 'disc_outs_fake = ', str(disc_outs_fake)
+
+            disc_outs_real = discriminator.feed_images(discriminator.disc_img_buff)
+            #print 'disc_outs_real = ', str(disc_outs_real)
+
+            # loss function
+            loss_discriminator
+            loss_generator
+
+    exit_notification = True
 
     print 'ok'
 

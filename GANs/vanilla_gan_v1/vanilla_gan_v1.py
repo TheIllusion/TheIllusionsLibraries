@@ -20,13 +20,15 @@ INPUT_IMAGE_WIDTH = 80
 INPUT_IMAGE_HEIGHT = 80
 INPUT_IMAGE_DEPTH = 3
 
-PSEUDO_MEAN_PIXEL_VALUE = 100
+# learning rate
+LEARNING_RATE = 0.00001
+initial_learning_rate = tf.Variable(LEARNING_RATE)
 
 # Macbook Pro
-#INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/face_data/20_female/"
+INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/face_data/20_female/"
 
 # Macbook 12
-INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Caricature/face_refined_1/original/"
+#INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Caricature/face_refined_1/original/"
 
 # i7-2600k (Ubuntu)
 #INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/KCeleb-v1/kim.yuna/"
@@ -37,7 +39,6 @@ INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Caricature/face_refined_
 # image buffers
 image_buffer_size = 60
 input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
-#answer_buff = np.empty(shape=(image_buffer_size))
 
 buff_status = []
 for i in range(image_buffer_size):
@@ -51,8 +52,6 @@ os.chdir(INPUT_IMAGE_DIRECTORY_PATH)
 jpg_files = glob.glob('*.jpg')
 random.shuffle(jpg_files)
 
-#training_list_file = open(TRAINING_LIST_FILE_NAME)
-#training_list = training_list_file.readlines()
 max_training_index = len(jpg_files)
 
 exit_notification = False
@@ -108,7 +107,6 @@ def image_buffer_loader():
             continue
 
         training_file_name = filename
-        # answer_file_name = answer_image_directory + filename
 
         while buff_status[current_buff_index] == 'filled':
             if exit_notification == True:
@@ -124,7 +122,6 @@ def image_buffer_loader():
             break
 
         input_img = cv2.imread(training_file_name, cv2.IMREAD_COLOR)
-        # answer_img = cv2.imread(answer_file_name, cv2.IMREAD_GRAYSCALE)
 
         if (type(input_img) is not np.ndarray):
             lineIdx = lineIdx + 1
@@ -135,38 +132,19 @@ def image_buffer_loader():
             continue
 
         input_buff[current_buff_index] = cv2.resize(input_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT), interpolation=cv2.INTER_LINEAR)
-        # classifying_string = filename_[end_index + 1]
-
-        '''
-        match = re.search("right_hand", filename_)
-        if match:
-            classifying_string = "0"
-        else:
-            classifying_string = "1"
-
-        answer_buff[current_buff_index] = float(classifying_string)
-        '''
 
         buff_status[current_buff_index] = 'filled'
 
-        # pseudo_mean_value = np.mean(input_buff[current_buff_index])
-        input_buff[current_buff_index] = input_buff[current_buff_index] - PSEUDO_MEAN_PIXEL_VALUE
-
         if lineIdx % 10 == 0:
-            # print 'mean = ' + str(pseudo_mean_value)
             print 'training_jpg_line_idx=', str(lineIdx)
-            # print 'mean_y) = ' + str(y_mean_value)
 
         lineIdx = lineIdx + 1
         if lineIdx >= max_training_index:
             lineIdx = 0
 
-        # print 'current_buff_index=', current_buff_index
-
         current_buff_index = current_buff_index + 1
         if current_buff_index >= image_buffer_size:
             current_buff_index = 0
-
 
 # Launch image buffer loader
 if IS_TRAINING:
@@ -175,14 +153,16 @@ if IS_TRAINING:
 ##############################################################################################
 
 class SimpleGenerator:
-    def __init__(self, sess):
+    def __init__(self, sess, discriminator):
+
+        # save the instance of the discriminator for future use
+        self.discriminator = discriminator
 
         self.sess = sess
         #self.z = np.random.normal(size=1000)
 
         # placeholder
         self.X = tf.placeholder(tf.float32, [BATCH_SIZE, NOISE_VECTOR_WIDTH, NOISE_VECTOR_HEIGHT, NOISE_VECTOR_DEPTH])
-        #self.X = tf.reshape(self.X, [-1, NOISE_VECTOR_WIDTH, NOISE_VECTOR_HEIGHT, NOISE_VECTOR_DEPTH])
 
         # weights
         self.TRANSPOSED_CONV_W1 = tf.get_variable("TRANSPOSED_CONV_W1", shape=[2, 2, 8, 16],
@@ -225,17 +205,29 @@ class SimpleGenerator:
 
         network_output = self.sess.run(self.hypothesis, feed_dict={self.X: noise_z})
 
-        # network_output = tf.to_float(self.hypothesis)
-
         # scale to 0~255
         fake_imgs = network_output * 255
 
+        self.fake_imgs = fake_imgs
+
         return fake_imgs
+
+    def train(self, sess):
+        optimizer_generator = tf.train.AdamOptimizer(initial_learning_rate)
+
+        disc_output = discriminator.forward_images(self.hypothesis)
+
+        # loss function
+        loss_generator = 1 - tf.log(disc_output)
+
+        train_generator = optimizer_generator.minimize(loss_generator)
+
+        sess.run(train_generator, feed_dict={self.X: self.fake_imgs})
 
 class SimpleDiscriminator:
     def __init__(self, sess):
 
-        self.disc_img_buff = np.empty(shape=(BATCH_SIZE, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
+        self.real_img_buff = np.empty(shape=(BATCH_SIZE, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
 
         self.sess = sess
 
@@ -273,19 +265,38 @@ class SimpleDiscriminator:
 
         self.hypothesis = tf.nn.sigmoid(tf.matmul(self.FC2, self.FC_W3) + self.BIAS_FC_W3)
 
-    def feed_images(self, img):
-        network_outputs = self.sess.run(self.hypothesis, feed_dict={self.X: img})
-        return network_outputs
+    def feed_images(self, fake_imgs):
+        # real images are already fed
+        self.fake_imgs = fake_imgs
+
+    def forward_images(self, imgs):
+        # feedforward input images
+        network_output = sess.run(self.hypothesis, feed_dict={self.X: imgs})
+        return network_output
+
+    def train(self, sess):
+
+        # loss functions
+        loss_real = 1 - tf.log(self.hypothesis)
+        loss_fake = tf.log(self.hypothesis)
+
+        optimizer_discriminator = tf.train.AdamOptimizer(initial_learning_rate)
+
+        train_disc_real = optimizer_discriminator.minimize(loss_real)
+        train_disc_fake = optimizer_discriminator.minimize(loss_fake)
+
+        sess.run(train_disc_real, feed_dict={self.X: self.real_img_buff})
+        sess.run(train_disc_fake, feed_dict={self.X: self.fake_imgs})
 
 if __name__ == '__main__':
 
     # Create a Tensorflow session
     with tf.Session() as sess:
-        # create a generator
-        generator = SimpleGenerator(sess)
-
         # create a discriminator
         discriminator = SimpleDiscriminator(sess)
+
+        # create a generator
+        generator = SimpleGenerator(sess, discriminator)
 
         #
         init = tf.initialize_all_variables()
@@ -312,7 +323,7 @@ if __name__ == '__main__':
                 if exit_notification == True:
                     break
 
-                discriminator.disc_img_buff[i] = input_buff[image_buff_read_index]
+                discriminator.real_img_buff[i] = input_buff[image_buff_read_index]
 
                 image_buff_read_index = image_buff_read_index + 1
                 if image_buff_read_index >= image_buffer_size:
@@ -320,15 +331,10 @@ if __name__ == '__main__':
 
             fake_imgs = generator.generate_fake_imgs()
 
-            disc_outs_fake = discriminator.feed_images(fake_imgs)
-            #print 'disc_outs_fake = ', str(disc_outs_fake)
+            discriminator.feed_images(fake_imgs)
+            discriminator.train(sess)
 
-            disc_outs_real = discriminator.feed_images(discriminator.disc_img_buff)
-            #print 'disc_outs_real = ', str(disc_outs_real)
-
-            # loss function
-            loss_discriminator
-            loss_generator
+            generator.train(sess)
 
     exit_notification = True
 

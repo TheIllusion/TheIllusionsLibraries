@@ -6,11 +6,14 @@ import os
 import glob
 #import copy
 
-INPUT_DIRECTORY = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/original_all/"
-ANSWER_DIRECTORY = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/seg_result_from_20170824_until_20170911/"
-OUTPUT_DIRECTORY = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/concatenated/"
+INPUT_DIRECTORY = "/Users/Illusion/Documents/Data/hair_염색_아르바이트/hair_style_generation/total_datasets_until_20171026/original/"
+ANSWER_DIRECTORY = "/Users/Illusion/Documents/Data/hair_염색_아르바이트/hair_style_generation/total_datasets_until_20171026/hair_edited/short/"
+OUTPUT_DIRECTORY = "/Users/Illusion/Documents/Data/hair_염색_아르바이트/hair_style_generation/total_datasets_until_20171026/hair_edited/short_concat/"
 
 if __name__ == "__main__":
+
+    if not os.path.exists(OUTPUT_DIRECTORY):
+        os.mkdir(OUTPUT_DIRECTORY)
 
     os.chdir(ANSWER_DIRECTORY)
     jpg_files = glob.glob( '*.jpg' )

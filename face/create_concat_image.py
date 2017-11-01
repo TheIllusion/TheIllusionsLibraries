@@ -6,9 +6,11 @@ import os
 import glob
 #import copy
 
-INPUT_DIRECTORY = "/Users/Illusion/Documents/Data/hair_염색_아르바이트/hair_style_generation/total_datasets_until_20171026/original/"
-ANSWER_DIRECTORY = "/Users/Illusion/Documents/Data/hair_염색_아르바이트/hair_style_generation/total_datasets_until_20171026/hair_edited/short/"
-OUTPUT_DIRECTORY = "/Users/Illusion/Documents/Data/hair_염색_아르바이트/hair_style_generation/total_datasets_until_20171026/hair_edited/short_concat/"
+INPUT_DIRECTORY = "/Users/Illusion/Documents/Data/hair_염색_아르바이트/hair_style_generation/total_datasets/original/"
+
+ANSWER_DIRECTORY = "/Users/Illusion/Documents/Data/hair_염색_아르바이트/hair_style_generation/total_datasets/hair_edited/retro_finger_perm/"
+
+OUTPUT_DIRECTORY = "/Users/Illusion/Documents/Data/hair_염색_아르바이트/hair_style_generation/total_datasets/hair_edited/retro_finger_perm_concat/"
 
 if __name__ == "__main__":
 

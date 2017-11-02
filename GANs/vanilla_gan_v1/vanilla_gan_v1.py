@@ -9,7 +9,7 @@ import threading
 
 IS_TRAINING = True
 
-TOTAL_ITERATION = 1000
+TOTAL_ITERATION = 50000
 
 BATCH_SIZE = 30
 NOISE_VECTOR_WIDTH = 10
@@ -40,12 +40,12 @@ INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/
 # Macbook Pro
 #OUTPUT_IMAGE_SAVE_DIRECTORY = "/Users/Illusion/Downloads/vanilla_gan_generated/"
 # svc002
-OUTPUT_IMAGE_SAVE_DIRECTORY = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/generated_imgs"
+OUTPUT_IMAGE_SAVE_DIRECTORY = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/generated_imgs/"
 ##############################################################################################
 # Image Buffer Management
 
 # image buffers
-image_buffer_size = 60
+image_buffer_size = 300 
 input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
 
 buff_status = []
@@ -143,7 +143,7 @@ def image_buffer_loader():
 
         buff_status[current_buff_index] = 'filled'
 
-        if lineIdx % 10 == 0:
+        if lineIdx % 200 == 0:
             print 'training_jpg_line_idx=', str(lineIdx)
 
         lineIdx = lineIdx + 1
@@ -325,7 +325,7 @@ if __name__ == '__main__':
 
         for iter in range(TOTAL_ITERATION):
 
-            print 'iter: ', str(iter)
+            # print 'iter: ', str(iter)
 
             for i in range(BATCH_SIZE):
                 while buff_status[image_buff_read_index] == 'empty':
@@ -341,7 +341,9 @@ if __name__ == '__main__':
                 if exit_notification == True:
                     break
 
-                discriminator.real_img_buff[i] = input_buff[image_buff_read_index]
+                np.copyto(discriminator.real_img_buff[i], input_buff[image_buff_read_index])
+                # discriminator.real_img_buff[i] = input_buff[image_buff_read_index]
+                buff_status[image_buff_read_index] = 'empty'
 
                 image_buff_read_index = image_buff_read_index + 1
                 if image_buff_read_index >= image_buffer_size:
@@ -358,12 +360,13 @@ if __name__ == '__main__':
             _, gen_loss_current = sess.run([train_gen, gen_loss], feed_dict={generator.gen_X: noise_z})
 
             # check the loss every 10-iter
-            if iter % 10 == 0:
+            if iter % 100 == 0:
+		print 'iter = ', str(iter)
                 print 'discriminator loss: ', str(disc_loss_current)
                 print 'generator loss: ', str(gen_loss_current)
 
             # generate fake iamges every 100-iter to check the quality of output images
-            if iter % 100 == 0:
+            if iter % 1000 == 0:
                 fake_imgs = generator.generate_fake_imgs()
                 for j in range(len(fake_imgs)):
                     # save images to jpg files

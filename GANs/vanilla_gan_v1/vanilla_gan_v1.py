@@ -9,7 +9,7 @@ import threading
 
 IS_TRAINING = True
 
-TOTAL_ITERATION = 10
+TOTAL_ITERATION = 1000
 
 BATCH_SIZE = 30
 NOISE_VECTOR_WIDTH = 10
@@ -25,10 +25,10 @@ LEARNING_RATE = 0.00001
 initial_learning_rate = tf.Variable(LEARNING_RATE)
 
 # Macbook Pro
-#INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/face_data/20_female/"
+INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/face_data/20_female/"
 
 # Macbook 12
-INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Caricature/face_refined_1/original/"
+#INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Caricature/face_refined_1/original/"
 
 # i7-2600k (Ubuntu)
 #INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/KCeleb-v1/kim.yuna/"
@@ -155,8 +155,6 @@ if IS_TRAINING:
 class SimpleGenerator:
     def __init__(self, sess, discriminator):
         with tf.variable_scope("generator") as scope:
-            # save the instance of the discriminator for future use
-            self.discriminator = discriminator
 
             self.sess = sess
 
@@ -178,34 +176,41 @@ class SimpleGenerator:
             self.gen_BIAS_2 = tf.Variable(tf.zeros([1, 4]), name="GEN_BIAS_2")
             self.gen_BIAS_3 = tf.Variable(tf.zeros([1, 3]), name="GEN_BIAS_3")
 
-            # graph
-            self.gen_TRANS_CONV_1 = tf.nn.relu(tf.nn.conv2d_transpose(self.gen_X,
-                                                                  self.gen_TRANSPOSED_CONV_W1,
-                                                                  output_shape=[BATCH_SIZE, 20, 20, 8],
-                                                                  strides=[1,2,2,1],
-                                                                  padding="SAME") + self.gen_BIAS_1)
-
-            self.gen_TRANS_CONV_2 = tf.nn.relu(tf.nn.conv2d_transpose(self.gen_TRANS_CONV_1,
-                                                                  self.gen_TRANSPOSED_CONV_W2,
-                                                                  output_shape=[BATCH_SIZE, 40, 40, 4],
-                                                                  strides=[1,2,2,1],
-                                                                  padding="SAME") + self.gen_BIAS_2)
-
-            self.gen_TRANS_CONV_3 = tf.nn.conv2d_transpose(self.gen_TRANS_CONV_2,
-                                                           self.gen_TRANSPOSED_CONV_W3,
-                                                           output_shape=[BATCH_SIZE, 80, 80, 3],
-                                                           strides=[1,2,2,1],
-                                                           padding="SAME") + self.gen_BIAS_3
-
-            self.gen_hypothesis = tf.sigmoid(self.gen_TRANS_CONV_3)
-
             #tf.global_variables_initializer().run()
+
+            self.var_list_gen = [self.gen_TRANSPOSED_CONV_W1, self.gen_TRANSPOSED_CONV_W2, self.gen_TRANSPOSED_CONV_W3,
+                                 self.gen_BIAS_1, self.gen_BIAS_2, self.gen_BIAS_3]
+
+    def forward(self, x):
+        # graph
+        gen_TRANS_CONV_1 = tf.nn.relu(tf.nn.conv2d_transpose(x,
+                                                              self.gen_TRANSPOSED_CONV_W1,
+                                                              output_shape=[BATCH_SIZE, 20, 20, 8],
+                                                              strides=[1, 2, 2, 1],
+                                                              padding="SAME") + self.gen_BIAS_1)
+
+        gen_TRANS_CONV_2 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_1,
+                                                              self.gen_TRANSPOSED_CONV_W2,
+                                                              output_shape=[BATCH_SIZE, 40, 40, 4],
+                                                              strides=[1, 2, 2, 1],
+                                                              padding="SAME") + self.gen_BIAS_2)
+
+        gen_TRANS_CONV_3 = tf.nn.conv2d_transpose(gen_TRANS_CONV_2,
+                                                   self.gen_TRANSPOSED_CONV_W3,
+                                                   output_shape=[BATCH_SIZE, 80, 80, 3],
+                                                   strides=[1, 2, 2, 1],
+                                                   padding="SAME") + self.gen_BIAS_3
+
+        gen_hypothesis = tf.sigmoid(gen_TRANS_CONV_3)
+
+        return gen_hypothesis
 
     def generate_fake_imgs(self):
         # Random noise vector
 
         noise_z = np.random.uniform(-1, 1, [BATCH_SIZE, NOISE_VECTOR_WIDTH, NOISE_VECTOR_HEIGHT, NOISE_VECTOR_DEPTH]).astype(np.float32)
 
+        gen_hypothesis = self.forward(self.gex_X)
         network_output = self.sess.run(self.gen_hypothesis, feed_dict={self.gen_X: noise_z})
 
         # scale to 0~255
@@ -214,18 +219,6 @@ class SimpleGenerator:
         self.fake_imgs = fake_imgs
 
         return fake_imgs
-
-    def train(self, sess):
-        optimizer_generator = tf.train.AdamOptimizer(initial_learning_rate)
-
-        disc_output = discriminator.forward_images(self.gen_hypothesis)
-
-        # loss function
-        loss_generator = 1 - tf.log(disc_output)
-
-        train_generator = optimizer_generator.minimize(loss_generator)
-
-        sess.run(train_generator, feed_dict={self.gen_X: self.fake_imgs})
 
 class SimpleDiscriminator:
     def __init__(self, sess):
@@ -258,41 +251,30 @@ class SimpleDiscriminator:
             self.disc_BIAS_FC_W2 = tf.Variable(tf.zeros([1, 1000]), name="DISC_FCBias2")
             self.disc_BIAS_FC_W3 = tf.Variable(tf.zeros([1, 1]), name="DISC_FCBias3")
 
-            # graph
-            self.disc_CNN1 = tf.nn.relu(tf.nn.conv2d(self.disc_X, self.disc_CNN_W1, strides=[1, 2, 2, 1], padding='SAME') + self.disc_BIAS_CONV_1)
-            self.disc_CNN2 = tf.nn.relu(tf.nn.conv2d(self.disc_CNN1, self.disc_CNN_W2, strides=[1, 2, 2, 1], padding='SAME') + self.disc_BIAS_CONV_2)
-            self.disc_CNN3 = tf.nn.relu(tf.nn.conv2d(self.disc_CNN2, self.disc_CNN_W3, strides=[1, 2, 2, 1], padding='SAME') + self.disc_BIAS_CONV_3)
-
-            self.disc_FC_IN = tf.reshape(self.disc_CNN3, [-1, 10 * 10 * 64])
-            self.disc_FC1 = tf.nn.relu(tf.matmul(self.disc_FC_IN, self.disc_FC_W1) + self.disc_BIAS_FC_W1)
-            self.disc_FC2 = tf.nn.relu(tf.matmul(self.disc_FC1, self.disc_FC_W2) + self.disc_BIAS_FC_W2)
-
-            self.disc_hypothesis = tf.nn.sigmoid(tf.matmul(self.disc_FC2, self.disc_FC_W3) + self.disc_BIAS_FC_W3)
-
-            #tf.global_variables_initializer().run()
+            self.var_list_disc = [self.disc_CNN_W1, self.disc_CNN_W2, self.disc_CNN_W3,
+                                  self.disc_FC_W1, self.disc_FC_W2, self.disc_FC_W3,
+                                  self.disc_BIAS_CONV_1, self.disc_BIAS_CONV_2, self.disc_BIAS_CONV_3,
+                                  self.disc_BIAS_FC_W1, self.disc_BIAS_FC_W2, self.disc_BIAS_FC_W3]
 
     def feed_images(self, fake_imgs):
         # real images are already fed
         self.fake_imgs = fake_imgs
 
-    def forward_images(self, imgs):
-        # feedforward input images
-        network_output = sess.run(self.disc_hypothesis, feed_dict={self.disc_X: imgs})
-        return network_output
+    def forward(self, x):
+        # graph
+        disc_CNN1 = tf.nn.relu(tf.nn.conv2d(x, self.disc_CNN_W1, strides=[1, 2, 2, 1], padding='SAME') + self.disc_BIAS_CONV_1)
+        disc_CNN2 = tf.nn.relu(tf.nn.conv2d(disc_CNN1, self.disc_CNN_W2, strides=[1, 2, 2, 1],
+                                                 padding='SAME') + self.disc_BIAS_CONV_2)
+        disc_CNN3 = tf.nn.relu(tf.nn.conv2d(disc_CNN2, self.disc_CNN_W3, strides=[1, 2, 2, 1],
+                                                 padding='SAME') + self.disc_BIAS_CONV_3)
 
-    def train(self, sess):
+        disc_FC_IN = tf.reshape(disc_CNN3, [-1, 10 * 10 * 64])
+        disc_FC1 = tf.nn.relu(tf.matmul(disc_FC_IN, self.disc_FC_W1) + self.disc_BIAS_FC_W1)
+        disc_FC2 = tf.nn.relu(tf.matmul(disc_FC1, self.disc_FC_W2) + self.disc_BIAS_FC_W2)
 
-        # loss functions
-        loss_real = 1 - tf.log(self.disc_hypothesis)
-        loss_fake = tf.log(self.disc_hypothesis)
+        disc_hypothesis = tf.nn.sigmoid(tf.matmul(disc_FC2, self.disc_FC_W3) + self.disc_BIAS_FC_W3)
 
-        optimizer_discriminator = tf.train.AdamOptimizer(initial_learning_rate)
-
-        train_disc_real = optimizer_discriminator.minimize(loss_real)
-        train_disc_fake = optimizer_discriminator.minimize(loss_fake)
-
-        sess.run(train_disc_real, feed_dict={self.disc_X: self.real_img_buff})
-        sess.run(train_disc_fake, feed_dict={self.disc_X: self.fake_imgs})
+        return disc_hypothesis
 
 if __name__ == '__main__':
 
@@ -305,13 +287,30 @@ if __name__ == '__main__':
         # create a generator
         generator = SimpleGenerator(sess, discriminator)
 
-        #
-        #init = tf.initialize_all_variables()
-        #sess.run(init)
-        tf.global_variables_initializer().run()
-
         # read real imgs
         image_buff_read_index = 0
+
+        # loss functions for discriminator
+        disc_real = discriminator.forward(discriminator.disc_X)
+        disc_fake = discriminator.forward(generator.forward(generator.gen_X))
+        disc_total_loss = -tf.reduce_mean(tf.log(disc_real) + tf.log(1. - disc_fake))
+
+        optimizer_discriminator = tf.train.AdamOptimizer(initial_learning_rate)
+        optimizer_generator = tf.train.AdamOptimizer(initial_learning_rate)
+
+        # loss function for generator
+        gen_loss = -tf.reduce_mean(tf.log(disc_fake))
+
+        # optimize the parameters of the discriminator only
+        train_disc = optimizer_discriminator.minimize(disc_total_loss, var_list=discriminator.var_list_disc)
+
+        # optimize the parameters of the generator only
+        train_gen = optimizer_generator.minimize(gen_loss, var_list=generator.var_list_gen)
+
+        #
+        # init = tf.initialize_all_variables()
+        # sess.run(init)
+        tf.global_variables_initializer().run()
 
         for iter in range(TOTAL_ITERATION):
 
@@ -337,14 +336,29 @@ if __name__ == '__main__':
                 if image_buff_read_index >= image_buffer_size:
                     image_buff_read_index = 0
 
-            fake_imgs = generator.generate_fake_imgs()
+            # noise vector z
+            noise_z = np.random.uniform(-1, 1, [BATCH_SIZE, NOISE_VECTOR_WIDTH, NOISE_VECTOR_HEIGHT,
+                                                NOISE_VECTOR_DEPTH]).astype(np.float32)
 
-            discriminator.feed_images(fake_imgs)
-            discriminator.train(sess)
+            # train the discriminator
+            _, disc_loss_current = sess.run([train_disc, disc_total_loss], feed_dict={discriminator.disc_X: discriminator.real_img_buff, generator.gen_X: noise_z})
 
-            generator.train(sess)
+            # train the generator
+            _, gen_loss_current = sess.run([train_gen, gen_loss], feed_dict={generator.gen_X: noise_z})
+
+            # check the loss every 10-iter
+            if iter % 10 == 0:
+                print 'discriminator loss: ', str(disc_loss_current)
+                print 'generator loss: ', str(gen_loss_current)
+
+            # generate fake iamges every 100-iter to check the quality of output images
+            '''
+            if iter % 100 == 0:
+                fake_imgs = generator.generate_fake_imgs()
+                for j in len(fake_imgs):
+                    # save images to jpg files
+            '''
 
     exit_notification = True
 
     print 'ok'
-

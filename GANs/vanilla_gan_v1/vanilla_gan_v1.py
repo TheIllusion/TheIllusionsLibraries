@@ -33,6 +33,9 @@ INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/face_data/20_female
 # i7-2600k (Ubuntu)
 #INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/KCeleb-v1/kim.yuna/"
 
+# output image save directory
+OUTPUT_IMAGE_SAVE_DIRECTORY = "/Users/Illusion/Downloads/vanilla_gan_generated/"
+
 ##############################################################################################
 # Image Buffer Management
 
@@ -210,8 +213,8 @@ class SimpleGenerator:
 
         noise_z = np.random.uniform(-1, 1, [BATCH_SIZE, NOISE_VECTOR_WIDTH, NOISE_VECTOR_HEIGHT, NOISE_VECTOR_DEPTH]).astype(np.float32)
 
-        gen_hypothesis = self.forward(self.gex_X)
-        network_output = self.sess.run(self.gen_hypothesis, feed_dict={self.gen_X: noise_z})
+        gen_hypothesis = self.forward(self.gen_X)
+        network_output = self.sess.run(gen_hypothesis, feed_dict={self.gen_X: noise_z})
 
         # scale to 0~255
         fake_imgs = network_output * 255
@@ -277,6 +280,9 @@ class SimpleDiscriminator:
         return disc_hypothesis
 
 if __name__ == '__main__':
+
+    if not os.path.exists(OUTPUT_IMAGE_SAVE_DIRECTORY):
+        os.mkdir(OUTPUT_IMAGE_SAVE_DIRECTORY)
 
     # Create a Tensorflow session
     with tf.Session() as sess:
@@ -352,12 +358,12 @@ if __name__ == '__main__':
                 print 'generator loss: ', str(gen_loss_current)
 
             # generate fake iamges every 100-iter to check the quality of output images
-            '''
             if iter % 100 == 0:
                 fake_imgs = generator.generate_fake_imgs()
-                for j in len(fake_imgs):
+                for j in range(len(fake_imgs)):
                     # save images to jpg files
-            '''
+                    filename = "iter_" + str(iter) + "_generated_" + str(j) + ".jpg"
+                    cv2.imwrite(OUTPUT_IMAGE_SAVE_DIRECTORY + filename, fake_imgs[j])
 
     exit_notification = True
 

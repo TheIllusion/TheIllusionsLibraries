@@ -9,7 +9,7 @@ import threading
 
 IS_TRAINING = True
 
-TOTAL_ITERATION = 50000
+TOTAL_ITERATION = 500000
 
 BATCH_SIZE = 30
 NOISE_VECTOR_WIDTH = 10
@@ -21,11 +21,11 @@ INPUT_IMAGE_HEIGHT = 80
 INPUT_IMAGE_DEPTH = 3
 
 # learning rate
-LEARNING_RATE = 0.00001
-initial_learning_rate = tf.Variable(LEARNING_RATE)
+initial_learning_rate_disc = tf.Variable(0.0000001)
+initial_learning_rate_gen = tf.Variable(0.0001)
 
 # svc002
-INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/face_imgs_svc"
+#INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/face_imgs_svc"
 
 # Macbook Pro
 #INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/face_data/20_female/"
@@ -34,13 +34,13 @@ INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/
 #INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Caricature/face_refined_1/original/"
 
 # i7-2600k (Ubuntu)
-#INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/KCeleb-v1/kim.yuna/"
+INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_DATA_SSD_M550/KCeleb-all-faces/"
 
 # output image save directory
 # Macbook Pro
 #OUTPUT_IMAGE_SAVE_DIRECTORY = "/Users/Illusion/Downloads/vanilla_gan_generated/"
 # svc002
-OUTPUT_IMAGE_SAVE_DIRECTORY = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/generated_imgs/"
+OUTPUT_IMAGE_SAVE_DIRECTORY = "/media/illusion/ML_Linux/temp/vanilla_gan_v1_gen_images/"
 ##############################################################################################
 # Image Buffer Management
 
@@ -143,7 +143,7 @@ def image_buffer_loader():
 
         buff_status[current_buff_index] = 'filled'
 
-        if lineIdx % 200 == 0:
+        if lineIdx % 1000 == 0:
             print 'training_jpg_line_idx=', str(lineIdx)
 
         lineIdx = lineIdx + 1
@@ -172,44 +172,73 @@ class SimpleGenerator:
             self.gen_X = tf.placeholder(tf.float32, [BATCH_SIZE, NOISE_VECTOR_WIDTH, NOISE_VECTOR_HEIGHT, NOISE_VECTOR_DEPTH])
 
             # weights
-            self.gen_TRANSPOSED_CONV_W1 = tf.get_variable("GEN_TRANSPOSED_CONV_W1", shape=[2, 2, 8, 16],
+            self.gen_TRANSPOSED_CONV_W1 = tf.get_variable("GEN_TRANSPOSED_CONV_W1", shape=[2, 2, 64, 16],
                                                       initializer=tf.contrib.layers.xavier_initializer())
-            self.gen_TRANSPOSED_CONV_W2 = tf.get_variable("GEN_TRANSPOSED_CONV_W2", shape=[2, 2, 4, 8],
+            self.gen_TRANSPOSED_CONV_W2 = tf.get_variable("GEN_TRANSPOSED_CONV_W2", shape=[2, 2, 128, 64],
                                                       initializer=tf.contrib.layers.xavier_initializer())
-            self.gen_TRANSPOSED_CONV_W3 = tf.get_variable("GEN_TRANSPOSED_CONV_W3", shape=[2, 2, 3, 4],
+            self.gen_TRANSPOSED_CONV_W3 = tf.get_variable("GEN_TRANSPOSED_CONV_W3", shape=[2, 2, 128, 128],
+                                                          initializer=tf.contrib.layers.xavier_initializer())
+            self.gen_TRANSPOSED_CONV_W4 = tf.get_variable("GEN_TRANSPOSED_CONV_W4", shape=[2, 2, 128, 128],
+                                                          initializer=tf.contrib.layers.xavier_initializer())
+            self.gen_TRANSPOSED_CONV_W5 = tf.get_variable("GEN_TRANSPOSED_CONV_W5", shape=[2, 2, 32, 128],
+                                                          initializer=tf.contrib.layers.xavier_initializer())
+            self.gen_TRANSPOSED_CONV_W6 = tf.get_variable("GEN_TRANSPOSED_CONV_W6", shape=[2, 2, 3, 32],
                                                       initializer=tf.contrib.layers.xavier_initializer())
 
             # biases
-            self.gen_BIAS_1 = tf.Variable(tf.zeros([1, 8]), name="GEN_BIAS_1")
-            self.gen_BIAS_2 = tf.Variable(tf.zeros([1, 4]), name="GEN_BIAS_2")
-            self.gen_BIAS_3 = tf.Variable(tf.zeros([1, 3]), name="GEN_BIAS_3")
+            self.gen_BIAS_1 = tf.Variable(tf.zeros([1, 64]), name="GEN_BIAS_1")
+            self.gen_BIAS_2 = tf.Variable(tf.zeros([1, 128]), name="GEN_BIAS_2")
+            self.gen_BIAS_3 = tf.Variable(tf.zeros([1, 128]), name="GEN_BIAS_3")
+            self.gen_BIAS_4 = tf.Variable(tf.zeros([1, 128]), name="GEN_BIAS_4")
+            self.gen_BIAS_5 = tf.Variable(tf.zeros([1, 32]), name="GEN_BIAS_5")
+            self.gen_BIAS_6 = tf.Variable(tf.zeros([1, 3]), name="GEN_BIAS_6")
 
             #tf.global_variables_initializer().run()
 
             self.var_list_gen = [self.gen_TRANSPOSED_CONV_W1, self.gen_TRANSPOSED_CONV_W2, self.gen_TRANSPOSED_CONV_W3,
-                                 self.gen_BIAS_1, self.gen_BIAS_2, self.gen_BIAS_3]
+                                 self.gen_TRANSPOSED_CONV_W4, self.gen_TRANSPOSED_CONV_W5, self.gen_TRANSPOSED_CONV_W6,
+                                 self.gen_BIAS_1, self.gen_BIAS_2, self.gen_BIAS_3,
+                                 self.gen_BIAS_4, self.gen_BIAS_5, self.gen_BIAS_6]
 
     def forward(self, x):
         # graph
         gen_TRANS_CONV_1 = tf.nn.relu(tf.nn.conv2d_transpose(x,
                                                               self.gen_TRANSPOSED_CONV_W1,
-                                                              output_shape=[BATCH_SIZE, 20, 20, 8],
+                                                              output_shape=[BATCH_SIZE, 20, 20, 64],
                                                               strides=[1, 2, 2, 1],
                                                               padding="SAME") + self.gen_BIAS_1)
 
         gen_TRANS_CONV_2 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_1,
-                                                              self.gen_TRANSPOSED_CONV_W2,
-                                                              output_shape=[BATCH_SIZE, 40, 40, 4],
-                                                              strides=[1, 2, 2, 1],
-                                                              padding="SAME") + self.gen_BIAS_2)
+                                                             self.gen_TRANSPOSED_CONV_W2,
+                                                             output_shape=[BATCH_SIZE, 20, 20, 128],
+                                                             strides=[1, 1, 1, 1],
+                                                             padding="SAME") + self.gen_BIAS_2)
 
-        gen_TRANS_CONV_3 = tf.nn.conv2d_transpose(gen_TRANS_CONV_2,
-                                                   self.gen_TRANSPOSED_CONV_W3,
+        gen_TRANS_CONV_3 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_2,
+                                                             self.gen_TRANSPOSED_CONV_W3,
+                                                             output_shape=[BATCH_SIZE, 20, 20, 128],
+                                                             strides=[1, 1, 1, 1],
+                                                             padding="SAME") + self.gen_BIAS_3)
+
+        gen_TRANS_CONV_4 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_3,
+                                                             self.gen_TRANSPOSED_CONV_W4,
+                                                             output_shape=[BATCH_SIZE, 20, 20, 128],
+                                                             strides=[1, 1, 1, 1],
+                                                             padding="SAME") + self.gen_BIAS_4)
+
+        gen_TRANS_CONV_5 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_4,
+                                                              self.gen_TRANSPOSED_CONV_W5,
+                                                              output_shape=[BATCH_SIZE, 40, 40, 32],
+                                                              strides=[1, 2, 2, 1],
+                                                              padding="SAME") + self.gen_BIAS_5)
+
+        gen_TRANS_CONV_6 = tf.nn.conv2d_transpose(gen_TRANS_CONV_5,
+                                                   self.gen_TRANSPOSED_CONV_W6,
                                                    output_shape=[BATCH_SIZE, 80, 80, 3],
                                                    strides=[1, 2, 2, 1],
-                                                   padding="SAME") + self.gen_BIAS_3
+                                                   padding="SAME") + self.gen_BIAS_6
 
-        gen_hypothesis = tf.sigmoid(gen_TRANS_CONV_3)
+        gen_hypothesis = tf.sigmoid(gen_TRANS_CONV_6)
 
         return gen_hypothesis
 
@@ -306,8 +335,8 @@ if __name__ == '__main__':
         disc_fake = discriminator.forward(generator.forward(generator.gen_X))
         disc_total_loss = -tf.reduce_mean(tf.log(disc_real) + tf.log(1. - disc_fake))
 
-        optimizer_discriminator = tf.train.AdamOptimizer(initial_learning_rate)
-        optimizer_generator = tf.train.AdamOptimizer(initial_learning_rate)
+        optimizer_discriminator = tf.train.AdamOptimizer(initial_learning_rate_disc)
+        optimizer_generator = tf.train.AdamOptimizer(initial_learning_rate_gen)
 
         # loss function for generator
         gen_loss = -tf.reduce_mean(tf.log(disc_fake))
@@ -357,13 +386,31 @@ if __name__ == '__main__':
             _, disc_loss_current = sess.run([train_disc, disc_total_loss], feed_dict={discriminator.disc_X: discriminator.real_img_buff, generator.gen_X: noise_z})
 
             # train the generator
-            _, gen_loss_current = sess.run([train_gen, gen_loss], feed_dict={generator.gen_X: noise_z})
+            _, gen_loss_current_1 = sess.run([train_gen, gen_loss], feed_dict={generator.gen_X: noise_z})
+
+            # train the generator (2nd time)
+            _, gen_loss_current_2 = sess.run([train_gen, gen_loss], feed_dict={generator.gen_X: noise_z})
+
+            # train the generator (3rd time)
+            _, gen_loss_current_3 = sess.run([train_gen, gen_loss], feed_dict={generator.gen_X: noise_z})
+
+            # train the generator (4th time)
+            _, gen_loss_current_4 = sess.run([train_gen, gen_loss], feed_dict={generator.gen_X: noise_z})
+
+            # train the generator (5th time)
+            _, gen_loss_current_5 = sess.run([train_gen, gen_loss], feed_dict={generator.gen_X: noise_z})
 
             # check the loss every 10-iter
             if iter % 100 == 0:
-		print 'iter = ', str(iter)
+                print '=============================================='
+                print 'iter = ', str(iter)
                 print 'discriminator loss: ', str(disc_loss_current)
-                print 'generator loss: ', str(gen_loss_current)
+                print 'generator loss(1): ', str(gen_loss_current_1)
+                print 'generator loss(2): ', str(gen_loss_current_2)
+                print 'generator loss(3): ', str(gen_loss_current_3)
+                print 'generator loss(4): ', str(gen_loss_current_4)
+                print 'generator loss(5): ', str(gen_loss_current_5)
+                print '=============================================='
 
             # generate fake iamges every 100-iter to check the quality of output images
             if iter % 1000 == 0:

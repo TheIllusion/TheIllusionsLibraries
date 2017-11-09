@@ -78,7 +78,8 @@ if __name__ == "__main__":
     idx = 0
     for batch_idx, (data, target) in enumerate(train_loader):
     #for data, target in train_loader:
-        data, target = Variable(data, volatile=True), Variable(target)
+        # data, target = Variable(data, volatile=True), Variable(target)
+        data, target = Variable(data), Variable(target)
 
         output = cnn_basic_model(data)
         loss = criterion(output, target)
@@ -96,8 +97,8 @@ if __name__ == "__main__":
 
         if idx % 10 == 0:
             print 'idx = ', str(idx)
+            print 'loss = ', str(loss)
 
         idx = idx + 1
-
 
     print 'hi'

@@ -5,6 +5,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
+import numpy as np
 
 # macbook pro
 root_dir = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/fashion-mnist/data/'
@@ -98,6 +99,8 @@ if __name__ == "__main__":
         if idx % 10 == 0:
             print 'idx = ', str(idx)
             print 'loss = ', str(loss)
+            print 'output = ', output
+            print 'target cls = ', target
 
         idx = idx + 1
 

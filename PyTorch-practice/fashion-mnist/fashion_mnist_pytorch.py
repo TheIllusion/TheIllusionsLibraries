@@ -58,13 +58,13 @@ if __name__ == "__main__":
     # create a cnn model
     cnn_basic_model = CNNBasic()
 
-    loss_fn = torch.nn.MSELoss(size_average=False)
+    # loss_fn = torch.nn.MSELoss(size_average=False)
 
     # Use the optim package to define an Optimizer that will update the weights of
     # the model for us. Here we will use Adam; the optim package contains many other
     # optimization algoriths. The first argument to the Adam constructor tells the
     # optimizer which Variables it should update.
-    learning_rate = 1e-4
+    learning_rate = 1e-5
 
     # Construct our loss function and an Optimizer. The call to model.parameters()
     # in the SGD constructor will contain the learnable parameters of the two
@@ -80,10 +80,10 @@ if __name__ == "__main__":
     for batch_idx, (data, target) in enumerate(train_loader):
     #for data, target in train_loader:
         # data, target = Variable(data, volatile=True), Variable(target)
-        data, target = Variable(data), Variable(target)
+        v_data, v_target = Variable(data), Variable(target)
 
-        output = cnn_basic_model(data)
-        loss = criterion(output, target)
+        output = cnn_basic_model(v_data)
+        loss = criterion(output, v_target)
 
         # Before the backward pass, use the optimizer object to zero all of the
         # gradients for the variables it will update (which are the learnable weights
@@ -96,10 +96,13 @@ if __name__ == "__main__":
         # Calling the step function on an Optimizer makes an update to its parameters
         optimizer.step()
 
-        if idx % 10 == 0:
+        if idx % 100 == 0:
+            print '-----------------------------------'
             print 'idx = ', str(idx)
             print 'loss = ', str(loss)
-            print 'output = ', output
+
+            _, predicted = torch.max(output.data, 1)
+            print 'output = ', predicted
             print 'target cls = ', target
 
         idx = idx + 1

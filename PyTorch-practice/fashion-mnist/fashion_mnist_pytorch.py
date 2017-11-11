@@ -8,7 +8,13 @@ import torchvision.transforms as transforms
 import numpy as np
 
 # macbook pro
-root_dir = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/fashion-mnist/data/'
+#root_dir = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/fashion-mnist/data/'
+
+# i7-2600k
+cifar10_data_dir = '/media/illusion/ML_Linux/Data/cifar-10/'
+
+# gpu mode
+is_gpu_mode = True
 
 class CNNBasic(nn.Module):
     def __init__(self):
@@ -19,11 +25,14 @@ class CNNBasic(nn.Module):
         super(CNNBasic, self).__init__()
 
         # input size is 32x32x3 for cifar-10 dataset
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=20, kernel_size=3, stride=2, bias=True)
-        self.conv2 = nn.Conv2d(in_channels=20, out_channels=20, kernel_size=3, stride=2, bias=True)
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=128, kernel_size=3, stride=1, bias=True)
+        self.conv2 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, bias=True)
+        self.conv3 = nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, bias=True)
+        self.conv4 = nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=2, bias=True)
+        self.conv5 = nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=2, bias=True)
 
         # size of the feature maps would be 4x4 at this point
-        self.fc1 = nn.Linear(980, 500)
+        self.fc1 = nn.Linear(6400, 500)
         self.fc2 = nn.Linear(500, 10)
 
     def forward(self, x):
@@ -34,7 +43,10 @@ class CNNBasic(nn.Module):
         """
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
-        x = x.view(-1, 980)
+        x = F.relu(self.conv3(x))
+        x = F.relu(self.conv4(x))
+        x = F.relu(self.conv5(x))
+        x = x.view(-1, 6400)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
 
@@ -50,13 +62,26 @@ transform = transforms.Compose(
 CIFA-10 dataset (Docs: https://www.cs.toronto.edu/~kriz/cifar.html)
 The CIFAR-10 dataset consists of 60000 32x32 colour images in 10 classes, with 6000 images per class. There are 50000 training images and 10000 test images. 
 '''
-train_loader = DataLoader(datasets.CIFAR10(root_dir, train=True, transform=transform, target_transform=None, download=True))
-test_loader = DataLoader(datasets.CIFAR10(root_dir, train=False, transform=transform, target_transform=None, download=True))
+
+train_set = datasets.CIFAR10(cifar10_data_dir, train=True,
+                             transform=transform, target_transform=None,
+                             download=True)
+
+train_loader = DataLoader(train_set, batch_size=30, shuffle=True, num_workers=2)
+
+test_set = datasets.CIFAR10(cifar10_data_dir, train=False,
+                            transform=transform, target_transform=None,
+                            download=True)
+
+test_loader = DataLoader(test_set, batch_size=30, shuffle=False, num_workers=2)
 
 if __name__ == "__main__":
 
     # create a cnn model
     cnn_basic_model = CNNBasic()
+
+    if is_gpu_mode:
+        cnn_basic_model.cuda()
 
     # loss_fn = torch.nn.MSELoss(size_average=False)
 
@@ -76,35 +101,40 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(cnn_basic_model.parameters(), lr=learning_rate)
 
     # load data from cifar10
-    idx = 0
-    for batch_idx, (data, target) in enumerate(train_loader):
-    #for data, target in train_loader:
-        # data, target = Variable(data, volatile=True), Variable(target)
-        v_data, v_target = Variable(data), Variable(target)
 
-        output = cnn_basic_model(v_data)
-        loss = criterion(output, v_target)
+    for epoch in range(50):
+        for i, data in enumerate(train_loader, 0):
 
-        # Before the backward pass, use the optimizer object to zero all of the
-        # gradients for the variables it will update (which are the learnable weights
-        # of the model)
-        optimizer.zero_grad()
+            # get the inputs
+            inputs, labels = data
 
-        # Backward pass: compute gradient of the loss with respect to model parameters
-        loss.backward()
+            # wrap them in Variables
+            if is_gpu_mode:
+                inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
+            else:
+                inputs, labels = Variable(inputs), Variable(labels)
 
-        # Calling the step function on an Optimizer makes an update to its parameters
-        optimizer.step()
+            # Before the backward pass, use the optimizer object to zero all of the
+            # gradients for the variables it will update (which are the learnable weights
+            # of the model)
+            optimizer.zero_grad()
 
-        if idx % 100 == 0:
-            print '-----------------------------------'
-            print 'idx = ', str(idx)
-            print 'loss = ', str(loss)
+            outputs = cnn_basic_model(inputs)
+            loss = criterion(outputs, labels)
 
-            _, predicted = torch.max(output.data, 1)
-            print 'output = ', predicted
-            print 'target cls = ', target
+            # Backward pass: compute gradient of the loss with respect to model parameters
+            loss.backward()
 
-        idx = idx + 1
+            # Calling the step function on an Optimizer makes an update to its parameters
+            optimizer.step()
+
+            if i % 100 == 0:
+                print '-----------------------------------'
+                print 'i = ', str(i)
+                print 'loss = ', str(loss)
+
+        _, predicted = torch.max(outputs.data, 1)
+        print 'output = ', predicted
+        print 'target cls = ', labels
 
     print 'hi'

@@ -8,8 +8,17 @@ import time
 import random
 import cv2
 
+#MNIST_DATA_SAVING_DIR = "/tmp/tensorflow/mnist/input_data/"
+MNIST_DATA_SAVING_DIR = "./mnist/input_data/"
+
+# output image save directory
+# Macbook Pro
+OUTPUT_IMAGE_SAVE_DIRECTORY = "/Users/Illusion/Downloads/vanilla_gan_generated/"
+# i7-2600k (Ubuntu)
+#OUTPUT_IMAGE_SAVE_DIRECTORY = "/media/illusion/ML_Linux/temp/vanilla_gan_v1_gen_images/"
+
 # Import data [784] = [28x28]
-mnist = input_data.read_data_sets("/tmp/tensorflow/mnist/input_data/", one_hot=True)
+mnist = input_data.read_data_sets(MNIST_DATA_SAVING_DIR, one_hot=True)
 
 IS_TRAINING = True
 
@@ -29,24 +38,6 @@ INPUT_IMAGE_HEIGHT = 28
 # learning rate
 initial_learning_rate_disc = tf.Variable(0.00001)
 initial_learning_rate_gen = tf.Variable(0.0001)
-
-# svc002
-#INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/face_imgs_svc"
-
-# Macbook Pro
-#INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/face_data/20_female/"
-
-# Macbook 12
-#INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Caricature/face_refined_1/original/"
-
-# i7-2600k (Ubuntu)
-INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_DATA_SSD_M550/KCeleb-all-faces/"
-
-# output image save directory
-# Macbook Pro
-#OUTPUT_IMAGE_SAVE_DIRECTORY = "/Users/Illusion/Downloads/vanilla_gan_generated/"
-# i7-2600k (Ubuntu)
-OUTPUT_IMAGE_SAVE_DIRECTORY = "/media/illusion/ML_Linux/temp/vanilla_gan_v1_gen_images/"
 
 ##############################################################################################
 

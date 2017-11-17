@@ -16,6 +16,7 @@ MNIST_DATA_SAVING_DIR = "./mnist/input_data/"
 #OUTPUT_IMAGE_SAVE_DIRECTORY = "/Users/Illusion/Downloads/vanilla_gan_generated/"
 # i7-2600k (Ubuntu)
 #OUTPUT_IMAGE_SAVE_DIRECTORY = "/media/illusion/ML_Linux/temp/vanilla_gan_v1_gen_images/"
+# svc002
 OUTPUT_IMAGE_SAVE_DIRECTORY = '/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/generated_imgs/'
 
 # Import data [784] = [28x28]
@@ -31,7 +32,7 @@ BATCH_SIZE = 30
 # if the size is too big, the output image shows sparse distributions
 NOISE_VECTOR_WIDTH = 1
 NOISE_VECTOR_HEIGHT = 1
-NOISE_VECTOR_DEPTH = 1
+NOISE_VECTOR_DEPTH = 100
 
 INPUT_IMAGE_WIDTH = 28
 INPUT_IMAGE_HEIGHT = 28

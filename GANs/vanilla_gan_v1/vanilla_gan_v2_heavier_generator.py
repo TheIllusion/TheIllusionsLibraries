@@ -12,10 +12,10 @@ IS_TRAINING = True
 
 TOTAL_ITERATION = 500000
 
-BATCH_SIZE = 10
-NOISE_VECTOR_WIDTH = 1
-NOISE_VECTOR_HEIGHT = 1
-NOISE_VECTOR_DEPTH = 100
+BATCH_SIZE = 100
+NOISE_VECTOR_WIDTH = 4
+NOISE_VECTOR_HEIGHT = 4
+NOISE_VECTOR_DEPTH = 3
 
 INPUT_IMAGE_WIDTH = 64
 INPUT_IMAGE_HEIGHT = 64
@@ -26,7 +26,9 @@ initial_learning_rate_disc = tf.Variable(0.00001)
 initial_learning_rate_gen = tf.Variable(0.00005)
 
 # svc002
-INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/face_imgs_svc"
+INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/blonde_hair"
+#"/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/face_imgs_svc"
+
 
 # Macbook Pro
 #INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/face_data/20_female/"
@@ -73,6 +75,8 @@ def image_buffer_loader():
     global exit_notification
 
     print 'image_buffer_loader'
+    
+    epoch = 0
     
     while True:
         filename_ = jpg_files[lineIdx]
@@ -154,6 +158,8 @@ def image_buffer_loader():
         lineIdx = lineIdx + 1
         if lineIdx >= max_training_index:
             lineIdx = 0
+            epoch = epoch + 1
+            print 'epoch = ', str(epoch)
 
         current_buff_index = current_buff_index + 1
         if current_buff_index >= image_buffer_size:
@@ -202,21 +208,38 @@ class SimpleGenerator:
 
             # weights
             self.gen_TRANSPOSED_CONV_W1 = tf.get_variable("GEN_TRANSPOSED_CONV_W1", 
-                                                          shape=[2, 2, 1024, NOISE_VECTOR_DEPTH],
+                                                          shape=[4, 4, 1024, NOISE_VECTOR_DEPTH],
                                                       initializer=tf.contrib.layers.xavier_initializer())
+            
             self.gen_TRANSPOSED_CONV_W2 = tf.get_variable("GEN_TRANSPOSED_CONV_W2", 
-                                                          shape=[2, 2, 512, 1024],
+                                                          shape=[4, 4, 512, 1024],
                                                       initializer=tf.contrib.layers.xavier_initializer())
+            
             self.gen_TRANSPOSED_CONV_W3 = tf.get_variable("GEN_TRANSPOSED_CONV_W3", 
-                                                          shape=[2, 2, 256, 512],
+                                                          shape=[4, 4, 256, 512],
                                                       initializer=tf.contrib.layers.xavier_initializer())
+            
             self.gen_TRANSPOSED_CONV_W4 = tf.get_variable("GEN_TRANSPOSED_CONV_W4", 
-                                                          shape=[2, 2, 256, 256],
+                                                          shape=[4, 4, 256, 256],
                                                       initializer=tf.contrib.layers.xavier_initializer())
+            
             self.gen_TRANSPOSED_CONV_W5 = tf.get_variable("GEN_TRANSPOSED_CONV_W5", 
-                                                          shape=[2, 2, 256, 256],
+                                                          shape=[4, 4, 256, 256],
                                                       initializer=tf.contrib.layers.xavier_initializer())
-            self.gen_TRANSPOSED_CONV_W6 = tf.get_variable("GEN_TRANSPOSED_CONV_W6", shape=[2, 2, 3, 256],
+            
+            self.gen_TRANSPOSED_CONV_W6 = tf.get_variable("GEN_TRANSPOSED_CONV_W6", 
+                                                          shape=[4, 4, 256, 256],
+                                                      initializer=tf.contrib.layers.xavier_initializer())
+            
+            self.gen_TRANSPOSED_CONV_W7 = tf.get_variable("GEN_TRANSPOSED_CONV_W7", 
+                                                          shape=[4, 4, 256, 256],
+                                                      initializer=tf.contrib.layers.xavier_initializer())
+            
+            self.gen_TRANSPOSED_CONV_W8 = tf.get_variable("GEN_TRANSPOSED_CONV_W8", 
+                                                          shape=[4, 4, 256, 256],
+                                                      initializer=tf.contrib.layers.xavier_initializer())
+            
+            self.gen_TRANSPOSED_CONV_W9 = tf.get_variable("GEN_TRANSPOSED_CONV_W9", shape=[4, 4, 3, 256],
                                                       initializer=tf.contrib.layers.xavier_initializer())
 
             # biases
@@ -225,27 +248,32 @@ class SimpleGenerator:
             self.gen_BIAS_3 = tf.Variable(tf.zeros([1, 256]), name="GEN_BIAS_3")
             self.gen_BIAS_4 = tf.Variable(tf.zeros([1, 256]), name="GEN_BIAS_4")
             self.gen_BIAS_5 = tf.Variable(tf.zeros([1, 256]), name="GEN_BIAS_5")
-            self.gen_BIAS_6 = tf.Variable(tf.zeros([1, 3]), name="GEN_BIAS_6")
+            self.gen_BIAS_6 = tf.Variable(tf.zeros([1, 256]), name="GEN_BIAS_6")
+            self.gen_BIAS_7 = tf.Variable(tf.zeros([1, 256]), name="GEN_BIAS_7")
+            self.gen_BIAS_8 = tf.Variable(tf.zeros([1, 256]), name="GEN_BIAS_8")
+            self.gen_BIAS_9 = tf.Variable(tf.zeros([1, 3]), name="GEN_BIAS_9")
 
             #tf.global_variables_initializer().run()
 
             self.var_list_gen = [self.gen_TRANSPOSED_CONV_W1, self.gen_TRANSPOSED_CONV_W2, self.gen_TRANSPOSED_CONV_W3,
                                  self.gen_TRANSPOSED_CONV_W4, self.gen_TRANSPOSED_CONV_W5, self.gen_TRANSPOSED_CONV_W6,
+                                 self.gen_TRANSPOSED_CONV_W7, self.gen_TRANSPOSED_CONV_W8, self.gen_TRANSPOSED_CONV_W9,
                                  self.gen_BIAS_1, self.gen_BIAS_2, self.gen_BIAS_3,
-                                 self.gen_BIAS_4, self.gen_BIAS_5, self.gen_BIAS_6]
+                                 self.gen_BIAS_4, self.gen_BIAS_5, self.gen_BIAS_6,
+                                 self.gen_BIAS_7, self.gen_BIAS_8, self.gen_BIAS_9]
 
     def forward(self, x):
         # graph
         gen_TRANS_CONV_1 = tf.nn.relu(tf.nn.conv2d_transpose(x,
                                                               self.gen_TRANSPOSED_CONV_W1,
-                                                              output_shape=[BATCH_SIZE, 2, 2, 1024],
-                                                              strides=[1, 2, 2, 1],
+                                                              output_shape=[BATCH_SIZE, 4, 4, 1024],
+                                                              strides=[1, 1, 1, 1],
                                                               padding="SAME") + self.gen_BIAS_1)
 
         gen_TRANS_CONV_2 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_1,
                                                              self.gen_TRANSPOSED_CONV_W2,
                                                              output_shape=[BATCH_SIZE, 4, 4, 512],
-                                                             strides=[1, 2, 2, 1],
+                                                             strides=[1, 1, 1, 1],
                                                              padding="SAME") + self.gen_BIAS_2)
 
         gen_TRANS_CONV_3 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_2,
@@ -265,14 +293,32 @@ class SimpleGenerator:
                                                               output_shape=[BATCH_SIZE, 32, 32, 256],
                                                               strides=[1, 2, 2, 1],
                                                               padding="SAME") + self.gen_BIAS_5)
+        
+        gen_TRANS_CONV_6 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_5,
+                                                              self.gen_TRANSPOSED_CONV_W6,
+                                                              output_shape=[BATCH_SIZE, 32, 32, 256],
+                                                              strides=[1, 1, 1, 1],
+                                                              padding="SAME") + self.gen_BIAS_6)
+        
+        gen_TRANS_CONV_7 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_6,
+                                                              self.gen_TRANSPOSED_CONV_W7,
+                                                              output_shape=[BATCH_SIZE, 32, 32, 256],
+                                                              strides=[1, 1, 1, 1],
+                                                              padding="SAME") + self.gen_BIAS_7)
+        
+        gen_TRANS_CONV_8 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_7,
+                                                              self.gen_TRANSPOSED_CONV_W8,
+                                                              output_shape=[BATCH_SIZE, 32, 32, 256],
+                                                              strides=[1, 1, 1, 1],
+                                                              padding="SAME") + self.gen_BIAS_8)
 
-        gen_TRANS_CONV_6 = tf.nn.conv2d_transpose(gen_TRANS_CONV_5,
-                                                   self.gen_TRANSPOSED_CONV_W6,
+        gen_TRANS_CONV_9 = tf.nn.conv2d_transpose(gen_TRANS_CONV_8,
+                                                   self.gen_TRANSPOSED_CONV_W9,
                                                    output_shape=[BATCH_SIZE, 64, 64, 3],
                                                    strides=[1, 2, 2, 1],
-                                                   padding="SAME") + self.gen_BIAS_6
+                                                   padding="SAME") + self.gen_BIAS_9
 
-        gen_hypothesis = tf.sigmoid(gen_TRANS_CONV_6)
+        gen_hypothesis = tf.sigmoid(gen_TRANS_CONV_9)
 
         return gen_hypothesis
 
@@ -305,21 +351,21 @@ class SimpleDiscriminator:
             # weights for convolutional layers
             self.disc_CNN_W1 = tf.get_variable("DISC_CNN_W1", shape=[5, 5, 3, 16], initializer=tf.contrib.layers.xavier_initializer())
             self.disc_CNN_W2 = tf.get_variable("DISC_CNN_W2", shape=[3, 3, 16, 32], initializer=tf.contrib.layers.xavier_initializer())
-            self.disc_CNN_W3 = tf.get_variable("DISC_CNN_W3", shape=[3, 3, 32, 64], initializer=tf.contrib.layers.xavier_initializer())
+            self.disc_CNN_W3 = tf.get_variable("DISC_CNN_W3", shape=[3, 3, 32, 32], initializer=tf.contrib.layers.xavier_initializer())
 
-            self.disc_FC_W1 = tf.get_variable("DISC_FC_W1", shape=[1024, 1000],
+            self.disc_FC_W1 = tf.get_variable("DISC_FC_W1", shape=[1024, 20],
                                        initializer=tf.contrib.layers.xavier_initializer())
-            self.disc_FC_W2 = tf.get_variable("DISC_FC_W2", shape=[1000, 1000],
+            self.disc_FC_W2 = tf.get_variable("DISC_FC_W2", shape=[20, 20],
                                        initializer=tf.contrib.layers.xavier_initializer())
-            self.disc_FC_W3 = tf.get_variable("DISC_FC_W3", shape=[1000, 1],
+            self.disc_FC_W3 = tf.get_variable("DISC_FC_W3", shape=[20, 1],
                                        initializer=tf.contrib.layers.xavier_initializer())
 
             # biases
             self.disc_BIAS_CONV_1 = tf.Variable(tf.zeros([1, 16]), name="DISC_ConvBias1")
             self.disc_BIAS_CONV_2 = tf.Variable(tf.zeros([1, 32]), name="DISC_ConvBias2")
-            self.disc_BIAS_CONV_3 = tf.Variable(tf.zeros([1, 64]), name="DISC_ConvBias3")
-            self.disc_BIAS_FC_W1 = tf.Variable(tf.zeros([1, 1000]), name="DISC_FCBias1")
-            self.disc_BIAS_FC_W2 = tf.Variable(tf.zeros([1, 1000]), name="DISC_FCBias2")
+            self.disc_BIAS_CONV_3 = tf.Variable(tf.zeros([1, 32]), name="DISC_ConvBias3")
+            self.disc_BIAS_FC_W1 = tf.Variable(tf.zeros([1, 20]), name="DISC_FCBias1")
+            self.disc_BIAS_FC_W2 = tf.Variable(tf.zeros([1, 20]), name="DISC_FCBias2")
             self.disc_BIAS_FC_W3 = tf.Variable(tf.zeros([1, 1]), name="DISC_FCBias3")
 
             self.var_list_disc = [self.disc_CNN_W1, self.disc_CNN_W2, self.disc_CNN_W3,

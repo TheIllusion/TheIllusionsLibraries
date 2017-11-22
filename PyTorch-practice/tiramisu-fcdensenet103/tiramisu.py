@@ -5,7 +5,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from sub_modules import Layer, TransitionUp, TransitionDown
+from sub_modules import Layer, TransitionUp, TransitionDown, DenseBlock
 
 # gpu mode
 is_gpu_mode = False
@@ -40,26 +40,27 @@ class Tiramisu(nn.Module):
         """
         super(Tiramisu, self).__init__()
 
-        model = [Layer(32)]
-
-        #model += [TransitionUp(32)]
-
-        #model += [TransitionDown(32)]
-
-        self.model = nn.Sequential(*model)
-
-        '''
-        # input size is 32x32x3 for cifar-10 dataset
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=128, kernel_size=3, stride=1, bias=True)
-        self.conv2 = nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, bias=True)
-        self.conv3 = nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=1, bias=True)
-        self.conv4 = nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=2, bias=True)
-        self.conv5 = nn.Conv2d(in_channels=256, out_channels=256, kernel_size=3, stride=2, bias=True)
-
-        # size of the feature maps would be 4x4 at this point
-        self.fc1 = nn.Linear(6400, 500)
-        self.fc2 = nn.Linear(500, 10)
-        '''
+        # define parameters
+        # first convolution
+        self.first_conv_layer = Layer(48)
+        # first dense block
+        self.first_dense_block = DenseBlock(112)
+        # first transition down
+        self.first_transition_down = TransitionDown(32)
+        # second transition down
+        self.second_transition_down = TransitionDown(32)
+        # middle dense block
+        self.middle_dense_block = DenseBlock(32)
+        # later-first transition up
+        self.later_first_transition_up = TransitionUp(32)
+        # later-first dense block
+        self.later_first_dense_block = DenseBlock(32)
+        # later-second transition up
+        self.later_second_transition_up = TransitionUp(32)
+        # later-second dense block
+        self.later_second_dense_block = DenseBlock(32)
+        # last convolution
+        self.last_conv_layer = Layer(32)
 
     def forward(self, x):
         """
@@ -68,20 +69,33 @@ class Tiramisu(nn.Module):
         well as arbitrary operators on Variables.
         """
 
-        '''
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = F.relu(self.conv3(x))
-        x = F.relu(self.conv4(x))
-        x = F.relu(self.conv5(x))
-        x = x.view(-1, 6400)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        ######################################################################
+        # define the forward connections
+        ######################################################################
+        x_first_conv_out = self.first_conv_layer(x)
+        x_first_dense_out = self.first_dense_block(x_first_conv_out)
+        # concatenate filters
+        x_first_dense_out_concat = torch.cat((x_first_conv_out, x_first_dense_out), 0)
+        x_first_td_out = self.first_transition_down(x_first_dense_out_concat)
+        x_second_dense_out = self.later_second_dense_block(x_first_td_out)
+        # concatenate filters
+        x_second_dense_out_concat = torch.cat((x_first_td_out, x_second_dense_out), 0)
+        x_second_td_out = self.second_transition_down(x_second_dense_out_concat)
+        x_middle_dense_out = self.middle_dense_block(x_second_td_out)
 
-        return F.log_softmax(x)
-        '''
-
-        return self.model(x)
+        ######################################################################
+        # define the backward connections
+        ######################################################################
+        x_later_first_tu_out = self.later_first_transition_up(x_middle_dense_out)
+        # concatenate filters (Skip-Connection)
+        x_later_first_tu_out_concat = torch.cat((x_later_first_tu_out, x_second_dense_out_concat), 0)
+        x_later_first_dense_out = self.later_first_dense_block(x_later_first_tu_out_concat)
+        x_later_second_tu_out = self.later_second_transition_up(x_later_first_dense_out)
+        # concatenate filters (Skip-Connection)
+        x_later_second_tu_out_concat = torch.cat((x_later_second_tu_out, x_first_dense_out_concat), 0)
+        x_later_second_dense_out = self.later_second_dense_block(x_later_second_tu_out_concat)
+        x_last_conv_out = self.last_conv_layer(x_later_second_dense_out)
+        return x_last_conv_out
 
 if __name__ == "__main__":
     print 'main'

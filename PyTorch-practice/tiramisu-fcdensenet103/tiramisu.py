@@ -20,17 +20,21 @@ transform = transforms.Compose(
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 # cifar10 dataset
+'''
+CIFA-10 dataset (Docs: https://www.cs.toronto.edu/~kriz/cifar.html)
+The CIFAR-10 dataset consists of 60000 32x32 colour images in 10 classes, with 6000 images per class. There are 50000 training images and 10000 test images. 
+'''
 train_set = datasets.CIFAR10(cifar10_data_dir, train=True,
                              transform=transform, target_transform=None,
                              download=True)
 
-train_loader = DataLoader(train_set, batch_size=30, shuffle=True, num_workers=2)
+train_loader = DataLoader(train_set, batch_size=1, shuffle=True, num_workers=2)
 
 test_set = datasets.CIFAR10(cifar10_data_dir, train=False,
                             transform=transform, target_transform=None,
                             download=True)
 
-test_loader = DataLoader(test_set, batch_size=30, shuffle=False, num_workers=2)
+test_loader = DataLoader(test_set, batch_size=1, shuffle=False, num_workers=2)
 
 class Tiramisu(nn.Module):
     def __init__(self):
@@ -42,25 +46,63 @@ class Tiramisu(nn.Module):
 
         # define parameters
         # first convolution
-        self.first_conv_layer = Layer(48)
+        self.first_conv_layer = Layer(3, 48)
+
         # first dense block
-        self.first_dense_block = DenseBlock(112)
+        self.first_dense_block = DenseBlock(layers=4, in_channels=48, k_feature_maps=16)
         # first transition down
-        self.first_transition_down = TransitionDown(32)
+        self.first_transition_down = TransitionDown(112)
+
+        # second dense block
+        self.second_dense_block = DenseBlock(layers=5, in_channels=112, k_feature_maps=16)
         # second transition down
-        self.second_transition_down = TransitionDown(32)
+        self.second_transition_down = TransitionDown(192)
+        # third dense block
+
+        self.third_dense_block = DenseBlock(layers=7, in_channels=192, k_feature_maps=16)
+        # third transition down
+        self.third_transition_down = TransitionDown(304)
+
+        # fourth dense block
+        self.fourth_dense_block = DenseBlock(layers=10, in_channels=304, k_feature_maps=16)
+        # fourth transition down
+        self.fourth_transition_down = TransitionDown(464)
+
+        # fifth dense block
+        self.fifth_dense_block = DenseBlock(layers=12, in_channels=464, k_feature_maps=16)
+        # fifth transition down
+        self.fifth_transition_down = TransitionDown(656)
+
         # middle dense block
-        self.middle_dense_block = DenseBlock(32)
+        self.middle_dense_block = DenseBlock(layers=15, in_channels=656, k_feature_maps=16)
+
         # later-first transition up
-        self.later_first_transition_up = TransitionUp(32)
+        self.later_first_transition_up = TransitionUp(896)
         # later-first dense block
-        self.later_first_dense_block = DenseBlock(32)
+        self.later_first_dense_block = DenseBlock(layers=12, in_channels=896, k_feature_maps=16)
+
         # later-second transition up
-        self.later_second_transition_up = TransitionUp(32)
+        self.later_second_transition_up = TransitionUp(1088)
         # later-second dense block
-        self.later_second_dense_block = DenseBlock(32)
-        # last convolution
-        self.last_conv_layer = Layer(32)
+        self.later_second_dense_block = DenseBlock(layers=10, in_channels=1088, k_feature_maps=16)
+
+        # later-third transition up
+        self.later_third_transition_up = TransitionUp(816)
+        # later-third dense block
+        self.later_third_dense_block = DenseBlock(layers=7, in_channels=816, k_feature_maps=16)
+
+        # later-fourth transition up
+        self.later_fourth_transition_up = TransitionUp(578)
+        # later-fourth dense block
+        self.later_fourth_dense_block = DenseBlock(layers=5, in_channels=578, k_feature_maps=16)
+
+        # later-fifth transition up
+        self.later_fifth_transition_up = TransitionUp(384)
+        # later-fifth dense block
+        self.later_fifth_dense_block = DenseBlock(layers=4, in_channels=384, k_feature_maps=16)
+
+        # last convolution - cifar10 has 10 classes
+        self.last_conv_layer = Layer(256, 10)
 
     def forward(self, x):
         """
@@ -73,28 +115,64 @@ class Tiramisu(nn.Module):
         # define the forward connections
         ######################################################################
         x_first_conv_out = self.first_conv_layer(x)
+
         x_first_dense_out = self.first_dense_block(x_first_conv_out)
         # concatenate filters
-        x_first_dense_out_concat = torch.cat((x_first_conv_out, x_first_dense_out), 0)
+        x_first_dense_out_concat = torch.cat((x_first_conv_out, x_first_dense_out), 1)
         x_first_td_out = self.first_transition_down(x_first_dense_out_concat)
-        x_second_dense_out = self.later_second_dense_block(x_first_td_out)
+
+        x_second_dense_out = self.second_dense_block(x_first_td_out)
         # concatenate filters
-        x_second_dense_out_concat = torch.cat((x_first_td_out, x_second_dense_out), 0)
+        x_second_dense_out_concat = torch.cat((x_first_td_out, x_second_dense_out), 1)
         x_second_td_out = self.second_transition_down(x_second_dense_out_concat)
-        x_middle_dense_out = self.middle_dense_block(x_second_td_out)
+
+        x_third_dense_out = self.third_dense_block(x_second_td_out)
+        # concatenate filters
+        x_third_dense_out_concat = torch.cat((x_second_td_out, x_third_dense_out), 1)
+        x_third_td_out = self.third_transition_down(x_third_dense_out_concat)
+
+        x_fourth_dense_out = self.fourth_dense_block(x_third_td_out)
+        # concatenate filters
+        x_fourth_dense_out_concat = torch.cat((x_third_td_out, x_fourth_dense_out), 1)
+        x_fourth_td_out = self.fourth_transition_down(x_fourth_dense_out_concat)
+
+        x_fifth_dense_out = self.fifth_dense_block(x_fourth_td_out)
+        # concatenate filters
+        x_fifth_dense_out_concat = torch.cat((x_fourth_td_out, x_fifth_dense_out), 1)
+        x_fifth_td_out = self.fifth_transition_down(x_fifth_dense_out_concat)
+
+        x_middle_dense_out = self.middle_dense_block(x_fifth_td_out)
 
         ######################################################################
         # define the backward connections
         ######################################################################
         x_later_first_tu_out = self.later_first_transition_up(x_middle_dense_out)
         # concatenate filters (Skip-Connection)
-        x_later_first_tu_out_concat = torch.cat((x_later_first_tu_out, x_second_dense_out_concat), 0)
+        x_later_first_tu_out_concat = torch.cat((x_later_first_tu_out, x_fifth_dense_out_concat), 1)
         x_later_first_dense_out = self.later_first_dense_block(x_later_first_tu_out_concat)
+
         x_later_second_tu_out = self.later_second_transition_up(x_later_first_dense_out)
         # concatenate filters (Skip-Connection)
-        x_later_second_tu_out_concat = torch.cat((x_later_second_tu_out, x_first_dense_out_concat), 0)
+        x_later_second_tu_out_concat = torch.cat((x_later_second_tu_out, x_fourth_dense_out_concat), 1)
         x_later_second_dense_out = self.later_second_dense_block(x_later_second_tu_out_concat)
-        x_last_conv_out = self.last_conv_layer(x_later_second_dense_out)
+
+        x_later_third_tu_out = self.later_third_transition_up(x_later_second_dense_out)
+        # concatenate filters (Skip-Connection)
+        x_later_third_tu_out_concat = torch.cat((x_later_third_tu_out, x_third_dense_out_concat), 1)
+        x_later_third_dense_out = self.later_third_dense_block(x_later_third_tu_out_concat)
+
+        x_later_fourth_tu_out = self.later_fourth_transition_up(x_later_third_dense_out)
+        # concatenate filters (Skip-Connection)
+        x_later_fourth_tu_out_concat = torch.cat((x_later_fourth_tu_out, x_second_dense_out_concat), 1)
+        x_later_fourth_dense_out = self.later_fourth_dense_block(x_later_fourth_tu_out_concat)
+
+        x_later_fifth_tu_out = self.later_fifth_transition_up(x_later_fourth_dense_out)
+        # concatenate filters (Skip-Connection)
+        x_later_fifth_tu_out_concat = torch.cat((x_later_fifth_tu_out, x_first_dense_out_concat), 1)
+        x_later_fifth_dense_out = self.later_fifth_dense_block(x_later_fifth_tu_out_concat)
+
+        x_last_conv_out = self.last_conv_layer(x_later_fifth_dense_out)
+
         return x_last_conv_out
 
 if __name__ == "__main__":

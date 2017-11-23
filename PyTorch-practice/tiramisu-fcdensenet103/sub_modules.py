@@ -8,14 +8,14 @@ import torchvision.transforms as transforms
 
 # Layer module from the paper - Table 1.
 class Layer(nn.Module):
-    def __init__(self, in_channels):
+    def __init__(self, in_channels, out_channels):
 
         super(Layer, self).__init__()
 
         self.drop_out = nn.Dropout2d(p=0.2)
-        self.conv = nn.Conv2d(in_channels=in_channels, out_channels=in_channels,
-                              kernel_size=3, stride=1, bias=True)
-        self.batch_norm = nn.BatchNorm2d(in_channels)
+        self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels,
+                              kernel_size=3, stride=1, padding=1, bias=True)
+        self.batch_norm = nn.BatchNorm2d(out_channels)
 
     def forward(self, x):
         x = self.drop_out(x)
@@ -31,8 +31,9 @@ class TransitionDown(nn.Module):
 
         self.drop_out = nn.Dropout2d(p=0.2)
         self.conv = nn.Conv2d(in_channels=in_channels, out_channels=in_channels,
-                              kernel_size=1, stride=1, bias=True)
-        self.batch_norm = nn.BatchNorm2d(in_channels)
+                              kernel_size=1, stride=1, padding=1, bias=True)
+        out_channels = in_channels
+        self.batch_norm = nn.BatchNorm2d(out_channels)
 
     def forward(self, x):
         x = F.max_pool2d(input=x, kernel_size=2)
@@ -68,43 +69,38 @@ class TransitionUp(nn.Module):
         x = self.transpoed_conv(x)
         return x
 
-# Dense Block of 4 layers. - Figure 2.
+# Dense Block - Figure 2.
 class DenseBlock(nn.Module):
-    def __init__(self, in_channels):
+    def __init__(self, layers, in_channels, k_feature_maps):
         super(DenseBlock, self).__init__()
 
-        first_layer = Layer(in_channels)
+        self.num_layers = layers
+        self.layers_list = []
+        self.forwarded_output_list = []
 
-        second_layer = Layer(in_channels)
-
-        third_layer = Layer(in_channels)
-
-        fourth_layer = Layer(in_channels)
+        # add layers to the list
+        for i in xrange(layers):
+            self.layers_list.append(Layer(in_channels, k_feature_maps))
 
     def forward(self, x):
 
-        # forward
-        x_second_out = self.first_layer.forward(x)
+        # feedforward x to the first layer and add the result to the list
+        x_first_out = self.layers_list[0].forward(x)
+        self.forwarded_output_list.append(x_first_out)
+        prev_x = x
 
-        # concatenate the output and the previous input
-        x_second_out_concat = torch.cat((x, x_second_out), 0)
+        # feedforward process from the second to the last layer
+        for i in range(1, self.num_layers):
+            # concatenate filters
+            concatenated_filters = torch.cat((self.forwarded_output_list[i-1], prev_x), 1)
+            # forward
+            x_next_out = self.layers_list[i].forward(concatenated_filters)
+            # add to the list
+            self.forwarded_output_list.append(x_next_out)
+            # prepare the temporary variable for the next loop
+            prev_x = concatenated_filters
 
-        # forward
-        x_third_out = self.second_layer.forward(x_second_out_concat)
+        # prepare the output (this will have (k_feature_maps * layers) feature maps)
+        output_x = torch.cat(self.forwarded_output_list, 1)
 
-        # concatenate the output and the previous input
-        x_third_out_concat = torch.cat((x_second_out_concat, x_third_out), 0)
-
-        # forward
-        x_fourth_out = self.third_layer.forward(x_third_out_concat)
-
-        # concatenate the output and the previous input
-        x_fourth_out_concat = torch.cat((x_third_out_concat, x_fourth_out), 0)
-
-        # forward
-        x_fifth_out = self.fourth_layer.forward(x_fourth_out_concat)
-
-        # concatenate the output and the previous input
-        x_fifth_out_concat = torch.cat((x_fourth_out_concat, x_fifth_out), 0)
-
-        return x_fifth_out_concat
+        return output_x

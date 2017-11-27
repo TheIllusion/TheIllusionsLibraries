@@ -31,7 +31,7 @@ class TransitionDown(nn.Module):
 
         self.drop_out = nn.Dropout2d(p=0.2)
         self.conv = nn.Conv2d(in_channels=in_channels, out_channels=in_channels,
-                              kernel_size=1, stride=1, padding=1, bias=True)
+                              kernel_size=1, stride=1, bias=True)
         out_channels = in_channels
         self.batch_norm = nn.BatchNorm2d(out_channels)
 
@@ -63,7 +63,7 @@ class TransitionUp(nn.Module):
         '''
 
         self.transpoed_conv = nn.ConvTranspose2d(in_channels=in_channels, out_channels=in_channels,
-                                                 kernel_size=3, stride=2, bias=True)
+                                                 kernel_size=2, stride=2, padding=0, output_padding=0, bias=True)
 
     def forward(self, x):
         x = self.transpoed_conv(x)
@@ -76,31 +76,34 @@ class DenseBlock(nn.Module):
 
         self.num_layers = layers
         self.layers_list = []
-        self.forwarded_output_list = []
 
         # add layers to the list
         for i in xrange(layers):
-            self.layers_list.append(Layer(in_channels, k_feature_maps))
+            self.layers_list.append(Layer(in_channels + i*k_feature_maps, k_feature_maps))
 
     def forward(self, x):
 
         # feedforward x to the first layer and add the result to the list
         x_first_out = self.layers_list[0].forward(x)
-        self.forwarded_output_list.append(x_first_out)
+
+        # initialize the list
+        forwarded_output_list = []
+
+        forwarded_output_list.append(x_first_out)
         prev_x = x
 
         # feedforward process from the second to the last layer
         for i in range(1, self.num_layers):
             # concatenate filters
-            concatenated_filters = torch.cat((self.forwarded_output_list[i-1], prev_x), 1)
+            concatenated_filters = torch.cat((forwarded_output_list[i-1], prev_x), 1)
             # forward
             x_next_out = self.layers_list[i].forward(concatenated_filters)
             # add to the list
-            self.forwarded_output_list.append(x_next_out)
+            forwarded_output_list.append(x_next_out)
             # prepare the temporary variable for the next loop
             prev_x = concatenated_filters
 
         # prepare the output (this will have (k_feature_maps * layers) feature maps)
-        output_x = torch.cat(self.forwarded_output_list, 1)
+        output_x = torch.cat(forwarded_output_list, 1)
 
         return output_x

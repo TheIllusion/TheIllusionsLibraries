@@ -77,32 +77,35 @@ class Tiramisu(nn.Module):
         self.middle_dense_block = DenseBlock(layers=15, in_channels=656, k_feature_maps=16)
 
         # later-first transition up
-        self.later_first_transition_up = TransitionUp(896)
+        #self.later_first_transition_up = TransitionUp(896)
+        self.later_first_transition_up = TransitionUp(240)
         # later-first dense block
         self.later_first_dense_block = DenseBlock(layers=12, in_channels=896, k_feature_maps=16)
 
         # later-second transition up
-        self.later_second_transition_up = TransitionUp(1088)
+        #self.later_second_transition_up = TransitionUp(1088)
+        self.later_second_transition_up = TransitionUp(192)
         # later-second dense block
-        self.later_second_dense_block = DenseBlock(layers=10, in_channels=1088, k_feature_maps=16)
+        self.later_second_dense_block = DenseBlock(layers=10, in_channels=656, k_feature_maps=16)
 
         # later-third transition up
-        self.later_third_transition_up = TransitionUp(816)
+        self.later_third_transition_up = TransitionUp(160)
         # later-third dense block
-        self.later_third_dense_block = DenseBlock(layers=7, in_channels=816, k_feature_maps=16)
+        self.later_third_dense_block = DenseBlock(layers=7, in_channels=464, k_feature_maps=16)
 
         # later-fourth transition up
-        self.later_fourth_transition_up = TransitionUp(578)
+        self.later_fourth_transition_up = TransitionUp(112)
         # later-fourth dense block
-        self.later_fourth_dense_block = DenseBlock(layers=5, in_channels=578, k_feature_maps=16)
+        self.later_fourth_dense_block = DenseBlock(layers=5, in_channels=304, k_feature_maps=16)
 
         # later-fifth transition up
-        self.later_fifth_transition_up = TransitionUp(384)
+        self.later_fifth_transition_up = TransitionUp(80)
         # later-fifth dense block
-        self.later_fifth_dense_block = DenseBlock(layers=4, in_channels=384, k_feature_maps=16)
+        self.later_fifth_dense_block = DenseBlock(layers=4, in_channels=192, k_feature_maps=16)
 
         # last convolution - cifar10 has 10 classes
-        self.last_conv_layer = Layer(256, 10)
+        #self.last_conv_layer = Layer(64, 10)
+        self.last_conv_layer = Layer(64, 3)
 
     def forward(self, x):
         """
@@ -222,7 +225,7 @@ if __name__ == "__main__":
             # Calling the step function on an Optimizer makes an update to its parameters
             optimizer.step()
 
-            if i % 100 == 0:
+            if i % 1 == 0:
                 print '-----------------------------------'
                 print 'i = ', str(i)
                 print 'loss = ', str(loss)

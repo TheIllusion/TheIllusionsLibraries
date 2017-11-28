@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 from sub_modules import Layer, TransitionUp, TransitionDown, DenseBlock
+import data_loader
 
 # gpu mode
 is_gpu_mode = False
@@ -230,9 +231,10 @@ if __name__ == "__main__":
                 print 'i = ', str(i)
                 print 'loss = ', str(loss)
 
+            print 'is_main_alive(before) = ', data_loader.is_main_alive
+            data_loader.is_main_alive = True
+            print 'is_main_alive(after) = ', data_loader.is_main_alive
+
         _, predicted = torch.max(outputs.data, 1)
         print 'output = ', predicted
         print 'target cls = ', labels
-
-
-

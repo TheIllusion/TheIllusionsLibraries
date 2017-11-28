@@ -77,6 +77,7 @@ def image_buffer_loader():
                 break
 
         if exit_notification == True:
+            print 'Exit'
             break
 
         # Input Image
@@ -137,10 +138,10 @@ def main_alive_checker():
             time.sleep(5)
             if is_main_alive == False:
                 exit_notification = True
-                break;
+                print 'Exit!'
+                break
             else:
                 is_main_alive = False
-
 
 ##############################################################################################
 

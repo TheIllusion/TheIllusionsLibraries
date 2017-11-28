@@ -6,10 +6,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 from sub_modules import Layer, TransitionUp, TransitionDown, DenseBlock
+import time, cv2
+import numpy as np
 import data_loader
 
 # gpu mode
 is_gpu_mode = False
+
+# batch size
+BATCH_SIZE = 1
+TOTAL_ITERATION = 100
 
 # macbook pro
 cifar10_data_dir = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/fashion-mnist/data/'
@@ -29,13 +35,13 @@ train_set = datasets.CIFAR10(cifar10_data_dir, train=True,
                              transform=transform, target_transform=None,
                              download=True)
 
-train_loader = DataLoader(train_set, batch_size=1, shuffle=True, num_workers=2)
+train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=2)
 
 test_set = datasets.CIFAR10(cifar10_data_dir, train=False,
                             transform=transform, target_transform=None,
                             download=True)
 
-test_loader = DataLoader(test_set, batch_size=1, shuffle=False, num_workers=2)
+test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
 
 class Tiramisu(nn.Module):
     def __init__(self):
@@ -199,6 +205,13 @@ if __name__ == "__main__":
     # optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
     optimizer = torch.optim.Adam(tiramisu_model.parameters(), lr=learning_rate)
 
+    # read imgs
+    image_buff_read_index = 0
+
+    input_img = np.empty(shape=(BATCH_SIZE, 512, 512, 3))
+    answer_img = np.empty(shape=(BATCH_SIZE, 512, 512, 3))
+
+    '''            
     for epoch in range(50):
         for i, data in enumerate(train_loader, 0):
 
@@ -210,31 +223,62 @@ if __name__ == "__main__":
                 inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
             else:
                 inputs, labels = Variable(inputs), Variable(labels)
+    '''
 
-            # Before the backward pass, use the optimizer object to zero all of the
-            # gradients for the variables it will update (which are the learnable weights
-            # of the model)
-            optimizer.zero_grad()
+    for i in range(TOTAL_ITERATION):
 
-            outputs = tiramisu_model(inputs)
-            #loss = criterion(outputs, labels)
-            loss = criterion(outputs, inputs)
+        # print 'iter: ', str(iter)
+        exit_notification = False
 
-            # Backward pass: compute gradient of the loss with respect to model parameters
-            loss.backward()
+        for j in range(BATCH_SIZE):
 
-            # Calling the step function on an Optimizer makes an update to its parameters
-            optimizer.step()
-
-            if i % 1 == 0:
-                print '-----------------------------------'
-                print 'i = ', str(i)
-                print 'loss = ', str(loss)
-
-            print 'is_main_alive(before) = ', data_loader.is_main_alive
             data_loader.is_main_alive = True
-            print 'is_main_alive(after) = ', data_loader.is_main_alive
 
-        _, predicted = torch.max(outputs.data, 1)
-        print 'output = ', predicted
-        print 'target cls = ', labels
+            while data_loader.buff_status[image_buff_read_index] == 'empty':
+                if exit_notification == True:
+                    break
+
+                time.sleep(1)
+                if data_loader.buff_status[image_buff_read_index] == 'filled':
+                    break
+
+            if exit_notification == True:
+                break
+
+            np.copyto(input_img[i], data_loader.input_buff[image_buff_read_index])
+            np.copyto(answer_img[i], data_loader.answer_buff[image_buff_read_index])
+
+            data_loader.buff_status[image_buff_read_index] = 'empty'
+
+            image_buff_read_index = image_buff_read_index + 1
+            if image_buff_read_index >= data_loader.image_buffer_size:
+                image_buff_read_index = 0
+
+            if is_gpu_mode:
+                inputs, answers = Variable(input_img.cuda()), Variable(answer_img.cuda())
+            else:
+                inputs, answers = torch.from_numpy(input_img).float(), torch.from_numpy(answer_img).float()
+
+        # Before the backward pass, use the optimizer object to zero all of the
+        # gradients for the variables it will update (which are the learnable weights
+        # of the model)
+        optimizer.zero_grad()
+
+        outputs = tiramisu_model(inputs)
+        #loss = criterion(outputs, labels)
+        loss = criterion(outputs, answers)
+
+        # Backward pass: compute gradient of the loss with respect to model parameters
+        loss.backward()
+
+        # Calling the step function on an Optimizer makes an update to its parameters
+        optimizer.step()
+
+        if i % 1 == 0:
+            print '-----------------------------------'
+            print 'i = ', str(i)
+            print 'loss = ', str(loss)
+
+    _, predicted = torch.max(outputs.data, 1)
+    print 'output = ', predicted
+    #print 'target cls = ', labels

@@ -8,13 +8,13 @@ import torchvision.transforms as transforms
 
 # Layer module from the paper - Table 1.
 class Layer(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, kernel_size, in_channels, out_channels):
 
         super(Layer, self).__init__()
 
         self.drop_out = nn.Dropout2d(p=0.2)
         self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels,
-                              kernel_size=3, stride=1, padding=1, bias=True)
+                              kernel_size=kernel_size, stride=1, padding=1, bias=True)
         self.batch_norm = nn.BatchNorm2d(out_channels)
 
     def forward(self, x):
@@ -79,7 +79,9 @@ class DenseBlock(nn.Module):
 
         # add layers to the list
         for i in xrange(layers):
-            self.layers_list.append(Layer(in_channels + i*k_feature_maps, k_feature_maps))
+            self.layers_list.append(Layer(kernel_size=3,
+                                          in_channels=in_channels + i*k_feature_maps,
+                                          out_channels=k_feature_maps))
 
         # gpu
         if is_gpu_mode:

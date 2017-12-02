@@ -15,7 +15,10 @@ is_gpu_mode = True
 
 # batch size
 BATCH_SIZE = 3
-TOTAL_ITERATION = 100
+TOTAL_ITERATION = 10000
+
+# model saving (iterations)
+MODEL_SAVING_FREQUENCY = 1000
 
 # macbook pro
 #cifar10_data_dir = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/fashion-mnist/data/'
@@ -56,7 +59,7 @@ class Tiramisu(nn.Module):
 
         # define parameters
         # first convolution
-        self.first_conv_layer = Layer(3, 48)
+        self.first_conv_layer = Layer(kernel_size=3, in_channels=3, out_channels=48)
 
         # first dense block
         self.first_dense_block = DenseBlock(layers=4, in_channels=48, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
@@ -115,7 +118,9 @@ class Tiramisu(nn.Module):
 
         # last convolution - cifar10 has 10 classes
         #self.last_conv_layer = Layer(64, 10)
-        self.last_conv_layer = Layer(64, 3)
+
+        # hair dataset (3 classes)
+        self.last_conv_layer = Layer(kernel_size=3, in_channels=64, out_channels=3)
 
     def forward(self, x):
         """
@@ -186,7 +191,12 @@ class Tiramisu(nn.Module):
 
         x_last_conv_out = self.last_conv_layer(x_later_fifth_dense_out)
 
-        return x_last_conv_out
+        sigmoid_out = nn.functional.sigmoid(x_last_conv_out)
+        #softmax_out = nn.functional.softmax(x_last_conv_out)
+
+        output = sigmoid_out * 255
+
+        return output
 
 if __name__ == "__main__":
     print 'main'
@@ -205,8 +215,8 @@ if __name__ == "__main__":
     # Construct our loss function and an Optimizer. The call to model.parameters()
     # in the SGD constructor will contain the learnable parameters of the two
     # nn.Linear modules which are members of the model.
-    criterion = torch.nn.MSELoss(size_average=False)
-    # criterion = nn.CrossEntropyLoss()
+    #criterion = torch.nn.MSELoss(size_average=False)
+    criterion = nn.CrossEntropyLoss()
 
     # optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
     optimizer = torch.optim.Adam(tiramisu_model.parameters(), lr=learning_rate)
@@ -279,8 +289,12 @@ if __name__ == "__main__":
         optimizer.zero_grad()
 
         outputs = tiramisu_model(inputs)
-        #loss = criterion(outputs, labels)
-        loss = criterion(outputs, answers)
+
+        # flatten data
+        outputs_view = outputs.view(-1, 3 * data_loader.INPUT_IMAGE_WIDTH * data_loader.INPUT_IMAGE_HEIGHT)
+        answers_view = answers.view(-1, 3 * data_loader.INPUT_IMAGE_WIDTH * data_loader.INPUT_IMAGE_HEIGHT)
+
+        loss = criterion(outputs_view, answers_view)
 
         # Backward pass: compute gradient of the loss with respect to model parameters
         loss.backward()
@@ -290,8 +304,13 @@ if __name__ == "__main__":
 
         if i % 10 == 0:
             print '-----------------------------------'
-            print 'i = ', str(i)
+            print 'iterations = ', str(i)
             print 'loss = ', str(loss)
+
+        # save the model
+        if i % MODEL_SAVING_FREQUENCY == 0:
+            torch.save(tiramisu_model.state_dict(),
+                       '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/tiramisu_iter_' +str(i) + '.pt')
 
     _, predicted = torch.max(outputs.data, 1)
     print 'output = ', predicted

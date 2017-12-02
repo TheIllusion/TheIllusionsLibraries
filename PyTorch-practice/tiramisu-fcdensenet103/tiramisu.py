@@ -11,14 +11,14 @@ import numpy as np
 import data_loader
 
 # gpu mode
-is_gpu_mode = False
+is_gpu_mode = True
 
 # batch size
-BATCH_SIZE = 1
+BATCH_SIZE = 3
 TOTAL_ITERATION = 100
 
 # macbook pro
-cifar10_data_dir = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/fashion-mnist/data/'
+#cifar10_data_dir = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/fashion-mnist/data/'
 
 # The output of torchvision datasets are PILImage images of range [0, 1].
 # We transform them to Tensors of normalized range [-1, 1]
@@ -31,6 +31,8 @@ transform = transforms.Compose(
 CIFA-10 dataset (Docs: https://www.cs.toronto.edu/~kriz/cifar.html)
 The CIFAR-10 dataset consists of 60000 32x32 colour images in 10 classes, with 6000 images per class. There are 50000 training images and 10000 test images. 
 '''
+
+'''
 train_set = datasets.CIFAR10(cifar10_data_dir, train=True,
                              transform=transform, target_transform=None,
                              download=True)
@@ -42,6 +44,7 @@ test_set = datasets.CIFAR10(cifar10_data_dir, train=False,
                             download=True)
 
 test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
+'''
 
 class Tiramisu(nn.Module):
     def __init__(self):
@@ -56,59 +59,59 @@ class Tiramisu(nn.Module):
         self.first_conv_layer = Layer(3, 48)
 
         # first dense block
-        self.first_dense_block = DenseBlock(layers=4, in_channels=48, k_feature_maps=16)
+        self.first_dense_block = DenseBlock(layers=4, in_channels=48, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
         # first transition down
         self.first_transition_down = TransitionDown(112)
 
         # second dense block
-        self.second_dense_block = DenseBlock(layers=5, in_channels=112, k_feature_maps=16)
+        self.second_dense_block = DenseBlock(layers=5, in_channels=112, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
         # second transition down
         self.second_transition_down = TransitionDown(192)
         # third dense block
 
-        self.third_dense_block = DenseBlock(layers=7, in_channels=192, k_feature_maps=16)
+        self.third_dense_block = DenseBlock(layers=7, in_channels=192, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
         # third transition down
         self.third_transition_down = TransitionDown(304)
 
         # fourth dense block
-        self.fourth_dense_block = DenseBlock(layers=10, in_channels=304, k_feature_maps=16)
+        self.fourth_dense_block = DenseBlock(layers=10, in_channels=304, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
         # fourth transition down
         self.fourth_transition_down = TransitionDown(464)
 
         # fifth dense block
-        self.fifth_dense_block = DenseBlock(layers=12, in_channels=464, k_feature_maps=16)
+        self.fifth_dense_block = DenseBlock(layers=12, in_channels=464, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
         # fifth transition down
         self.fifth_transition_down = TransitionDown(656)
 
         # middle dense block
-        self.middle_dense_block = DenseBlock(layers=15, in_channels=656, k_feature_maps=16)
+        self.middle_dense_block = DenseBlock(layers=15, in_channels=656, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
 
         # later-first transition up
         #self.later_first_transition_up = TransitionUp(896)
         self.later_first_transition_up = TransitionUp(240)
         # later-first dense block
-        self.later_first_dense_block = DenseBlock(layers=12, in_channels=896, k_feature_maps=16)
+        self.later_first_dense_block = DenseBlock(layers=12, in_channels=896, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
 
         # later-second transition up
         #self.later_second_transition_up = TransitionUp(1088)
         self.later_second_transition_up = TransitionUp(192)
         # later-second dense block
-        self.later_second_dense_block = DenseBlock(layers=10, in_channels=656, k_feature_maps=16)
+        self.later_second_dense_block = DenseBlock(layers=10, in_channels=656, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
 
         # later-third transition up
         self.later_third_transition_up = TransitionUp(160)
         # later-third dense block
-        self.later_third_dense_block = DenseBlock(layers=7, in_channels=464, k_feature_maps=16)
+        self.later_third_dense_block = DenseBlock(layers=7, in_channels=464, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
 
         # later-fourth transition up
         self.later_fourth_transition_up = TransitionUp(112)
         # later-fourth dense block
-        self.later_fourth_dense_block = DenseBlock(layers=5, in_channels=304, k_feature_maps=16)
+        self.later_fourth_dense_block = DenseBlock(layers=5, in_channels=304, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
 
         # later-fifth transition up
         self.later_fifth_transition_up = TransitionUp(80)
         # later-fifth dense block
-        self.later_fifth_dense_block = DenseBlock(layers=4, in_channels=192, k_feature_maps=16)
+        self.later_fifth_dense_block = DenseBlock(layers=4, in_channels=192, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
 
         # last convolution - cifar10 has 10 classes
         #self.last_conv_layer = Layer(64, 10)
@@ -190,6 +193,9 @@ if __name__ == "__main__":
 
     tiramisu_model = Tiramisu()
 
+    if is_gpu_mode:
+        tiramisu_model.cuda()
+
     # Use the optim package to define an Optimizer that will update the weights of
     # the model for us. Here we will use Adam; the optim package contains many other
     # optimization algoriths. The first argument to the Adam constructor tells the
@@ -208,8 +214,15 @@ if __name__ == "__main__":
     # read imgs
     image_buff_read_index = 0
 
+    # opencv style
+    '''
     input_img = np.empty(shape=(BATCH_SIZE, 512, 512, 3))
     answer_img = np.empty(shape=(BATCH_SIZE, 512, 512, 3))
+    '''
+
+    # pytorch style
+    input_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
+    answer_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
 
     '''            
     for epoch in range(50):
@@ -245,8 +258,8 @@ if __name__ == "__main__":
             if exit_notification == True:
                 break
 
-            np.copyto(input_img[i], data_loader.input_buff[image_buff_read_index])
-            np.copyto(answer_img[i], data_loader.answer_buff[image_buff_read_index])
+            np.copyto(input_img[j], data_loader.input_buff[image_buff_read_index])
+            np.copyto(answer_img[j], data_loader.answer_buff[image_buff_read_index])
 
             data_loader.buff_status[image_buff_read_index] = 'empty'
 
@@ -255,7 +268,8 @@ if __name__ == "__main__":
                 image_buff_read_index = 0
 
             if is_gpu_mode:
-                inputs, answers = Variable(input_img.cuda()), Variable(answer_img.cuda())
+                inputs, answers = Variable(torch.from_numpy(input_img).float().cuda()), \
+                                  Variable(torch.from_numpy(answer_img).float().cuda())
             else:
                 inputs, answers = torch.from_numpy(input_img).float(), torch.from_numpy(answer_img).float()
 
@@ -274,7 +288,7 @@ if __name__ == "__main__":
         # Calling the step function on an Optimizer makes an update to its parameters
         optimizer.step()
 
-        if i % 1 == 0:
+        if i % 10 == 0:
             print '-----------------------------------'
             print 'i = ', str(i)
             print 'loss = ', str(loss)

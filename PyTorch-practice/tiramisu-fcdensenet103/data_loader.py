@@ -2,8 +2,13 @@ import numpy as np
 import os, glob, random, re, time, threading
 import cv2
 
-INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/original_all"
-ANSWER_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/seg_result_until_20170911"
+# Macbook Pro
+#INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/original_all"
+#ANSWER_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/seg_result_until_20170911"
+
+# i7-2600k
+INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all"
+ANSWER_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/seg_result_until_20170823_without_cloth/seg_result_until_20170823_without_cloth"
 
 IS_TRAINING = True
 
@@ -12,13 +17,19 @@ print 'data loader'
 ##############################################################################################
 # Image Buffer Management
 
-INPUT_IMAGE_WIDTH = 512
-INPUT_IMAGE_HEIGHT = 512
+INPUT_IMAGE_WIDTH = 256
+INPUT_IMAGE_HEIGHT = 256
 
 # image buffers
 image_buffer_size = 30
-input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
-answer_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
+
+# OpenCV format
+#input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
+#answer_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
+
+# PyTorch format
+input_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
+answer_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
 
 buff_status = []
 for i in range(image_buffer_size):
@@ -77,7 +88,7 @@ def image_buffer_loader():
                 break
 
         if exit_notification == True:
-            print 'Exit'
+            print 'Exit(1)'
             break
 
         # Input Image
@@ -92,8 +103,17 @@ def image_buffer_loader():
             print 'skip this jpg file. continue.'
             continue
 
-        input_buff[current_buff_index] = cv2.resize(input_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
+        '''
+            input_buff[current_buff_index] = cv2.resize(input_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
+                                                        interpolation=cv2.INTER_LINEAR)
+        '''
+        input_img_tmp = cv2.resize(input_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
                                                     interpolation=cv2.INTER_LINEAR)
+
+
+        input_buff[current_buff_index][0, :, :] = input_img_tmp[:, :, 0]
+        input_buff[current_buff_index][1, :, :] = input_img_tmp[:, :, 1]
+        input_buff[current_buff_index][2, :, :] = input_img_tmp[:, :, 2]
 
         # Answer Image
         filename = os.path.join(ANSWER_IMAGE_DIRECTORY_PATH, training_file_name)
@@ -107,8 +127,17 @@ def image_buffer_loader():
             print 'skip this jpg file. continue.'
             continue
 
+        '''
         answer_buff[current_buff_index] = cv2.resize(answer_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
                                                     interpolation=cv2.INTER_LINEAR)
+        '''
+
+        answer_img_tmp = cv2.resize(answer_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
+                                   interpolation=cv2.INTER_LINEAR)
+
+        answer_buff[current_buff_index][0, :, :] = answer_img_tmp[:, :, 0]
+        answer_buff[current_buff_index][1, :, :] = answer_img_tmp[:, :, 1]
+        answer_buff[current_buff_index][2, :, :] = answer_img_tmp[:, :, 2]
 
         buff_status[current_buff_index] = 'filled'
 
@@ -138,7 +167,7 @@ def main_alive_checker():
             time.sleep(5)
             if is_main_alive == False:
                 exit_notification = True
-                print 'Exit!'
+                print 'Exit(2)'
                 break
             else:
                 is_main_alive = False

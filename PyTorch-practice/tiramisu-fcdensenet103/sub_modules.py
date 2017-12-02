@@ -71,7 +71,7 @@ class TransitionUp(nn.Module):
 
 # Dense Block - Figure 2.
 class DenseBlock(nn.Module):
-    def __init__(self, layers, in_channels, k_feature_maps):
+    def __init__(self, layers, in_channels, k_feature_maps, is_gpu_mode):
         super(DenseBlock, self).__init__()
 
         self.num_layers = layers
@@ -80,6 +80,11 @@ class DenseBlock(nn.Module):
         # add layers to the list
         for i in xrange(layers):
             self.layers_list.append(Layer(in_channels + i*k_feature_maps, k_feature_maps))
+
+        # gpu
+        if is_gpu_mode:
+            for model in self.layers_list:
+                model.cuda()
 
     def forward(self, x):
 

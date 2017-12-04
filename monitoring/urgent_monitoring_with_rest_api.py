@@ -19,25 +19,25 @@ FILE_PATH_FOR_ERROR_LOG = '/Users/Illusion/Temp/response_error.log'
 hand_rest_api_address = []
 face_rest_api_address = []
 
-hand_rest_api_address.append('http://10.161.31.22:8979/hand')
+hand_rest_api_address.append('http://10.161.31.22:8979/hand-v2')
 #hand_rest_api_address.append('http://10.161.31.24:8979/hand')
-hand_rest_api_address.append('http://10.161.31.26:8979/hand')
-hand_rest_api_address.append('http://10.161.31.27:8979/hand')
+hand_rest_api_address.append('http://10.161.31.26:8979/hand-v2')
+hand_rest_api_address.append('http://10.161.31.27:8979/hand-v2')
 
-face_rest_api_address.append('http://10.161.31.22:8989/face')
+face_rest_api_address.append('http://10.161.31.22:8989/face-v2')
 #face_rest_api_address.append('http://10.161.31.24:8989/face')
-face_rest_api_address.append('http://10.161.31.26:8989/face')
-face_rest_api_address.append('http://10.161.31.27:8989/face')
+face_rest_api_address.append('http://10.161.31.26:8989/face-v2')
+face_rest_api_address.append('http://10.161.31.27:8989/face-v2')
 
 #hand_img_path = '/Users/Illusion/Documents/Palm_Data/random_hands/IMG_0703.jpg'
 
 #12' Macbook
-#hand_img_path = '/Users/Illusion/Documents/rk.jpg'
-#face_img_path = '/Users/Illusion/Documents/rk_face.jpg'
+hand_img_path = '/Users/Illusion/Documents/rk.jpg'
+face_img_path = '/Users/Illusion/Documents/rk_face.jpg'
 
 #Macbook Pro
-hand_img_path = '/Users/Illusion/Documents/Data/palm_data/test_set/crop_resize_512_512/rk.jpg'
-face_img_path = '/Users/Illusion/Documents/Data/toast_faces/rk.jpg'
+#hand_img_path = '/Users/Illusion/Documents/Data/palm_data/test_set/crop_resize_512_512/rk.jpg'
+#face_img_path = '/Users/Illusion/Documents/Data/toast_faces/rk.jpg'
 
 f_hand = open(hand_img_path, 'rb')
 hand_image = f_hand.read()
@@ -94,7 +94,7 @@ while True:
 
         # Check the validity of the response string
         match = re.search('"Status": "OK"', res)
-        match_2 = re.search('"Gamjeong": 2001', res)
+        match_2 = re.search('"Gamjeong": 2000', res)
         if match and match_2:
             print "Valid response data"
         else:

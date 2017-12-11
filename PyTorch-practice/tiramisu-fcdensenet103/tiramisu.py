@@ -11,14 +11,18 @@ import numpy as np
 import data_loader
 
 # gpu mode
-is_gpu_mode = True
+is_gpu_mode = False
 
 # batch size
-BATCH_SIZE = 3
+BATCH_SIZE = 1
 TOTAL_ITERATION = 10000
 
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 1000
+# i7-2600k
+#MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
+# macbook pro
+MODEL_SAVING_DIRECTORY = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
 
 # macbook pro
 #cifar10_data_dir = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/fashion-mnist/data/'
@@ -215,8 +219,8 @@ if __name__ == "__main__":
     # Construct our loss function and an Optimizer. The call to model.parameters()
     # in the SGD constructor will contain the learnable parameters of the two
     # nn.Linear modules which are members of the model.
-    #criterion = torch.nn.MSELoss(size_average=False)
-    criterion = nn.CrossEntropyLoss()
+    criterion = torch.nn.MSELoss(size_average=False)
+    #criterion = nn.CrossEntropyLoss()
 
     # optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
     optimizer = torch.optim.Adam(tiramisu_model.parameters(), lr=learning_rate)
@@ -310,7 +314,7 @@ if __name__ == "__main__":
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(tiramisu_model.state_dict(),
-                       '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/tiramisu_iter_' +str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'tiramisu_iter_' +str(i) + '.pt')
 
     _, predicted = torch.max(outputs.data, 1)
     print 'output = ', predicted

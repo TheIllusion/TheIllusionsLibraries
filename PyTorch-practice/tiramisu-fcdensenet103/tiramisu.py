@@ -11,10 +11,10 @@ import numpy as np
 import data_loader
 
 # gpu mode
-is_gpu_mode = False
+is_gpu_mode = True 
 
 # batch size
-BATCH_SIZE = 1
+BATCH_SIZE = 3 
 TOTAL_ITERATION = 10000
 
 # model saving (iterations)
@@ -22,7 +22,9 @@ MODEL_SAVING_FREQUENCY = 1000
 # i7-2600k
 #MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
 # macbook pro
-MODEL_SAVING_DIRECTORY = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
+#MODEL_SAVING_DIRECTORY = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
+# svc002
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/users/rklee/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
 
 # macbook pro
 #cifar10_data_dir = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/fashion-mnist/data/'
@@ -221,10 +223,10 @@ class Tiramisu(nn.Module):
         sigmoid_out = nn.functional.sigmoid(x_last_conv_out)
         #softmax_out = custom_softmax_for_segmentation(x_last_conv_out, 3)
 
-        output = sigmoid_out * 255
+        #output = sigmoid_out * 255
         #output = softmax_out
 
-        return output
+        return sigmoid_out
 
 if __name__ == "__main__":
     print 'main'
@@ -311,7 +313,7 @@ if __name__ == "__main__":
             else:
                 inputs, answers = Variable(torch.from_numpy(input_img).float()), Variable(torch.from_numpy(answer_img).float())
 
-        #answers = answers / 255.
+        answers = answers / 255.
         #answers = answers.long()
 
         # Before the backward pass, use the optimizer object to zero all of the

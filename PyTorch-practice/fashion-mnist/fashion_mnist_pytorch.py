@@ -8,13 +8,13 @@ import torchvision.transforms as transforms
 import numpy as np
 
 # macbook pro
-#root_dir = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/fashion-mnist/data/'
+cifar10_data_dir = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/fashion-mnist/data/'
 
 # i7-2600k
-cifar10_data_dir = '/media/illusion/ML_Linux/Data/cifar-10/'
+#cifar10_data_dir = '/media/illusion/ML_Linux/Data/cifar-10/'
 
 # gpu mode
-is_gpu_mode = True
+is_gpu_mode = False
 
 class CNNBasic(nn.Module):
     def __init__(self):

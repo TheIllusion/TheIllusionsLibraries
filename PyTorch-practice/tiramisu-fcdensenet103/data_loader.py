@@ -21,7 +21,7 @@ INPUT_IMAGE_WIDTH = 256
 INPUT_IMAGE_HEIGHT = 256
 
 # image buffers
-image_buffer_size = 30
+image_buffer_size = 10
 
 # OpenCV format
 #input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))

@@ -342,7 +342,3 @@ if __name__ == "__main__":
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(tiramisu_model.state_dict(),
                        MODEL_SAVING_DIRECTORY + 'tiramisu_iter_' +str(i) + '.pt')
-
-    _, predicted = torch.max(outputs.data, 1)
-    print 'output = ', predicted
-    #print 'target cls = ', labels

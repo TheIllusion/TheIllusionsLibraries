@@ -8,11 +8,16 @@ import torchvision.transforms as transforms
 from sub_modules import Layer, TransitionUp, TransitionDown, DenseBlock
 import time, cv2
 import numpy as np
-import data_loader
 
 # gpu mode
 is_gpu_mode = True 
 
+# feedforward mode
+is_feedforward_mode = True
+
+if not is_feedforward_mode:
+    import data_loader
+    
 # batch size
 BATCH_SIZE = 3 
 TOTAL_ITERATION = 1000000

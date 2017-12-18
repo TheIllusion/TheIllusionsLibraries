@@ -15,7 +15,7 @@ is_gpu_mode = True
 
 # batch size
 BATCH_SIZE = 3 
-TOTAL_ITERATION = 10000
+TOTAL_ITERATION = 1000000
 
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 1000

@@ -26,7 +26,7 @@ initial_learning_rate_disc = tf.Variable(0.00001)
 initial_learning_rate_gen = tf.Variable(0.00002)
 
 # svc002
-INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/blonde_hair"
+INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/data_6T/CelebA_data/female"
 # "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/face_imgs_svc"
 
 

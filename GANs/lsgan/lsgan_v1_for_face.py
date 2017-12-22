@@ -23,7 +23,10 @@ INPUT_IMAGE_DEPTH = 3
 
 # learning rate
 initial_learning_rate_disc = tf.Variable(0.00001)
-initial_learning_rate_gen = tf.Variable(0.00002)
+initial_learning_rate_gen = tf.Variable(0.0005)
+
+# freq of training the generator per training the discriminator for once
+GENERATOR_TRAINING_FREQUENCY = 5
 
 # svc002
 INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/data_6T/CelebA_data/female"
@@ -486,18 +489,22 @@ if __name__ == '__main__':
                                             feed_dict={discriminator.disc_X: discriminator.real_img_buff,
                                                        generator.gen_X: noise_z})
 
-            # train the generator
-            _, gen_loss_current_1 = sess.run([train_gen, gen_loss], feed_dict={generator.gen_X: noise_z})
-
-            # train the generator (2nd time)
-            # _, gen_loss_current_2 = sess.run([train_gen, gen_loss], feed_dict={generator.gen_X: noise_z})
+            gen_loss_current = []
+            for iter_gen in xrange(GENERATOR_TRAINING_FREQUENCY):
+                # train the generator
+                _, gen_loss_temp = sess.run([train_gen, gen_loss], feed_dict={generator.gen_X: noise_z})
+                gen_loss_current.append(gen_loss_temp)
 
             # check the loss every 10-iter
             if iter % 100 == 0:
                 print '=============================================='
                 print 'iter = ', str(iter)
                 print 'discriminator loss: ', str(disc_loss_current)
-                print 'generator loss(1): ', str(gen_loss_current_1)
+                
+                for iter_gen in xrange(GENERATOR_TRAINING_FREQUENCY):
+                    print 'generator loss: ', str(gen_loss_current[iter_gen])
+                    
+                # print 'generator loss(1): ', str(gen_loss_current_1)
                 # print 'generator loss(2): ', str(gen_loss_current_2)
                 # print 'generator loss(3): ', str(gen_loss_current_3)
                 # print 'generator loss(4): ', str(gen_loss_current_4)

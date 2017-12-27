@@ -4,7 +4,7 @@ from torchvision import datasets
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
-import torchvision.transforms as transforms
+#import torchvision.transforms as transforms
 from sub_modules import Layer, TransitionUp, TransitionDown, DenseBlock
 import time, cv2
 import numpy as np
@@ -13,7 +13,7 @@ import numpy as np
 is_gpu_mode = True 
 
 # feedforward mode
-is_feedforward_mode = True
+is_feedforward_mode = False
 
 if not is_feedforward_mode:
     import data_loader
@@ -36,9 +36,11 @@ MODEL_SAVING_DIRECTORY = '/home1/irteamsu/users/rklee/TheIllusionsLibraries/PyTo
 
 # The output of torchvision datasets are PILImage images of range [0, 1].
 # We transform them to Tensors of normalized range [-1, 1]
+'''
 transform = transforms.Compose(
     [transforms.ToTensor(),
      transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+'''
 
 # cifar10 dataset
 '''
@@ -60,28 +62,6 @@ test_set = datasets.CIFAR10(cifar10_data_dir, train=False,
 test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
 '''
 
-def custom_softmax_for_segmentation(tensor, num_classes):
-
-    temp_np = np.empty(shape=num_classes)
-
-    for batch_idx in xrange(BATCH_SIZE):
-        for width_idx in xrange(data_loader.INPUT_IMAGE_WIDTH):
-            for height_idx in xrange(data_loader.INPUT_IMAGE_HEIGHT):
-
-                # get pixels from different channels (at same position)
-                for channel_idx in xrange(num_classes):
-                    temp_np[channel_idx] = tensor.data[batch_idx][channel_idx][width_idx][height_idx]
-
-                temp_var = Variable(torch.from_numpy(temp_np).float())
-
-                # softmax operation
-                softmax_out = nn.functional.softmax(temp_var)
-
-                # save back to the tensor
-                for channel_idx in xrange(num_classes):
-                    tensor.data[batch_idx][channel_idx][width_idx][height_idx] = softmax_out.data[channel_idx]
-
-    return tensor
 
 class Tiramisu(nn.Module):
     def __init__(self):
@@ -245,13 +225,13 @@ if __name__ == "__main__":
     # the model for us. Here we will use Adam; the optim package contains many other
     # optimization algoriths. The first argument to the Adam constructor tells the
     # optimizer which Variables it should update.
-    learning_rate = 1e-5
+    learning_rate = 1e-4
 
     # Construct our loss function and an Optimizer. The call to model.parameters()
     # in the SGD constructor will contain the learnable parameters of the two
     # nn.Linear modules which are members of the model.
-    criterion = torch.nn.MSELoss(size_average=False)
-    #criterion = torch.nn.CrossEntropyLoss()
+    #criterion = torch.nn.MSELoss(size_average=False)
+    criterion = torch.nn.BCELoss()
 
     # optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
     optimizer = torch.optim.Adam(tiramisu_model.parameters(), lr=learning_rate)
@@ -268,20 +248,6 @@ if __name__ == "__main__":
     # pytorch style
     input_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
     answer_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
-
-    '''            
-    for epoch in range(50):
-        for i, data in enumerate(train_loader, 0):
-
-            # get the inputs
-            inputs, labels = data
-
-            # wrap them in Variables
-            if is_gpu_mode:
-                inputs, labels = Variable(inputs.cuda()), Variable(labels.cuda())
-            else:
-                inputs, labels = Variable(inputs), Variable(labels)
-    '''
 
     for i in range(TOTAL_ITERATION):
 
@@ -329,10 +295,11 @@ if __name__ == "__main__":
         outputs = tiramisu_model(inputs)
 
         # change the dimension
-        #outputs_view = outputs.view(-1, data_loader.INPUT_IMAGE_WIDTH * data_loader.INPUT_IMAGE_HEIGHT * 3)
-        #answers_view = answers.view(-1, data_loader.INPUT_IMAGE_WIDTH * data_loader.INPUT_IMAGE_HEIGHT * 3)
+        outputs_view = outputs.view(BATCH_SIZE * data_loader.INPUT_IMAGE_WIDTH * data_loader.INPUT_IMAGE_HEIGHT * 3)
+        answers_view = answers.view(BATCH_SIZE * data_loader.INPUT_IMAGE_WIDTH * data_loader.INPUT_IMAGE_HEIGHT * 3)
 
-        loss = criterion(outputs, answers)
+        #loss = criterion(outputs, answers)
+        loss = criterion(outputs_view, answers_view)
 
         # Backward pass: compute gradient of the loss with respect to model parameters
         loss.backward()

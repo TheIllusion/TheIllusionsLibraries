@@ -12,8 +12,8 @@ import cv2
 
 
 # svc002
-INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/data_6T/data/hair_semantic_segmentation/until_2017_0823/original_all"
-ANSWER_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/data_6T/data/hair_semantic_segmentation/until_2017_0823/seg_result_until_20170823_without_cloth"
+INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/data_6T/data/hair_semantic_segmentation/until_2017_0823/original_all/image_pyramids"
+ANSWER_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/data_6T/data/hair_semantic_segmentation/until_2017_0823/seg_result_until_20170823_without_cloth/image_pyramids"
 
 IS_TRAINING = True
 

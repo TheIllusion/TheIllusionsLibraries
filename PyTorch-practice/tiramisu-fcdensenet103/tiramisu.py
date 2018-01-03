@@ -19,7 +19,7 @@ if not is_feedforward_mode:
     import data_loader
     
 # batch size
-BATCH_SIZE = 3 
+BATCH_SIZE = 2
 TOTAL_ITERATION = 1000000
 
 # model saving (iterations)

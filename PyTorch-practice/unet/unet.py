@@ -5,7 +5,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 #import torchvision.transforms as transforms
-from sub_modules import Layer, TransitionUp, TransitionDown, DenseBlock
+from sub_modules import Layer, TransitionUp, TransitionDown
 import time, cv2
 import numpy as np
 
@@ -13,13 +13,13 @@ import numpy as np
 is_gpu_mode = True 
 
 # feedforward mode
-is_feedforward_mode = False
+is_feedforward_mode = True
 
 if not is_feedforward_mode:
     import data_loader
     
 # batch size
-BATCH_SIZE = 2
+BATCH_SIZE = 20
 TOTAL_ITERATION = 1000000
 
 # model saving (iterations)
@@ -140,7 +140,7 @@ class Unet(nn.Module):
         
         # followed by 2 conv layers 
         self.later_seventh_conv_layer = Layer(kernel_size=3, in_channels=128, out_channels=64)
-        self.later_eight_conv_layer = Layer(kernel_size=3, in_channels=64, out_channels=64)
+        self.later_eighth_conv_layer = Layer(kernel_size=3, in_channels=64, out_channels=64)
         
         # last conv layer (num. of output channels should be modified according to the number of classes)
         self.later_last_conv_layer = Layer(kernel_size=3, in_channels=64, out_channels=3)
@@ -157,107 +157,74 @@ class Unet(nn.Module):
         # define the forward connections
         ######################################################################
         x = self.first_conv_layer(x)
-        x = self.second_conv_layer(x)
+        x_second_conv_out = self.second_conv_layer(x)
         
         # first TD
-        x = self.first_transition_down(x)
+        x = self.first_transition_down(x_second_conv_out)
         
         x = self.third_conv_layer(x)
-        x = self.fourth_conv_layer(x)
+        x_fourth_conv_out = self.fourth_conv_layer(x)
         
         # second TD
-        x = self.second_transition_down(x)
+        x = self.second_transition_down(x_fourth_conv_out)
         
         x = self.fifth_conv_layer(x)
-        x = self.sixth_conv_layer(x)
+        x_sixth_conv_out = self.sixth_conv_layer(x)
         
         # third TD
-        x = self.third_transition_down(x)
+        x = self.third_transition_down(x_sixth_conv_out)
         
         x = self.seventh_conv_layer(x)
-        x = self.eight_conv_layer(x)
+        x_eighth_conv_out = self.eighth_conv_layer(x)
         
         # fourth TD
-        x = self.fourth_transition_down(x)
+        x = self.fourth_transition_down(x_eighth_conv_out)
         
         ######################################################################
         # define the middle connections
         ######################################################################
-        x = self.nigth_conv_layer(x)
+        x = self.ninth_conv_layer(x)
         x = self.tenth_conv_layer(x)
         
         ######################################################################
         # define the backward connections
         ######################################################################
         # first TU
-        # second TU
-        # third TU
-        # fourth TU
+        x = self.later_first_transition_up(x)
+        x_later_first_concat = torch.cat((x, x_eighth_conv_out), 1)
         
-        # code borrowed from Tiramisu
-        ######################################################################
-        # define the forward connections
-        ######################################################################
-        x_first_conv_out = self.first_conv_layer(x)
+        # followed by 2 conv layers
+        x = self.later_first_conv_layer(x_later_first_concat)
+        x = self.later_second_conv_layer(x)
+        
+        # second TU
+        x = self.later_second_transition_up(x)
+        x_later_second_concat = torch.cat((x, x_sixth_conv_out), 1)
+        
+        # followed by 2 conv layers
+        x = self.later_third_conv_layer(x_later_second_concat)
+        x = self.later_fourth_conv_layer(x)
+        
+        # third TU
+        x = self.later_third_transition_up(x)
+        x_later_third_concat = torch.cat((x, x_fourth_conv_out), 1)
+        
+        # followed by 2 conv layers
+        x = self.later_fifth_conv_layer(x_later_third_concat)
+        x = self.later_sixth_conv_layer(x)
+        
+        # fourth TU
+        x = self.later_fourth_transition_up(x)
+        x_later_fourth_concat = torch.cat((x, x_second_conv_out), 1)
+        
+        # followed by 2 conv layers
+        x = self.later_seventh_conv_layer(x_later_fourth_concat)
+        x = self.later_eighth_conv_layer(x)
+        
+        # last conv layer
+        x = self.later_last_conv_layer(x)
 
-        x_first_dense_out = self.first_dense_block(x_first_conv_out)
-        # concatenate filters
-        x_first_dense_out_concat = torch.cat((x_first_conv_out, x_first_dense_out), 1)
-        x_first_td_out = self.first_transition_down(x_first_dense_out_concat)
-
-        x_second_dense_out = self.second_dense_block(x_first_td_out)
-        # concatenate filters
-        x_second_dense_out_concat = torch.cat((x_first_td_out, x_second_dense_out), 1)
-        x_second_td_out = self.second_transition_down(x_second_dense_out_concat)
-
-        x_third_dense_out = self.third_dense_block(x_second_td_out)
-        # concatenate filters
-        x_third_dense_out_concat = torch.cat((x_second_td_out, x_third_dense_out), 1)
-        x_third_td_out = self.third_transition_down(x_third_dense_out_concat)
-
-        x_fourth_dense_out = self.fourth_dense_block(x_third_td_out)
-        # concatenate filters
-        x_fourth_dense_out_concat = torch.cat((x_third_td_out, x_fourth_dense_out), 1)
-        x_fourth_td_out = self.fourth_transition_down(x_fourth_dense_out_concat)
-
-        x_fifth_dense_out = self.fifth_dense_block(x_fourth_td_out)
-        # concatenate filters
-        x_fifth_dense_out_concat = torch.cat((x_fourth_td_out, x_fifth_dense_out), 1)
-        x_fifth_td_out = self.fifth_transition_down(x_fifth_dense_out_concat)
-
-        x_middle_dense_out = self.middle_dense_block(x_fifth_td_out)
-
-        ######################################################################
-        # define the backward connections
-        ######################################################################
-        x_later_first_tu_out = self.later_first_transition_up(x_middle_dense_out)
-        # concatenate filters (Skip-Connection)
-        x_later_first_tu_out_concat = torch.cat((x_later_first_tu_out, x_fifth_dense_out_concat), 1)
-        x_later_first_dense_out = self.later_first_dense_block(x_later_first_tu_out_concat)
-
-        x_later_second_tu_out = self.later_second_transition_up(x_later_first_dense_out)
-        # concatenate filters (Skip-Connection)
-        x_later_second_tu_out_concat = torch.cat((x_later_second_tu_out, x_fourth_dense_out_concat), 1)
-        x_later_second_dense_out = self.later_second_dense_block(x_later_second_tu_out_concat)
-
-        x_later_third_tu_out = self.later_third_transition_up(x_later_second_dense_out)
-        # concatenate filters (Skip-Connection)
-        x_later_third_tu_out_concat = torch.cat((x_later_third_tu_out, x_third_dense_out_concat), 1)
-        x_later_third_dense_out = self.later_third_dense_block(x_later_third_tu_out_concat)
-
-        x_later_fourth_tu_out = self.later_fourth_transition_up(x_later_third_dense_out)
-        # concatenate filters (Skip-Connection)
-        x_later_fourth_tu_out_concat = torch.cat((x_later_fourth_tu_out, x_second_dense_out_concat), 1)
-        x_later_fourth_dense_out = self.later_fourth_dense_block(x_later_fourth_tu_out_concat)
-
-        x_later_fifth_tu_out = self.later_fifth_transition_up(x_later_fourth_dense_out)
-        # concatenate filters (Skip-Connection)
-        x_later_fifth_tu_out_concat = torch.cat((x_later_fifth_tu_out, x_first_dense_out_concat), 1)
-        x_later_fifth_dense_out = self.later_fifth_dense_block(x_later_fifth_tu_out_concat)
-
-        x_last_conv_out = self.last_conv_layer(x_later_fifth_dense_out)
-
-        sigmoid_out = nn.functional.sigmoid(x_last_conv_out)
+        sigmoid_out = nn.functional.sigmoid(x)
         #softmax_out = custom_softmax_for_segmentation(x_last_conv_out, 3)
 
         #output = sigmoid_out * 255
@@ -277,7 +244,7 @@ if __name__ == "__main__":
     # the model for us. Here we will use Adam; the optim package contains many other
     # optimization algoriths. The first argument to the Adam constructor tells the
     # optimizer which Variables it should update.
-    learning_rate = 1e-4
+    learning_rate = 1e-5
 
     # Construct our loss function and an Optimizer. The call to model.parameters()
     # in the SGD constructor will contain the learnable parameters of the two
@@ -286,7 +253,7 @@ if __name__ == "__main__":
     criterion = torch.nn.BCELoss()
 
     # optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)
-    optimizer = torch.optim.Adam(tiramisu_model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.Adam(unet_model.parameters(), lr=learning_rate)
 
     # read imgs
     image_buff_read_index = 0
@@ -366,5 +333,5 @@ if __name__ == "__main__":
 
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
-            torch.save(tiramisu_model.state_dict(),
+            torch.save(unet_model.state_dict(),
                        MODEL_SAVING_DIRECTORY + 'unet_iter_' +str(i) + '.pt')

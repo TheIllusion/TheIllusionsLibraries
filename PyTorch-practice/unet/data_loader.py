@@ -16,6 +16,7 @@ INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_201
 ANSWER_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/answer_imgs/"
 
 IS_TRAINING = True
+IS_MULTI_GPU = False
 
 print 'data loader'
 
@@ -197,8 +198,12 @@ def main_alive_checker():
 if IS_TRAINING:
     timer = threading.Timer(1, image_buffer_loader)
     timer.start()
-
-    timer2 = threading.Timer(1, main_alive_checker)
-    timer2.start()
+    
+    if IS_MULTI_GPU:
+        timer2 = threading.Timer(30, main_alive_checker)
+        timer2.start()
+    else:
+        timer2 = threading.Timer(1, main_alive_checker)
+        timer2.start()
 
 ###############################################################################################

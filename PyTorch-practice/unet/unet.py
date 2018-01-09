@@ -4,7 +4,6 @@ from torchvision import datasets
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
-#import torchvision.transforms as transforms
 from sub_modules import Layer, TransitionUp, TransitionDown
 import time, cv2
 import numpy as np
@@ -13,54 +12,20 @@ import numpy as np
 is_gpu_mode = True 
 
 # feedforward mode
-is_feedforward_mode = True
+is_feedforward_mode = False
 
 if not is_feedforward_mode:
     import data_loader
     
 # batch size
-BATCH_SIZE = 20
-TOTAL_ITERATION = 1000000
+BATCH_SIZE = 5
+TOTAL_ITERATION = 2000000
 
 # model saving (iterations)
-MODEL_SAVING_FREQUENCY = 1000
-# i7-2600k
-#MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
-# macbook pro
-#MODEL_SAVING_DIRECTORY = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
+MODEL_SAVING_FREQUENCY = 10000
+
 # tbt005
 MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/unet/models/'
-
-# macbook pro
-#cifar10_data_dir = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/fashion-mnist/data/'
-
-# The output of torchvision datasets are PILImage images of range [0, 1].
-# We transform them to Tensors of normalized range [-1, 1]
-'''
-transform = transforms.Compose(
-    [transforms.ToTensor(),
-     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
-'''
-
-# cifar10 dataset
-'''
-CIFA-10 dataset (Docs: https://www.cs.toronto.edu/~kriz/cifar.html)
-The CIFAR-10 dataset consists of 60000 32x32 colour images in 10 classes, with 6000 images per class. There are 50000 training images and 10000 test images. 
-'''
-
-'''
-train_set = datasets.CIFAR10(cifar10_data_dir, train=True,
-                             transform=transform, target_transform=None,
-                             download=True)
-
-train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=2)
-
-test_set = datasets.CIFAR10(cifar10_data_dir, train=False,
-                            transform=transform, target_transform=None,
-                            download=True)
-
-test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
-'''
 
 class Unet(nn.Module):
     def __init__(self):
@@ -334,4 +299,4 @@ if __name__ == "__main__":
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(unet_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'unet_iter_' +str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'unet_total_augmented_iter_' +str(i) + '.pt')

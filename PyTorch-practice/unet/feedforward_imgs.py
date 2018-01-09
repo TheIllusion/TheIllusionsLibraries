@@ -11,7 +11,7 @@ import time, cv2
 import os, glob
 import numpy as np
 
-INPUT_TEST_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/original_all/"
+INPUT_TEST_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/official_test_set/original/"
 
 # load the filelist
 #os.chdir(INPUT_TEST_IMAGE_DIRECTORY_PATH)
@@ -19,8 +19,8 @@ jpg_files = glob.glob(INPUT_TEST_IMAGE_DIRECTORY_PATH + '*.jpg')
 #random.shuffle(jpg_files)
 max_test_index = len(jpg_files)
 
-INPUT_TEST_IMAGE_WIDTH = 256
-INPUT_TEST_IMAGE_HEIGHT = 256
+INPUT_TEST_IMAGE_WIDTH = 384
+INPUT_TEST_IMAGE_HEIGHT = 384
 
 TEST_SIZE = 50
 
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     if unet.is_gpu_mode:
         unet_model.cuda()
 
-    unet_model.load_state_dict(torch.load(unet.MODEL_SAVING_DIRECTORY + 'unet_iter_1000.pt'))
+    unet_model.load_state_dict(torch.load(unet.MODEL_SAVING_DIRECTORY + 'unet_iter_65000.pt'))
             
     # pytorch style
     input_img = np.empty(shape=(1, 3, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))
@@ -39,7 +39,10 @@ if __name__ == "__main__":
     # opencv style
     output_img_opencv = np.empty(shape=(INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT, 3))
     
-    for idx in range(TEST_SIZE):
+    if max_test_index > TEST_SIZE:
+        max_test_index = TEST_SIZE
+        
+    for idx in range(max_test_index):
         # load a single img
         img_opencv = cv2.imread(jpg_files[idx], cv2.IMREAD_COLOR)
 
@@ -77,5 +80,9 @@ if __name__ == "__main__":
         output_img_opencv[:, :, 2] = output_img[2, :, :]
 
         cv2.imwrite("output_idx" + str(idx) + ".jpg", output_img_opencv)
+        
+        # display purposes only. create concatenated imgs (original:feedforward)
+        concated_img = np.hstack((img_opencv, output_img_opencv))
+        cv2.imwrite('concat_' + str(idx) + '.jpg', concated_img)
     
     print 'feedforward_img.py main'

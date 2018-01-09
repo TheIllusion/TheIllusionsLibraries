@@ -12,8 +12,8 @@ import cv2
 
 
 # tbt005 (10.161.31.83)
-INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/original_all"
-ANSWER_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/seg_result_until_20170911_without_cloth"
+INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/input_imgs/"
+ANSWER_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/answer_imgs/"
 
 IS_TRAINING = True
 
@@ -21,12 +21,14 @@ print 'data loader'
 
 ##############################################################################################
 # Image Buffer Management
-
-INPUT_IMAGE_WIDTH = 256
-INPUT_IMAGE_HEIGHT = 256
+INPUT_IMAGE_WIDTH = 512
+INPUT_IMAGE_HEIGHT = 512
 
 # image buffers
 image_buffer_size = 100
+
+# Data Augmentation option
+ENABLE_FLIP = True
 
 # OpenCV format
 #input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
@@ -60,7 +62,7 @@ def image_buffer_loader():
     print 'image_buffer_loader'
 
     epoch = 0
-
+      
     while True:
         filename_ = jpg_files[lineIdx]
 
@@ -100,6 +102,12 @@ def image_buffer_loader():
         filename = os.path.join(INPUT_IMAGE_DIRECTORY_PATH, training_file_name)
         input_img = cv2.imread(filename, cv2.IMREAD_COLOR)
 
+        # Flip
+        if ENABLE_FLIP:
+            if epoch % 2 == 1:
+                input_img = cv2.flip(input_img, 1)
+                print 'flipping enabled. input img'
+            
         if (type(input_img) is not np.ndarray):
             lineIdx = lineIdx + 1
             if lineIdx >= max_training_index:
@@ -124,6 +132,12 @@ def image_buffer_loader():
         filename = os.path.join(ANSWER_IMAGE_DIRECTORY_PATH, training_file_name)
         answer_img = cv2.imread(filename, cv2.IMREAD_COLOR)
 
+        # Flip
+        if ENABLE_FLIP:
+            if epoch % 2 == 1:
+                answer_img = cv2.flip(answer_img, 1)
+                print 'flipping enabled. answer img'
+            
         if (type(answer_img) is not np.ndarray):
             lineIdx = lineIdx + 1
             if lineIdx >= max_training_index:

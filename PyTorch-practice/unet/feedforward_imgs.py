@@ -31,7 +31,7 @@ if __name__ == "__main__":
     if unet.is_gpu_mode:
         unet_model.cuda()
 
-    unet_model.load_state_dict(torch.load(unet.MODEL_SAVING_DIRECTORY + 'unet_iter_65000.pt'))
+    unet_model.load_state_dict(torch.load(unet.MODEL_SAVING_DIRECTORY + 'unet_total_augmented_iter_90000.pt'))
             
     # pytorch style
     input_img = np.empty(shape=(1, 3, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))
@@ -79,7 +79,8 @@ if __name__ == "__main__":
         output_img_opencv[:, :, 1] = output_img[1, :, :]
         output_img_opencv[:, :, 2] = output_img[2, :, :]
 
-        cv2.imwrite("output_idx" + str(idx) + ".jpg", output_img_opencv)
+        cv2.imwrite(os.path.basename(jpg_files[idx]), output_img_opencv)
+        #print os.path.basename(jpg_files[idx])
         
         # display purposes only. create concatenated imgs (original:feedforward)
         concated_img = np.hstack((img_opencv, output_img_opencv))

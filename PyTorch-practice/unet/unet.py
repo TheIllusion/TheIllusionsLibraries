@@ -12,7 +12,7 @@ import numpy as np
 is_gpu_mode = True 
 
 # feedforward mode
-is_feedforward_mode = False
+is_feedforward_mode = True
 
 if not is_feedforward_mode:
     import data_loader

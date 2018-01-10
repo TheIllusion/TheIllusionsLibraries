@@ -12,8 +12,7 @@ DEST_WIDTH = 800
 DEST_HEIGHT = 800
 
 if __name__ == "__main__":
-    print 'hi'
-    print len(sys.argv)
+
     if len(sys.argv) != 2:
         print 'you need to specify the fullpath of input image directory'
         exit(0)
@@ -29,6 +28,8 @@ if __name__ == "__main__":
 
     img_files = glob.glob('*.png')
 
+    img_idx = 0
+
     for img_file in img_files:
         img = cv2.imread(img_file, cv2.IMREAD_UNCHANGED)
 
@@ -37,4 +38,8 @@ if __name__ == "__main__":
         result_filename = os.path.join(dest_path, img_file)
 
         cv2.imwrite(result_filename, resized_img)
+
+        img_idx = img_idx + 1
+        if img_idx % 100 == 0:
+            print 'index: ', str(img_idx)
 

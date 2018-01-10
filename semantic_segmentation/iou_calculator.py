@@ -5,6 +5,9 @@ import glob
 import cv2
 import numpy as np
 
+#PIXEL_THRESHOLD = 127
+PIXEL_THRESHOLD = 180
+
 # paths (filenames in GT_IMAGE_DIRECTORY and FEEDFORWARD_IMAGE_DIRECTORY must be the same)
 #GT_IMAGE_DIRECTORY = '/Users/Illusion/Temp/seg_test/seg_gt/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Temp/seg_test/seg_modified/'
@@ -16,6 +19,7 @@ GT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/custom_net_v1_without_augmentation/results/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_and_lfw_aug/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_aug/'
+FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Downloads/forward_result_unet/'
 
 # pink to blue by photoshop
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_background_and_geometry_aug_pink_to_blue/'
@@ -30,7 +34,7 @@ GT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Downloads/forward_result/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/hair_semantic_segmentation_pix2pix_without_GAN_until0911_lfw_aug/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/hair_semantic_segmentation_pix2pix_with_gan_until0911_lfw_aug/'
-FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/hair_semantic_segmentation_pix2pix_without_GAN_until0911_lfw_aug_epoch_9/'
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/hair_semantic_segmentation_pix2pix_without_GAN_until0911_lfw_aug_epoch_9/'
 
 # unet pix2pix (256x256)
 '''
@@ -86,8 +90,6 @@ def load_pair_images(filename):
 
     return gt_img, result_img
 
-PIXEL_THRESHOLD = 127
-
 def thresholding_images(gt_img, result_img):
 
     # thresholding gt_img
@@ -101,6 +103,11 @@ def thresholding_images(gt_img, result_img):
     higher_valued_color_elements = np.invert(lower_valued_color_elements)
     result_img[lower_valued_color_elements] = 0
     result_img[higher_valued_color_elements] = 1
+
+    # change the black pixels(unknown) to background pixels
+    # iterate through pixels
+    black_pixels_mask = np.all(result_img == (0, 0, 0), axis=-1)
+    result_img[black_pixels_mask] = tuple(answer_classes['background'])
 
     return gt_img, result_img
 
@@ -205,6 +212,10 @@ if __name__ == "__main__":
 
         if (gt_img.shape[1] is not INPUT_GT_IMAGE_SIZE_WIDTH) or (gt_img.shape[0] is not INPUT_GT_IMAGE_SIZE_HEIGHT):
             gt_img = cv2.resize(gt_img,
+                       (INPUT_GT_IMAGE_SIZE_WIDTH, INPUT_GT_IMAGE_SIZE_HEIGHT), cv2.INTER_CUBIC)
+
+        if (result_img.shape[1] is not INPUT_GT_IMAGE_SIZE_WIDTH) or (result_img.shape[0] is not INPUT_GT_IMAGE_SIZE_HEIGHT):
+            result_img = cv2.resize(result_img,
                        (INPUT_GT_IMAGE_SIZE_WIDTH, INPUT_GT_IMAGE_SIZE_HEIGHT), cv2.INTER_CUBIC)
 
         # thresholding pixel values to 0 or 1

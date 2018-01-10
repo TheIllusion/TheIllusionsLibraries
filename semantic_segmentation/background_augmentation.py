@@ -12,6 +12,8 @@ TRAINING_IMAGE_DIR = '/Users/Illusion/Documents/Data/background_augmentation/inp
 TRAINING_IMAGE_SEMANTIC_MAPS_DIR = '/Users/Illusion/Documents/Data/background_augmentation/semantic_maps/'
 
 BACKGROUND_IMAGE_DIR = '/Users/Illusion/Documents/Data/background_augmentation/background_imgs/refined/'
+
+# Result Images
 RESULT_AUGMENTED_IMAGE_DIR = '/Users/Illusion/Documents/Data/background_augmentation/result_imgs/'
 RESULT_SEMANTIC_MAPS_DIR = '/Users/Illusion/Documents/Data/background_augmentation/result_semantic_maps/'
 

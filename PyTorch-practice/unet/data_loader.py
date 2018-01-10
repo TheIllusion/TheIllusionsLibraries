@@ -162,13 +162,13 @@ def image_buffer_loader():
         buff_status[current_buff_index] = 'filled'
 
         if lineIdx % 10 == 0:
-            print 'training_jpg_line_idx=', str(lineIdx)
+            print 'training_jpg_line_idx=', str(lineIdx), ' epoch=', str(epoch)
 
         lineIdx = lineIdx + 1
         if lineIdx >= max_training_index:
             lineIdx = 0
             epoch = epoch + 1
-            print 'epoch = ', str(epoch)
+            #print 'epoch = ', str(epoch)
 
         current_buff_index = current_buff_index + 1
         if current_buff_index >= image_buffer_size:

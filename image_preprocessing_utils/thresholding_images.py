@@ -17,7 +17,7 @@ def thresholding_images(input_img):
     lower_valued_color_elements = input_img < PIXEL_THRESHOLD
     higher_valued_color_elements = np.invert(lower_valued_color_elements)
     input_img[lower_valued_color_elements] = 0
-    input_img[higher_valued_color_elements] = 1
+    input_img[higher_valued_color_elements] = 255
 
     return input_img
 

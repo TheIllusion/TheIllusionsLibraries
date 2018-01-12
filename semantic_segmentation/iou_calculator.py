@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 
 #PIXEL_THRESHOLD = 127
-PIXEL_THRESHOLD = 180
+PIXEL_THRESHOLD = 160
 
 # paths (filenames in GT_IMAGE_DIRECTORY and FEEDFORWARD_IMAGE_DIRECTORY must be the same)
 #GT_IMAGE_DIRECTORY = '/Users/Illusion/Temp/seg_test/seg_gt/'

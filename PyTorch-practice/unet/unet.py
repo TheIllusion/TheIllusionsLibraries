@@ -12,7 +12,8 @@ import numpy as np
 is_gpu_mode = True 
 
 # feedforward mode
-is_feedforward_mode = True
+#is_feedforward_mode = True
+is_feedforward_mode = False
 
 if not is_feedforward_mode:
     import data_loader
@@ -210,7 +211,7 @@ if __name__ == "__main__":
     # the model for us. Here we will use Adam; the optim package contains many other
     # optimization algoriths. The first argument to the Adam constructor tells the
     # optimizer which Variables it should update.
-    learning_rate = 1 * 1e-4
+    learning_rate = 3 * 1e-4
 
     # Construct our loss function and an Optimizer. The call to model.parameters()
     # in the SGD constructor will contain the learnable parameters of the two
@@ -300,4 +301,4 @@ if __name__ == "__main__":
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(unet_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'unet_total_augmented_iter_' +str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'unet_lr_0_0003_total_augmented_iter_' +str(i) + '.pt')

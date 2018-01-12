@@ -14,23 +14,25 @@ is_gpu_mode = True
 
 # feedforward mode
 is_feedforward_mode = False
+#is_feedforward_mode = True
 
 if not is_feedforward_mode:
     import data_loader
     
 # batch size
-BATCH_SIZE = 2
+BATCH_SIZE = 5
 TOTAL_ITERATION = 1000000
 
 # model saving (iterations)
-MODEL_SAVING_FREQUENCY = 1000
+MODEL_SAVING_FREQUENCY = 5000
 # i7-2600k
 #MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
 # macbook pro
 #MODEL_SAVING_DIRECTORY = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
 # svc002
-MODEL_SAVING_DIRECTORY = '/home1/irteamsu/users/rklee/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
-
+#MODEL_SAVING_DIRECTORY = '/home1/irteamsu/users/rklee/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
+# tbt005
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
 # macbook pro
 #cifar10_data_dir = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/fashion-mnist/data/'
 
@@ -225,7 +227,7 @@ if __name__ == "__main__":
     # the model for us. Here we will use Adam; the optim package contains many other
     # optimization algoriths. The first argument to the Adam constructor tells the
     # optimizer which Variables it should update.
-    learning_rate = 1e-4
+    learning_rate = 1 * 1e-4
 
     # Construct our loss function and an Optimizer. The call to model.parameters()
     # in the SGD constructor will contain the learnable parameters of the two
@@ -315,4 +317,4 @@ if __name__ == "__main__":
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(tiramisu_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'tiramisu_iter_' +str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'tiramisu_lr_0_0001_iter_' +str(i) + '.pt')

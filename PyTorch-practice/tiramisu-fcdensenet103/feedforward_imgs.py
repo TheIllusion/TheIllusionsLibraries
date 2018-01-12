@@ -11,7 +11,11 @@ import time, cv2
 import os, glob
 import numpy as np
 
-INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/data_6T/data/hair_semantic_segmentation/until_2017_0823/original_all/"
+# svc003
+#INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/data_6T/data/hair_semantic_segmentation/until_2017_0823/original_all/"
+
+# tbt005
+INPUT_TEST_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/official_test_set/original/"
 
 # load the filelist
 #os.chdir(INPUT_TEST_IMAGE_DIRECTORY_PATH)
@@ -22,7 +26,7 @@ max_test_index = len(jpg_files)
 INPUT_TEST_IMAGE_WIDTH = 256
 INPUT_TEST_IMAGE_HEIGHT = 256
 
-TEST_SIZE = 50
+TEST_SIZE = 10
 
 if __name__ == "__main__":
     
@@ -31,7 +35,7 @@ if __name__ == "__main__":
     if tiramisu.is_gpu_mode:
         tiramisu_model.cuda()
 
-    tiramisu_model.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_iter_13000.pt'))
+    tiramisu_model.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_iter_1500.pt'))
             
     # pytorch style
     input_img = np.empty(shape=(1, 3, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))

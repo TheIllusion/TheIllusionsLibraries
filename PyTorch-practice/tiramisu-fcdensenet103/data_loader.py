@@ -11,9 +11,9 @@ import cv2
 #ANSWER_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/seg_result_until_20170823_without_cloth/seg_result_until_20170823_without_cloth"
 
 
-# svc002
-INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/data_6T/data/hair_semantic_segmentation/until_2017_0823/original_all/image_pyramids"
-ANSWER_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/data_6T/data/hair_semantic_segmentation/until_2017_0823/seg_result_until_20170823_without_cloth/image_pyramids"
+# tbt005 (10.161.31.83)
+INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/input_imgs/"
+ANSWER_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/answer_imgs/"
 
 IS_TRAINING = True
 

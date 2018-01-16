@@ -26,7 +26,10 @@ BATCH_SIZE = 4
 TOTAL_ITERATION = 1000000
 
 # learning rate
-LEARNING_RATE = 10 * 1e-4
+LEARNING_RATE = 1 * 1e-4
+
+# zero centered
+MEAN_VALUE_FOR_ZERO_CENTERED = 128 
 
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 10000
@@ -278,7 +281,11 @@ if __name__ == "__main__":
 
             np.copyto(input_img[j], data_loader.input_buff[image_buff_read_index])
             np.copyto(answer_img[j], data_loader.answer_buff[image_buff_read_index])
-
+            
+            # apply zero-centered input
+            input_img[j] = input_img[j] - MEAN_VALUE_FOR_ZERO_CENTERED
+            answer_img[j] = answer_img[j] - MEAN_VALUE_FOR_ZERO_CENTERED
+            
             data_loader.buff_status[image_buff_read_index] = 'empty'
 
             image_buff_read_index = image_buff_read_index + 1
@@ -322,4 +329,4 @@ if __name__ == "__main__":
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(tiramisu_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'tiramisu_lr_0_001_iter_' +str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'tiramisu_zero_centr_lr_0_0001_iter_' +str(i) + '.pt')

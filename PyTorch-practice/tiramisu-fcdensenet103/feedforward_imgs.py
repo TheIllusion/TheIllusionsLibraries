@@ -53,6 +53,9 @@ if __name__ == "__main__":
         input_img[0][1, :, :] = img_opencv[:, :, 1]
         input_img[0][2, :, :] = img_opencv[:, :, 2]    
         
+        # zero-centered input
+        input_img[0] = input_img[0] - tiramisu.MEAN_VALUE_FOR_ZERO_CENTERED
+        
         # test purposes only
         '''
         output_img_opencv[:, :, 0] = input_img[0][0, :, :]

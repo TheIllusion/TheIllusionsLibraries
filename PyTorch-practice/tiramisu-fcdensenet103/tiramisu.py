@@ -22,14 +22,14 @@ if not is_feedforward_mode:
     import data_loader
     
 # batch size
-BATCH_SIZE = 5
+BATCH_SIZE = 4
 TOTAL_ITERATION = 1000000
 
 # learning rate
-LEARNING_RATE = 3 * 1e-4
+LEARNING_RATE = 10 * 1e-4
 
 # model saving (iterations)
-MODEL_SAVING_FREQUENCY = 1000
+MODEL_SAVING_FREQUENCY = 10000
 
 # i7-2600k
 #MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
@@ -322,4 +322,4 @@ if __name__ == "__main__":
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(tiramisu_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'tiramisu_lr_0_0001_iter_' +str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'tiramisu_lr_0_001_iter_' +str(i) + '.pt')

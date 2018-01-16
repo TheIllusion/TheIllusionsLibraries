@@ -19,7 +19,8 @@ GT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/custom_net_v1_without_augmentation/results/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_and_lfw_aug/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_aug/'
-FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Downloads/forward_result_unet/'
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Downloads/forward_result_unet/'
+FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Downloads/unet_lr_0_0003/'
 
 # pink to blue by photoshop
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_background_and_geometry_aug_pink_to_blue/'
@@ -220,6 +221,9 @@ if __name__ == "__main__":
 
         # thresholding pixel values to 0 or 1
         gt_img, result_img = thresholding_images(gt_img, result_img)
+
+        # save the thresholded image. debug purposes only.
+        #cv2.imwrite('thresholded_' + filename, result_img*255)
 
         # calculate overall pixel accuracy
         accuracy = calculate_accuracy(gt_img, result_img)

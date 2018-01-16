@@ -13,8 +13,10 @@ import numpy as np
 is_gpu_mode = True 
 
 # feedforward mode
-is_feedforward_mode = False
-#is_feedforward_mode = True
+if __name__ == "__main__":
+    is_feedforward_mode = False
+else:
+    is_feedforward_mode = True
 
 if not is_feedforward_mode:
     import data_loader
@@ -23,8 +25,12 @@ if not is_feedforward_mode:
 BATCH_SIZE = 5
 TOTAL_ITERATION = 1000000
 
+# learning rate
+LEARNING_RATE = 3 * 1e-4
+
 # model saving (iterations)
-MODEL_SAVING_FREQUENCY = 5000
+MODEL_SAVING_FREQUENCY = 1000
+
 # i7-2600k
 #MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
 # macbook pro
@@ -63,7 +69,6 @@ test_set = datasets.CIFAR10(cifar10_data_dir, train=False,
 
 test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
 '''
-
 
 class Tiramisu(nn.Module):
     def __init__(self):
@@ -222,12 +227,12 @@ if __name__ == "__main__":
 
     if is_gpu_mode:
         tiramisu_model.cuda()
-
+    
     # Use the optim package to define an Optimizer that will update the weights of
     # the model for us. Here we will use Adam; the optim package contains many other
     # optimization algoriths. The first argument to the Adam constructor tells the
     # optimizer which Variables it should update.
-    learning_rate = 1 * 1e-4
+    learning_rate = LEARNING_RATE
 
     # Construct our loss function and an Optimizer. The call to model.parameters()
     # in the SGD constructor will contain the learnable parameters of the two

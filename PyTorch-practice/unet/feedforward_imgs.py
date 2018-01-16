@@ -11,7 +11,8 @@ import time, cv2
 import os, glob
 import numpy as np
 
-INPUT_TEST_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/official_test_set/original/"
+#INPUT_TEST_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/official_test_set/original/"
+INPUT_TEST_IMAGE_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/unet/resize_ori_384/'
 
 # load the filelist
 #os.chdir(INPUT_TEST_IMAGE_DIRECTORY_PATH)
@@ -22,7 +23,7 @@ max_test_index = len(jpg_files)
 INPUT_TEST_IMAGE_WIDTH = 384
 INPUT_TEST_IMAGE_HEIGHT = 384
 
-TEST_SIZE = 50
+TEST_SIZE = 300
 
 if __name__ == "__main__":
     
@@ -31,7 +32,7 @@ if __name__ == "__main__":
     if unet.is_gpu_mode:
         unet_model.cuda()
 
-    unet_model.load_state_dict(torch.load(unet.MODEL_SAVING_DIRECTORY + 'unet_total_augmented_iter_130000.pt'))
+    unet_model.load_state_dict(torch.load(unet.MODEL_SAVING_DIRECTORY + 'unet_lr_0_0003_total_augmented_iter_380000.pt'))
             
     # pytorch style
     input_img = np.empty(shape=(1, 3, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))

@@ -13,10 +13,18 @@ class Layer(nn.Module):
         
         self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels,
                               kernel_size=kernel_size, stride=1, padding=1, bias=True)
+        
+        # weight initialization
+        torch.nn.init.xavier_uniform(self.conv.weight)
+        
         self.batch_norm = nn.BatchNorm2d(out_channels)
 
     def forward(self, x):
         x = F.relu(self.conv(x))
+        
+        # try batch-norm (this could be different from the original u-net)
+        x = self.batch_norm(x)
+        
         return x
 
 # max pooling
@@ -50,6 +58,9 @@ class TransitionUp(nn.Module):
 
         self.transpoed_conv = nn.ConvTranspose2d(in_channels=in_channels, out_channels=in_channels/2,
                                                  kernel_size=2, stride=2, padding=0, output_padding=0, bias=True)
+        
+        # weight initialization
+        torch.nn.init.xavier_uniform(self.transpoed_conv.weight)
 
     def forward(self, x):
         x = self.transpoed_conv(x)

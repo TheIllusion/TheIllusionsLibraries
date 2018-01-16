@@ -13,18 +13,27 @@ import numpy as np
 is_gpu_mode = True 
 
 # feedforward mode
-is_feedforward_mode = False
-#is_feedforward_mode = True
+if __name__ == "__main__":
+    is_feedforward_mode = False
+else:
+    is_feedforward_mode = True
 
 if not is_feedforward_mode:
     import data_loader
     
 # batch size
-BATCH_SIZE = 5
+BATCH_SIZE = 4
 TOTAL_ITERATION = 1000000
 
+# learning rate
+LEARNING_RATE = 1 * 1e-4
+
+# zero centered
+MEAN_VALUE_FOR_ZERO_CENTERED = 128 
+
 # model saving (iterations)
-MODEL_SAVING_FREQUENCY = 5000
+MODEL_SAVING_FREQUENCY = 10000
+
 # i7-2600k
 #MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/'
 # macbook pro
@@ -63,7 +72,6 @@ test_set = datasets.CIFAR10(cifar10_data_dir, train=False,
 
 test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=2)
 '''
-
 
 class Tiramisu(nn.Module):
     def __init__(self):
@@ -222,12 +230,12 @@ if __name__ == "__main__":
 
     if is_gpu_mode:
         tiramisu_model.cuda()
-
+    
     # Use the optim package to define an Optimizer that will update the weights of
     # the model for us. Here we will use Adam; the optim package contains many other
     # optimization algoriths. The first argument to the Adam constructor tells the
     # optimizer which Variables it should update.
-    learning_rate = 1 * 1e-4
+    learning_rate = LEARNING_RATE
 
     # Construct our loss function and an Optimizer. The call to model.parameters()
     # in the SGD constructor will contain the learnable parameters of the two
@@ -273,7 +281,11 @@ if __name__ == "__main__":
 
             np.copyto(input_img[j], data_loader.input_buff[image_buff_read_index])
             np.copyto(answer_img[j], data_loader.answer_buff[image_buff_read_index])
-
+            
+            # apply zero-centered input
+            input_img[j] = input_img[j] - MEAN_VALUE_FOR_ZERO_CENTERED
+            answer_img[j] = answer_img[j] - MEAN_VALUE_FOR_ZERO_CENTERED
+            
             data_loader.buff_status[image_buff_read_index] = 'empty'
 
             image_buff_read_index = image_buff_read_index + 1
@@ -317,4 +329,4 @@ if __name__ == "__main__":
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(tiramisu_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'tiramisu_lr_0_0001_iter_' +str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'tiramisu_zero_centr_lr_0_0001_iter_' +str(i) + '.pt')

@@ -22,8 +22,8 @@ print 'data loader'
 ##############################################################################################
 # Image Buffer Management
 
-INPUT_IMAGE_WIDTH = 256
-INPUT_IMAGE_HEIGHT = 256
+INPUT_IMAGE_WIDTH = 384
+INPUT_IMAGE_HEIGHT = 384
 
 # image buffers
 image_buffer_size = 100

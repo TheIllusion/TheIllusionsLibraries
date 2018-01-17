@@ -283,8 +283,8 @@ if __name__ == "__main__":
             np.copyto(answer_img[j], data_loader.answer_buff[image_buff_read_index])
             
             # apply zero-centered input
-            input_img[j] = input_img[j] - MEAN_VALUE_FOR_ZERO_CENTERED
-            answer_img[j] = answer_img[j] - MEAN_VALUE_FOR_ZERO_CENTERED
+            #input_img[j] = input_img[j] - MEAN_VALUE_FOR_ZERO_CENTERED
+            #answer_img[j] = answer_img[j] - MEAN_VALUE_FOR_ZERO_CENTERED
             
             data_loader.buff_status[image_buff_read_index] = 'empty'
 

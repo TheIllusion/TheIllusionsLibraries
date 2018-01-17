@@ -54,7 +54,7 @@ if __name__ == "__main__":
         input_img[0][2, :, :] = img_opencv[:, :, 2]    
         
         # zero-centered input
-        #input_img[0] = input_img[0] - tiramisu.MEAN_VALUE_FOR_ZERO_CENTERED
+        input_img[0] = input_img[0] - tiramisu.MEAN_VALUE_FOR_ZERO_CENTERED
         
         # test purposes only
         '''
@@ -83,7 +83,7 @@ if __name__ == "__main__":
         output_img_opencv[:, :, 1] = output_img[1, :, :]
         output_img_opencv[:, :, 2] = output_img[2, :, :]
 
-        cv2.imwrite("output_idx" + str(idx) + ".jpg", output_img_opencv)
+        cv2.imwrite(os.path.basename(jpg_files[idx]), output_img_opencv)
         
         # display purposes only. create concatenated imgs (original:feedforward)
         concated_img = np.hstack((img_opencv, output_img_opencv))

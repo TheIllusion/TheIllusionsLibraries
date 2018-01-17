@@ -6,11 +6,11 @@ import os
 import glob
 #import copy
 
-INPUT_DIRECTORY = "/Users/Illusion/Temp/pics/"
+INPUT_DIRECTORY = "/Users/Illusion/Temp/fashion_items/"
 
-ANSWER_DIRECTORY = "/Users/Illusion/Temp/pic_result/"
+ANSWER_DIRECTORY = "/Users/Illusion/Temp/results/"
 
-OUTPUT_DIRECTORY = "/Users/Illusion/Temp/pics_concat/"
+OUTPUT_DIRECTORY = "/Users/Illusion/Temp/result_concat/"
 
 if __name__ == "__main__":
 
@@ -24,8 +24,8 @@ if __name__ == "__main__":
 
         print 'filename: ', jpg_file
 
-        canny_img = cv2.imread( INPUT_DIRECTORY + jpg_file, cv2.IMREAD_COLOR)
-        if (type(canny_img) is not np.ndarray):
+        input_img = cv2.imread( INPUT_DIRECTORY + jpg_file, cv2.IMREAD_COLOR)
+        if (type(input_img) is not np.ndarray):
             print jpg_file + ' load failed!'
             os.system("exit")
             #continue
@@ -36,10 +36,15 @@ if __name__ == "__main__":
             os.system("exit")
             #continue
 
-        #try:
-        concated_img = np.hstack((canny_img, answer_img))
+        # resize the answer_img to the size of input_img
+        if input_img.shape[0] != answer_img.shape[0] or input_img.shape[1] != answer_img.shape[1]:
+            print 'resize the image'
+            answer_img = cv2.resize(answer_img, (input_img.shape[1], input_img.shape[0]), interpolation=cv2.INTER_CUBIC)
 
-        cv2.imwrite(OUTPUT_DIRECTORY + 'trn_' + jpg_file, concated_img)
+        #try:
+        concated_img = np.hstack((input_img, answer_img))
+
+        cv2.imwrite(OUTPUT_DIRECTORY + 'concat_' + jpg_file, concated_img)
         #except:
          #   print 'error occurred. skip this image'
 

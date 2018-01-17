@@ -18,7 +18,7 @@ else:
     is_feedforward_mode = True
 
 # learning rate
-LEARNING_RATE = 1 * 1e-4
+LEARNING_RATE = 0.5 * 1e-4
 
 if not is_feedforward_mode:
     import data_loader
@@ -268,7 +268,7 @@ if __name__ == "__main__":
 
             # make zero-centered (this could be different from the original unet)
             input_img[j] = input_img[j] - MEAN_VALUE_FOR_ZERO_CENTERED
-            answer_img[j] = answer_img[j] - MEAN_VALUE_FOR_ZERO_CENTERED
+            #answer_img[j] = answer_img[j] - MEAN_VALUE_FOR_ZERO_CENTERED
             
             data_loader.buff_status[image_buff_read_index] = 'empty'
 
@@ -313,4 +313,4 @@ if __name__ == "__main__":
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(unet_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'unet_lr_0_0001_total_augmented_iter_' +str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'unet_zero_centr_lr_0_00005_total_augmented_iter_' +str(i) + '.pt')

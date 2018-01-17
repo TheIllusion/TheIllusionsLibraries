@@ -26,7 +26,7 @@ max_test_index = len(jpg_files)
 INPUT_TEST_IMAGE_WIDTH = 384
 INPUT_TEST_IMAGE_HEIGHT = 384
 
-TEST_SIZE = 20
+TEST_SIZE = 50
 
 if __name__ == "__main__":
     
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     if tiramisu.is_gpu_mode:
         tiramisu_model.cuda()
 
-    tiramisu_model.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_lr_0_0003_iter_10000.pt'))
+    tiramisu_model.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_zero_centr_lr_0_0001_iter_110000.pt'))
             
     # pytorch style
     input_img = np.empty(shape=(1, 3, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))
@@ -83,7 +83,7 @@ if __name__ == "__main__":
         output_img_opencv[:, :, 1] = output_img[1, :, :]
         output_img_opencv[:, :, 2] = output_img[2, :, :]
 
-        cv2.imwrite("output_idx" + str(idx) + ".jpg", output_img_opencv)
+        cv2.imwrite(os.path.basename(jpg_files[idx]), output_img_opencv)
         
         # display purposes only. create concatenated imgs (original:feedforward)
         concated_img = np.hstack((img_opencv, output_img_opencv))

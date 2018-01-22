@@ -16,6 +16,7 @@ import numpy as np
 
 # tbt005
 INPUT_TEST_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/official_test_set/original/"
+#INPUT_TEST_IMAGE_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/unet/resize_ori_384/'
 
 # load the filelist
 #os.chdir(INPUT_TEST_IMAGE_DIRECTORY_PATH)
@@ -26,7 +27,7 @@ max_test_index = len(jpg_files)
 INPUT_TEST_IMAGE_WIDTH = 384
 INPUT_TEST_IMAGE_HEIGHT = 384
 
-TEST_SIZE = 50
+TEST_SIZE = 53
 
 if __name__ == "__main__":
     
@@ -35,7 +36,7 @@ if __name__ == "__main__":
     if tiramisu.is_gpu_mode:
         tiramisu_model.cuda()
 
-    tiramisu_model.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_zero_centr_lr_0_0001_iter_110000.pt'))
+    tiramisu_model.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_zero_centr_lr_0_00005_iter_690000.pt'))
             
     # pytorch style
     input_img = np.empty(shape=(1, 3, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))

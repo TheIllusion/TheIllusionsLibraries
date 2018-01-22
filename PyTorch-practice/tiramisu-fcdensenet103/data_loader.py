@@ -12,8 +12,12 @@ import cv2
 
 
 # tbt005 (10.161.31.83)
+'''
 INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/input_imgs/"
 ANSWER_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/answer_imgs/"
+'''
+INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/data/rklee/hair_segmentation/seg_result_until_20170911_and_lfw/total_augmented_training_data/input_imgs/"
+ANSWER_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/data/rklee/hair_segmentation/seg_result_until_20170911_and_lfw/total_augmented_training_data/answer_imgs/"
 
 IS_TRAINING = True
 

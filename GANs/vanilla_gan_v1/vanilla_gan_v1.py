@@ -37,7 +37,8 @@ initial_learning_rate_gen = tf.Variable(0.0002)
 #INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Caricature/face_refined_1/original/"
 
 # i7-2600k (Ubuntu)
-INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_DATA_SSD_M550/KCeleb-all-faces/"
+#INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_DATA_SSD_M550/KCeleb-all-faces/"
+INPUT_IMAGE_DIRECTORY_PATH = '/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all/'
 
 # output image save directory
 # Macbook Pro
@@ -440,7 +441,7 @@ if __name__ == '__main__':
                 print '=============================================='
 
             # generate fake iamges every 100-iter to check the quality of output images
-            if iter % 1000 == 0:
+            if iter % 200 == 0:
                 fake_imgs = generator.generate_fake_imgs()
 
                 # revert zero-centered

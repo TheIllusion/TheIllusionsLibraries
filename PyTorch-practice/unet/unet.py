@@ -276,11 +276,11 @@ if __name__ == "__main__":
             if image_buff_read_index >= data_loader.image_buffer_size:
                 image_buff_read_index = 0
 
-            if is_gpu_mode:
-                inputs, answers = Variable(torch.from_numpy(input_img).float().cuda()), \
-                                  Variable(torch.from_numpy(answer_img).float().cuda())
-            else:
-                inputs, answers = Variable(torch.from_numpy(input_img).float()), Variable(torch.from_numpy(answer_img).float())
+        if is_gpu_mode:
+            inputs, answers = Variable(torch.from_numpy(input_img).float().cuda()), \
+                              Variable(torch.from_numpy(answer_img).float().cuda())
+        else:
+            inputs, answers = Variable(torch.from_numpy(input_img).float()), Variable(torch.from_numpy(answer_img).float())
 
         answers = answers / 255.
         #answers = answers.long()

@@ -26,11 +26,11 @@ print 'data loader'
 ##############################################################################################
 # Image Buffer Management
 
-INPUT_IMAGE_WIDTH = 384
-INPUT_IMAGE_HEIGHT = 384
+INPUT_IMAGE_WIDTH = 64
+INPUT_IMAGE_HEIGHT = 64
 
 # image buffers
-image_buffer_size = 100
+image_buffer_size = 300
 
 # OpenCV format
 #input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
@@ -149,8 +149,8 @@ def image_buffer_loader():
 
         buff_status[current_buff_index] = 'filled'
 
-        if lineIdx % 10 == 0:
-            print 'training_jpg_line_idx=', str(lineIdx)
+        if lineIdx % 1000 == 0:
+            print 'training_jpg_line_idx =', str(lineIdx), 'epoch =', str(epoch)
 
         lineIdx = lineIdx + 1
         if lineIdx >= max_training_index:

@@ -103,7 +103,6 @@ class Generator(nn.Module):
         a Variable of output data. We can use Modules defined in the constructor as
         well as arbitrary operators on Variables.
         """
-
         x = self.first_deconv(x)
         x = F.relu(x)
         x = self.second_deconv(x)
@@ -128,8 +127,8 @@ class Discriminator(nn.Module):
         self.second_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
         self.third_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
 
-        self.fc1 = nn.Linear(8*8*512, 50)
-        self.fc2 = nn.Linear(50, 1)
+        self.fc1 = nn.Linear(8*8*512, 200)
+        self.fc2 = nn.Linear(200, 1)
 
     def forward(self, x):
         """
@@ -228,23 +227,25 @@ if __name__ == "__main__":
         # gradients for the variables it will update (which are the learnable weights
         # of the model)
         optimizer_disc.zero_grad()
-        optimizer_gen.zero_grad()
 
         # Backward pass: compute gradient of the loss with respect to model parameters
         loss_disc_total.backward(retain_graph = True)
-        loss_gen.backward()
 
         # Calling the step function on an Optimizer makes an update to its parameters
-        optimizer_gen.step()
         optimizer_disc.step()
+
+        # generator
+        optimizer_gen.zero_grad()
+        loss_gen.backward()
+        optimizer_gen.step()
 
         if i % 100 == 0:
             print '-----------------------------------'
             print 'iterations = ', str(i)
             print 'loss(generator)     = ', str(loss_gen)
             print 'loss(discriminator) = ', str(loss_disc_total)
-            print '(discriminator out-real) = ', output_disc_real
-            print '(discriminator out-fake) = ', output_disc_fake
+            print '(discriminator out-real) = ', output_disc_real[0]
+            print '(discriminator out-fake) = ', output_disc_fake[0]
 
         if i % 500 == 0:
             # save the output images

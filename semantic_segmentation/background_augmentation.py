@@ -8,17 +8,20 @@ import numpy as np
 import random
 
 # The Filenames of original images and semantic maps must be the same
-TRAINING_IMAGE_DIR = '/Users/Illusion/Documents/Data/background_augmentation/input_imgs/'
-TRAINING_IMAGE_SEMANTIC_MAPS_DIR = '/Users/Illusion/Documents/Data/background_augmentation/semantic_maps/'
+TRAINING_IMAGE_DIR = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/lfw/lfw_funneled_jpg_images/'
+TRAINING_IMAGE_SEMANTIC_MAPS_DIR = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/lfw/parts_lfw_funneled_gt_jpg_images/'
 
 BACKGROUND_IMAGE_DIR = '/Users/Illusion/Documents/Data/background_augmentation/background_imgs/refined/'
 
 # Result Images
-RESULT_AUGMENTED_IMAGE_DIR = '/Users/Illusion/Documents/Data/background_augmentation/result_imgs/'
-RESULT_SEMANTIC_MAPS_DIR = '/Users/Illusion/Documents/Data/background_augmentation/result_semantic_maps/'
+#RESULT_AUGMENTED_IMAGE_DIR = '/Users/Illusion/Documents/Data/background_augmentation/result_imgs/'
+#RESULT_SEMANTIC_MAPS_DIR = '/Users/Illusion/Documents/Data/background_augmentation/result_semantic_maps/'
+
+RESULT_AUGMENTED_IMAGE_DIR = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/lfw/lfw_funneled_jpg_images_background_augmented/'
+RESULT_SEMANTIC_MAPS_DIR = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/lfw/lfw_funneled_jpg_images_background_augmented_sem_maps/'
 
 # Number of desired images per input image (background image will be chosen randomly from 'BACKGROUND_IMAGE_DIR')
-NUMBER_OF_AUGMENTED_IMAGES_PER_INPUT = 10
+NUMBER_OF_AUGMENTED_IMAGES_PER_INPUT = 20
 
 # Dictionary for background colors in BGR. Values must be thresholded to 0 or 1.
 background_classes = {}
@@ -30,6 +33,12 @@ background_classes['background'] = [1, 0, 0]
 #background_classes['pink'] = [1, 0, 1]
 
 PIXEL_THRESHOLD = 127
+
+if not os.path.exists(RESULT_AUGMENTED_IMAGE_DIR):
+    os.mkdir(RESULT_AUGMENTED_IMAGE_DIR)
+
+if not os.path.exists(RESULT_SEMANTIC_MAPS_DIR):
+    os.mkdir(RESULT_SEMANTIC_MAPS_DIR)
 
 def load_file_names(full_path):
 
@@ -132,6 +141,8 @@ def augment_background_images(sem_map, sem_map_original, input_img, input_img_fi
 
 if __name__ == "__main__":
 
+    idx = 0
+
     for input_img_filename in input_img_filenames:
 
         print 'filename: ', input_img_filename
@@ -147,4 +158,8 @@ if __name__ == "__main__":
 
         augment_background_images(sem_map, sem_map_original, input_img, input_img_filename)
 
+        if idx % 100 == 0:
+            print 'idx=', str(idx)
+
+        idx = idx + 1
     print 'process finished'

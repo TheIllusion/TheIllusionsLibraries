@@ -26,7 +26,7 @@ BATCH_SIZE = 4
 TOTAL_ITERATION = 1000000
 
 # learning rate
-LEARNING_RATE = 0.5 * 1e-4
+LEARNING_RATE = 1 * 1e-4
 
 # zero centered
 MEAN_VALUE_FOR_ZERO_CENTERED = 128 
@@ -292,11 +292,11 @@ if __name__ == "__main__":
             if image_buff_read_index >= data_loader.image_buffer_size:
                 image_buff_read_index = 0
 
-            if is_gpu_mode:
-                inputs, answers = Variable(torch.from_numpy(input_img).float().cuda()), \
-                                  Variable(torch.from_numpy(answer_img).float().cuda())
-            else:
-                inputs, answers = Variable(torch.from_numpy(input_img).float()), Variable(torch.from_numpy(answer_img).float())
+        if is_gpu_mode:
+            inputs, answers = Variable(torch.from_numpy(input_img).float().cuda()), \
+                              Variable(torch.from_numpy(answer_img).float().cuda())
+        else:
+            inputs, answers = Variable(torch.from_numpy(input_img).float()), Variable(torch.from_numpy(answer_img).float())
 
         answers = answers / 255.
         #answers = answers.long()
@@ -329,4 +329,4 @@ if __name__ == "__main__":
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(tiramisu_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'tiramisu_zero_centr_lr_0_00005_iter_' +str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'tiramisu_lfw_added_zero_centr_lr_0_0001_iter_' +str(i) + '.pt')

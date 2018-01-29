@@ -11,21 +11,23 @@ IS_TRAINING = True
 
 TOTAL_ITERATION = 500000
 
-BATCH_SIZE = 100
+BATCH_SIZE = 50
 NOISE_VECTOR_WIDTH = 4
 NOISE_VECTOR_HEIGHT = 4
 NOISE_VECTOR_DEPTH = 3
 
-INPUT_IMAGE_WIDTH = 28
-INPUT_IMAGE_HEIGHT = 28
+INPUT_IMAGE_WIDTH = 32
+INPUT_IMAGE_HEIGHT = 32
 INPUT_IMAGE_DEPTH = 3
 
+PIXEL_VALUE_FOR_ZERO_CENTERED = 128
+
 # learning rate
-initial_learning_rate_disc = tf.Variable(0.00001)
-initial_learning_rate_gen = tf.Variable(0.00005)
+initial_learning_rate_disc = tf.Variable(0.0002)
+initial_learning_rate_gen = tf.Variable(0.0002)
 
 # svc002
-INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/blonde_hair"
+#INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/blonde_hair"
 #"/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/face_imgs_svc"
 
 # Macbook Pro
@@ -36,14 +38,15 @@ INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/
 
 # i7-2600k (Ubuntu)
 #INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_DATA_SSD_M550/KCeleb-all-faces/"
+INPUT_IMAGE_DIRECTORY_PATH = '/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all/'
 
 # output image save directory
 # Macbook Pro
 #OUTPUT_IMAGE_SAVE_DIRECTORY = "/Users/Illusion/Downloads/vanilla_gan_generated/"
 # svc002
-OUTPUT_IMAGE_SAVE_DIRECTORY = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/generated_face_imgs/"
+#OUTPUT_IMAGE_SAVE_DIRECTORY = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/generated_face_imgs/"
 # i7-2600k (Ubuntu)
-#OUTPUT_IMAGE_SAVE_DIRECTORY = "/media/illusion/ML_Linux/temp/vanilla_gan_v1_gen_images/"
+OUTPUT_IMAGE_SAVE_DIRECTORY = "/media/illusion/ML_Linux/temp/vanilla_gan_v1_gen_images/"
 ##############################################################################################
 # Image Buffer Management
 
@@ -146,6 +149,9 @@ def image_buffer_loader():
 
         input_buff[current_buff_index] = cv2.resize(input_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT), interpolation=cv2.INTER_LINEAR)
 
+        # make zero-centered
+        input_buff[current_buff_index] = input_buff[current_buff_index] - PIXEL_VALUE_FOR_ZERO_CENTERED
+
         buff_status[current_buff_index] = 'filled'
 
         if lineIdx % 1000 == 0:
@@ -209,13 +215,7 @@ class SimpleGenerator:
                                                           initializer=tf.contrib.layers.xavier_initializer())
             self.gen_TRANSPOSED_CONV_W4 = tf.get_variable("GEN_TRANSPOSED_CONV_W4", shape=[4, 4, 128, 256],
                                                           initializer=tf.contrib.layers.xavier_initializer())
-            self.gen_TRANSPOSED_CONV_W5 = tf.get_variable("GEN_TRANSPOSED_CONV_W5", shape=[4, 4, 128, 128],
-                                                          initializer=tf.contrib.layers.xavier_initializer())
-            self.gen_TRANSPOSED_CONV_W6 = tf.get_variable("GEN_TRANSPOSED_CONV_W6", shape=[4, 4, 128, 128],
-                                                          initializer=tf.contrib.layers.xavier_initializer())
-            self.gen_TRANSPOSED_CONV_W7 = tf.get_variable("GEN_TRANSPOSED_CONV_W7", shape=[4, 4, 128, 128],
-                                                          initializer=tf.contrib.layers.xavier_initializer())
-            self.gen_TRANSPOSED_CONV_W8 = tf.get_variable("GEN_TRANSPOSED_CONV_W8", shape=[4, 4, 3, 128],
+            self.gen_TRANSPOSED_CONV_W5 = tf.get_variable("GEN_TRANSPOSED_CONV_W5", shape=[4, 4, 3, 128],
                                                           initializer=tf.contrib.layers.xavier_initializer())
 
             # biases
@@ -223,71 +223,54 @@ class SimpleGenerator:
             self.gen_BIAS_2 = tf.Variable(tf.zeros([1, 512]), name="GEN_BIAS_2")
             self.gen_BIAS_3 = tf.Variable(tf.zeros([1, 256]), name="GEN_BIAS_3")
             self.gen_BIAS_4 = tf.Variable(tf.zeros([1, 128]), name="GEN_BIAS_4")
-            self.gen_BIAS_5 = tf.Variable(tf.zeros([1, 128]), name="GEN_BIAS_5")
-            self.gen_BIAS_6 = tf.Variable(tf.zeros([1, 128]), name="GEN_BIAS_6")
-            self.gen_BIAS_7 = tf.Variable(tf.zeros([1, 128]), name="GEN_BIAS_7")
-            self.gen_BIAS_8 = tf.Variable(tf.zeros([1, 3]), name="GEN_BIAS_8")
+            self.gen_BIAS_5 = tf.Variable(tf.zeros([1, 3]), name="GEN_BIAS_5")
 
             #tf.global_variables_initializer().run()
 
             self.var_list_gen = [self.gen_TRANSPOSED_CONV_W1, self.gen_TRANSPOSED_CONV_W2, self.gen_TRANSPOSED_CONV_W3,
-                                 self.gen_TRANSPOSED_CONV_W4, self.gen_TRANSPOSED_CONV_W5, self.gen_TRANSPOSED_CONV_W6,
-                                 self.gen_TRANSPOSED_CONV_W7, self.gen_TRANSPOSED_CONV_W8,
+                                 self.gen_TRANSPOSED_CONV_W4, self.gen_TRANSPOSED_CONV_W5,
                                  self.gen_BIAS_1, self.gen_BIAS_2, self.gen_BIAS_3,
-                                 self.gen_BIAS_4, self.gen_BIAS_5, self.gen_BIAS_6,
-                                 self.gen_BIAS_7, self.gen_BIAS_8]
+                                 self.gen_BIAS_4, self.gen_BIAS_5]
 
     def forward(self, x):
         # graph
         gen_TRANS_CONV_1 = tf.nn.relu(tf.nn.conv2d_transpose(x,
                                                               self.gen_TRANSPOSED_CONV_W1,
-                                                              output_shape=[BATCH_SIZE, 4, 4, 1024],
-                                                              strides=[1, 1, 1, 1],
+                                                              output_shape=[BATCH_SIZE, 8, 8, 1024],
+                                                              strides=[1, 2, 2, 1],
                                                               padding="SAME") + self.gen_BIAS_1)
 
         gen_TRANS_CONV_2 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_1,
                                                              self.gen_TRANSPOSED_CONV_W2,
-                                                             output_shape=[BATCH_SIZE, 4, 4, 512],
-                                                             strides=[1, 1, 1, 1],
+                                                             output_shape=[BATCH_SIZE, 16, 16, 512],
+                                                             strides=[1, 2, 2, 1],
                                                              padding="SAME") + self.gen_BIAS_2)
 
         gen_TRANS_CONV_3 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_2,
                                                              self.gen_TRANSPOSED_CONV_W3,
-                                                             output_shape=[BATCH_SIZE, 7, 7, 256],
+                                                             output_shape=[BATCH_SIZE, 32, 32, 256],
                                                              strides=[1, 2, 2, 1],
                                                              padding="SAME") + self.gen_BIAS_3)
 
         gen_TRANS_CONV_4 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_3,
                                                              self.gen_TRANSPOSED_CONV_W4,
-                                                             output_shape=[BATCH_SIZE, 14, 14, 128],
-                                                             strides=[1, 2, 2, 1],
+                                                             output_shape=[BATCH_SIZE, 32, 32, 128],
+                                                             strides=[1, 1, 1, 1],
                                                              padding="SAME") + self.gen_BIAS_4)
 
         gen_TRANS_CONV_5 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_4,
                                                               self.gen_TRANSPOSED_CONV_W5,
-                                                              output_shape=[BATCH_SIZE, 14, 14, 128],
+                                                              output_shape=[BATCH_SIZE, 32, 32, 3],
                                                               strides=[1, 1, 1, 1],
                                                               padding="SAME") + self.gen_BIAS_5)
         
-        gen_TRANS_CONV_6 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_5,
-                                                              self.gen_TRANSPOSED_CONV_W6,
-                                                              output_shape=[BATCH_SIZE, 14, 14, 128],
-                                                              strides=[1, 1, 1, 1],
-                                                              padding="SAME") + self.gen_BIAS_6)
-        
-        gen_TRANS_CONV_7 = tf.nn.relu(tf.nn.conv2d_transpose(gen_TRANS_CONV_6,
-                                                              self.gen_TRANSPOSED_CONV_W7,
-                                                              output_shape=[BATCH_SIZE, 14, 14, 128],
-                                                              strides=[1, 1, 1, 1],
-                                                              padding="SAME") + self.gen_BIAS_7)
+        gen_hypothesis = tf.sigmoid(gen_TRANS_CONV_5)
 
-        gen_TRANS_CONV_8 = tf.nn.conv2d_transpose(gen_TRANS_CONV_7,
-                                                   self.gen_TRANSPOSED_CONV_W8,
-                                                   output_shape=[BATCH_SIZE, 28, 28, 3],
-                                                   strides=[1, 2, 2, 1],
-                                                   padding="SAME") + self.gen_BIAS_8
+        # scale to 0~255
+        gen_hypothesis = gen_hypothesis * 255
 
-        gen_hypothesis = tf.sigmoid(gen_TRANS_CONV_8)
+        # make zero centered
+        gen_hypothesis = gen_hypothesis - PIXEL_VALUE_FOR_ZERO_CENTERED
 
         return gen_hypothesis
 
@@ -299,9 +282,7 @@ class SimpleGenerator:
         gen_hypothesis = self.forward(self.gen_X)
         network_output = self.sess.run(gen_hypothesis, feed_dict={self.gen_X: noise_z})
 
-        # scale to 0~255
-        fake_imgs = network_output * 255
-
+        fake_imgs = network_output
         self.fake_imgs = fake_imgs
 
         return fake_imgs
@@ -322,7 +303,7 @@ class SimpleDiscriminator:
             self.disc_CNN_W2 = tf.get_variable("DISC_CNN_W2", shape=[3, 3, 16, 32], initializer=tf.contrib.layers.xavier_initializer())
             self.disc_CNN_W3 = tf.get_variable("DISC_CNN_W3", shape=[3, 3, 32, 32], initializer=tf.contrib.layers.xavier_initializer())
 
-            self.disc_FC_W1 = tf.get_variable("DISC_FC_W1", shape=[12544, 30],
+            self.disc_FC_W1 = tf.get_variable("DISC_FC_W1", shape=[8192, 30],
                                        initializer=tf.contrib.layers.xavier_initializer())
             self.disc_FC_W2 = tf.get_variable("DISC_FC_W2", shape=[30, 30],
                                        initializer=tf.contrib.layers.xavier_initializer())
@@ -359,7 +340,7 @@ class SimpleDiscriminator:
                                                  padding='SAME') + self.disc_BIAS_CONV_3)
 
         # 14x14
-        disc_FC_IN = tf.reshape(disc_CNN3, [-1, 14*14*64])
+        disc_FC_IN = tf.reshape(disc_CNN3, [-1, 16*16*32])
         disc_FC1 = tf.nn.relu(tf.matmul(disc_FC_IN, self.disc_FC_W1) + self.disc_BIAS_FC_W1)
         disc_FC2 = tf.nn.relu(tf.matmul(disc_FC1, self.disc_FC_W2) + self.disc_BIAS_FC_W2)
 
@@ -460,8 +441,12 @@ if __name__ == '__main__':
                 print '=============================================='
 
             # generate fake iamges every 100-iter to check the quality of output images
-            if iter % 1000 == 0:
+            if iter % 200 == 0:
                 fake_imgs = generator.generate_fake_imgs()
+
+                # revert zero-centered
+                fake_imgs = fake_imgs + PIXEL_VALUE_FOR_ZERO_CENTERED
+
                 for j in range(len(fake_imgs)):
                     # save images to jpg files
                     filename = "iter_" + str(iter) + "_generated_" + str(j) + ".jpg"

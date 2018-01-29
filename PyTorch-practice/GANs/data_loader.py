@@ -7,7 +7,7 @@ import cv2
 #ANSWER_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/seg_result_until_20170911"
 
 # i7-2600k
-#INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all"
+INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all"
 #ANSWER_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/seg_result_until_20170823_without_cloth/seg_result_until_20170823_without_cloth"
 
 
@@ -16,8 +16,8 @@ import cv2
 INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/input_imgs/"
 ANSWER_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/answer_imgs/"
 '''
-INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/data/rklee/hair_segmentation/seg_result_until_20170911_and_lfw/total_augmented_training_data/input_imgs/"
-ANSWER_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/data/rklee/hair_segmentation/seg_result_until_20170911_and_lfw/total_augmented_training_data/answer_imgs/"
+#INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/data/rklee/hair_segmentation/seg_result_until_20170911_and_lfw/total_augmented_training_data/input_imgs/"
+#ANSWER_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/data/rklee/hair_segmentation/seg_result_until_20170911_and_lfw/total_augmented_training_data/answer_imgs/"
 
 IS_TRAINING = True
 
@@ -26,11 +26,11 @@ print 'data loader'
 ##############################################################################################
 # Image Buffer Management
 
-INPUT_IMAGE_WIDTH = 384
-INPUT_IMAGE_HEIGHT = 384
+INPUT_IMAGE_WIDTH = 64
+INPUT_IMAGE_HEIGHT = 64
 
 # image buffers
-image_buffer_size = 100
+image_buffer_size = 300
 
 # OpenCV format
 #input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
@@ -38,7 +38,7 @@ image_buffer_size = 100
 
 # PyTorch format
 input_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
-answer_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
+#answer_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
 
 buff_status = []
 for i in range(image_buffer_size):
@@ -48,7 +48,8 @@ current_buff_index = 0
 lineIdx = 0
 
 # load the filelist
-os.chdir(ANSWER_IMAGE_DIRECTORY_PATH)
+#os.chdir(ANSWER_IMAGE_DIRECTORY_PATH)
+os.chdir(INPUT_IMAGE_DIRECTORY_PATH)
 jpg_files = glob.glob('*.jpg')
 random.shuffle(jpg_files)
 
@@ -125,6 +126,7 @@ def image_buffer_loader():
         input_buff[current_buff_index][2, :, :] = input_img_tmp[:, :, 2]
 
         # Answer Image
+        '''
         filename = os.path.join(ANSWER_IMAGE_DIRECTORY_PATH, training_file_name)
         answer_img = cv2.imread(filename, cv2.IMREAD_COLOR)
 
@@ -136,22 +138,19 @@ def image_buffer_loader():
             print 'skip this jpg file. continue.'
             continue
 
-        '''
-        answer_buff[current_buff_index] = cv2.resize(answer_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
-                                                    interpolation=cv2.INTER_LINEAR)
-        '''
-
         answer_img_tmp = cv2.resize(answer_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
                                    interpolation=cv2.INTER_LINEAR)
 
         answer_buff[current_buff_index][0, :, :] = answer_img_tmp[:, :, 0]
         answer_buff[current_buff_index][1, :, :] = answer_img_tmp[:, :, 1]
         answer_buff[current_buff_index][2, :, :] = answer_img_tmp[:, :, 2]
+        
+        '''
 
         buff_status[current_buff_index] = 'filled'
 
-        if lineIdx % 10 == 0:
-            print 'training_jpg_line_idx=', str(lineIdx)
+        if lineIdx % 1000 == 0:
+            print 'training_jpg_line_idx =', str(lineIdx), 'epoch =', str(epoch)
 
         lineIdx = lineIdx + 1
         if lineIdx >= max_training_index:

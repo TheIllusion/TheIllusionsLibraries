@@ -11,12 +11,15 @@ import time, cv2
 import os, glob
 import numpy as np
 
+ENABLE_MODEL_ENSEMBLES = False
+
 # svc003
 #INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/data_6T/data/hair_semantic_segmentation/until_2017_0823/original_all/"
 
 # tbt005
 INPUT_TEST_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/official_test_set/original/"
 #INPUT_TEST_IMAGE_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/unet/resize_ori_384/'
+#INPUT_TEST_IMAGE_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/face_crop/'
 
 # load the filelist
 #os.chdir(INPUT_TEST_IMAGE_DIRECTORY_PATH)
@@ -28,16 +31,30 @@ INPUT_TEST_IMAGE_WIDTH = 384
 INPUT_TEST_IMAGE_HEIGHT = 384
 
 TEST_SIZE = 53
+#TEST_SIZE = 300
 
 if __name__ == "__main__":
     
     tiramisu_model = tiramisu.Tiramisu()
-
+    
+    if ENABLE_MODEL_ENSEMBLES:
+        tiramisu_model_2 = tiramisu.Tiramisu()
+        tiramisu_model_3 = tiramisu.Tiramisu()
+    
     if tiramisu.is_gpu_mode:
         tiramisu_model.cuda()
 
-    tiramisu_model.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_zero_centr_lr_0_00005_iter_690000.pt'))
-            
+        if ENABLE_MODEL_ENSEMBLES:
+            tiramisu_model_2.cuda()
+            tiramisu_model_3.cuda()
+
+    tiramisu_model.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_lfw_added_zero_centr_lr_0_0001_iter_540000.pt'))
+
+    if ENABLE_MODEL_ENSEMBLES:
+        tiramisu_model_2.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_zero_centr_lr_0_0003_iter_950000.pt'))
+
+        tiramisu_model_3.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_zero_centr_lr_0_0003_iter_600000.pt'))
+    
     # pytorch style
     input_img = np.empty(shape=(1, 3, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))
     
@@ -72,13 +89,26 @@ if __name__ == "__main__":
             inputs = Variable(torch.from_numpy(input_img).float())
 
         start_time = time.time()
+        
         outputs = tiramisu_model(inputs)
+        if ENABLE_MODEL_ENSEMBLES:
+            outputs_2 = tiramisu_model_2(inputs)
+            outputs_3 = tiramisu_model_3(inputs)
+        
         elapsed_time = time.time() - start_time
         
         print 'elapsed time for processing ' + str(idx) + 'th img: ', str(elapsed_time)
 
         output_img = outputs.cpu().data.numpy()[0]
-        output_img = output_img * 255
+        if ENABLE_MODEL_ENSEMBLES:
+            output_img_2 = outputs_2.cpu().data.numpy()[0]
+            output_img_3 = outputs_3.cpu().data.numpy()[0]
+        
+        if not ENABLE_MODEL_ENSEMBLES:
+            output_img = output_img * 255
+        else:
+            #output_img = (output_img + output_img_2) * 255 / 2
+            output_img = (output_img + output_img_2 + output_img_3) * 255 / 3
 
         output_img_opencv[:, :, 0] = output_img[0, :, :]
         output_img_opencv[:, :, 1] = output_img[1, :, :]

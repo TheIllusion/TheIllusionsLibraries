@@ -22,16 +22,17 @@ INPUT_IMAGE_HEIGHT = 64
 INPUT_IMAGE_DEPTH = 3
 
 # learning rate
-initial_learning_rate_disc = tf.Variable(0.00001)
-initial_learning_rate_gen = tf.Variable(0.0005)
+initial_learning_rate_disc = tf.Variable(0.0001)
+initial_learning_rate_gen = tf.Variable(0.0002)
 
 # freq of training the generator per training the discriminator for once
-GENERATOR_TRAINING_FREQUENCY = 5
+GENERATOR_TRAINING_FREQUENCY = 1
+
+PIXEL_VALUE_FOR_ZERO_CENTERED = 128
 
 # svc002
-INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/data_6T/CelebA_data/female"
+#INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/data_6T/CelebA_data/female"
 # "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/face_imgs_svc"
-
 
 # Macbook Pro
 # INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/face_data/20_female/"
@@ -41,14 +42,15 @@ INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/data_6T/CelebA_data/fe
 
 # i7-2600k (Ubuntu)
 #INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_DATA_SSD_M550/KCeleb-all-faces/"
+INPUT_IMAGE_DIRECTORY_PATH = '/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all/'
 
 # output image save directory
 # Macbook Pro
 # OUTPUT_IMAGE_SAVE_DIRECTORY = "/Users/Illusion/Downloads/vanilla_gan_generated/"
 # svc002
-OUTPUT_IMAGE_SAVE_DIRECTORY = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/lsgan/generated_face_imgs_v1/"
+#OUTPUT_IMAGE_SAVE_DIRECTORY = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/lsgan/generated_face_imgs_v1/"
 # i7-2600k (Ubuntu)
-#OUTPUT_IMAGE_SAVE_DIRECTORY = "/media/illusion/ML_Linux/temp/lsgan_v1_gen_images/"
+OUTPUT_IMAGE_SAVE_DIRECTORY = "/media/illusion/ML_Linux/temp/lsgan_v1_gen_images/"
 ##############################################################################################
 # Image Buffer Management
 
@@ -154,6 +156,9 @@ def image_buffer_loader():
 
         input_buff[current_buff_index] = cv2.resize(input_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
                                                     interpolation=cv2.INTER_LINEAR)
+
+        # make zero-centered
+        input_buff[current_buff_index] = input_buff[current_buff_index] - PIXEL_VALUE_FOR_ZERO_CENTERED
 
         buff_status[current_buff_index] = 'filled'
 
@@ -327,6 +332,12 @@ class SimpleGenerator:
 
         gen_hypothesis = tf.sigmoid(gen_TRANS_CONV_9)
 
+        # scale to 0~255
+        gen_hypothesis = gen_hypothesis * 255
+
+        # make zero centered
+        gen_hypothesis = gen_hypothesis - PIXEL_VALUE_FOR_ZERO_CENTERED
+
         return gen_hypothesis
 
     def generate_fake_imgs(self):
@@ -339,9 +350,7 @@ class SimpleGenerator:
         gen_hypothesis = self.forward(self.gen_X)
         network_output = self.sess.run(gen_hypothesis, feed_dict={self.gen_X: noise_z})
 
-        # scale to 0~255
-        fake_imgs = network_output * 255
-
+        fake_imgs = network_output
         self.fake_imgs = fake_imgs
 
         return fake_imgs
@@ -511,9 +520,13 @@ if __name__ == '__main__':
                 # print 'generator loss(5): ', str(gen_loss_current_5)
                 print '=============================================='
 
-            # generate fake iamges every 100-iter to check the quality of output images
-            if iter % 1000 == 0:
+            # generate fake iamges every 200-iter to check the quality of output images
+            if iter % 200 == 0:
                 fake_imgs = generator.generate_fake_imgs()
+
+                # revert zero-centered
+                fake_imgs = fake_imgs + PIXEL_VALUE_FOR_ZERO_CENTERED
+
                 for j in range(len(fake_imgs)):
                     # save images to jpg files
                     filename = "iter_" + str(iter) + "_generated_" + str(j) + ".jpg"

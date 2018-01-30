@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import cv2, time, os
 import numpy as np
 import data_loader
+from logger import Logger
 
 # gpu mode
 is_gpu_mode = True
@@ -14,7 +15,8 @@ BATCH_SIZE = 50
 TOTAL_ITERATION = 1000000
 
 # learning rate
-LEARNING_RATE = 3 * 1e-4
+LEARNING_RATE_GENERATOR = 5 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 0.01 * 1e-4
 
 # zero centered
 #MEAN_VALUE_FOR_ZERO_CENTERED = 128
@@ -22,9 +24,16 @@ LEARNING_RATE = 3 * 1e-4
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 10000
 
+# tbt003
+MODEL_SAVING_DIRECTORY = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/vanilla_gan_models/"
+RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/gen_images/'
+
 # i7-2600k
-MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
-RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_vanilla_gan/'
+#MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
+#RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_vanilla_gan/'
+
+# tensor-board logger
+logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger')
 
 class TransitionDown(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):
@@ -86,16 +95,19 @@ class Generator(nn.Module):
         super(Generator, self).__init__()
 
         # output feature map will have the size of 8x8x3
-        self.first_deconv = TransitionUp(in_channels=3, out_channels=1024, kernel_size=2)
+        self.first_deconv = TransitionUp(in_channels=1, out_channels=1024, kernel_size=2)
+        self.first_batch_norm = nn.BatchNorm2d(1024)
 
         # output feature map will have the size of 16x16x3
-        self.second_deconv = TransitionUp(in_channels=1024, out_channels=512, kernel_size=2)
-
+        self.second_deconv = TransitionUp(in_channels=1024, out_channels=512, kernel_size=4)
+        self.second_batch_norm = nn.BatchNorm2d(512)
+        
         # output feature map will have the size of 32x32x3
-        self.third_deconv = TransitionUp(in_channels=512, out_channels=256, kernel_size=2)
-
+        self.third_deconv = TransitionUp(in_channels=512, out_channels=256, kernel_size=4)
+        self.third_batch_norm = nn.BatchNorm2d(256)
+        
         # output feature map will have the size of 64x64x3
-        self.fourth_deconv = TransitionUp(in_channels=256, out_channels=3, kernel_size=2)
+        self.fourth_deconv = TransitionUp(in_channels=256, out_channels=3, kernel_size=4)
 
     def forward(self, x):
         """
@@ -104,11 +116,17 @@ class Generator(nn.Module):
         well as arbitrary operators on Variables.
         """
         x = self.first_deconv(x)
-        x = F.relu(x)
+        x = self.first_batch_norm(x)
+        x = F.leaky_relu(x)
+        
         x = self.second_deconv(x)
-        x = F.relu(x)
+        x = self.second_batch_norm(x)
+        x = F.leaky_relu(x)
+        
         x = self.third_deconv(x)
-        x = F.relu(x)
+        x = self.third_batch_norm(x)
+        x = F.leaky_relu(x)
+        
         x = self.fourth_deconv(x)
         sigmoid_out = nn.functional.sigmoid(x)
 
@@ -127,7 +145,7 @@ class Discriminator(nn.Module):
         self.second_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
         self.third_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
 
-        self.fc1 = nn.Linear(8*8*512, 200)
+        self.fc1 = nn.Linear(10*10*512, 200)
         self.fc2 = nn.Linear(200, 1)
 
     def forward(self, x):
@@ -136,11 +154,12 @@ class Discriminator(nn.Module):
         a Variable of output data. We can use Modules defined in the constructor as
         well as arbitrary operators on Variables.
         """
+                
         x = self.first_conv_layer(x)
         x = self.second_conv_layer(x)
         x = self.third_conv_layer(x)
-
-        x = x.view(-1, 8*8*512)
+        
+        x = x.view(-1, 10*10*512)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
 
@@ -148,6 +167,15 @@ class Discriminator(nn.Module):
 
         return sigmoid_out
 
+###################################################################################
+
+if is_gpu_mode:
+    ones_label = Variable(torch.ones(BATCH_SIZE).cuda())
+    zeros_label = Variable(torch.zeros(BATCH_SIZE).cuda())
+else:
+    ones_label = Variable(torch.ones(BATCH_SIZE))
+    zeros_label = Variable(torch.zeros(BATCH_SIZE))
+        
 if __name__ == "__main__":
     print 'main'
 
@@ -157,18 +185,18 @@ if __name__ == "__main__":
     if is_gpu_mode:
         gen_model.cuda()
         disc_model.cuda()
+        #gen_model = torch.nn.DataParallel(gen_model).cuda()
+        #disc_model = torch.nn.DataParallel(disc_model).cuda()
 
-    learning_rate = LEARNING_RATE
-
-    optimizer_gen = torch.optim.Adam(gen_model.parameters(), lr=learning_rate)
-    optimizer_disc = torch.optim.Adam(disc_model.parameters(), lr=learning_rate)
+    optimizer_gen = torch.optim.Adam(gen_model.parameters(), lr=LEARNING_RATE_GENERATOR)
+    optimizer_disc = torch.optim.Adam(disc_model.parameters(), lr=LEARNING_RATE_DISCRIMINATOR)
 
     # read imgs
     image_buff_read_index = 0
 
     # pytorch style
     input_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
-    answer_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
+    #answer_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
 
     # opencv style
     output_img_opencv = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT, 3))
@@ -203,7 +231,7 @@ if __name__ == "__main__":
                 image_buff_read_index = 0
 
         # random noise z
-        noise_z = torch.randn(BATCH_SIZE, 3, 4, 4)
+        noise_z = torch.randn(BATCH_SIZE, 1, 4, 4)
 
         if is_gpu_mode:
             inputs = Variable(torch.from_numpy(input_img).float().cuda())
@@ -220,13 +248,20 @@ if __name__ == "__main__":
         output_disc_fake = disc_model(outputs_gen)
 
         # loss functions
-        loss_disc_total = -torch.mean(torch.log(output_disc_real) + torch.log(1. - output_disc_fake))
-        loss_gen = -torch.mean(torch.log(output_disc_fake))
+        loss_real_d = F.binary_cross_entropy(output_disc_real, ones_label)
+        loss_fake_d = F.binary_cross_entropy(output_disc_fake, zeros_label)
+        loss_disc_total = loss_real_d + loss_fake_d
+
+        loss_gen = F.binary_cross_entropy(output_disc_fake, ones_label)
+        
+        #loss_disc_total = -torch.mean(torch.log(output_disc_real) + torch.log(1. - output_disc_fake))
+        #loss_gen = -torch.mean(torch.log(output_disc_fake))
 
         # Before the backward pass, use the optimizer object to zero all of the
         # gradients for the variables it will update (which are the learnable weights
         # of the model)
         optimizer_disc.zero_grad()
+        optimizer_gen.zero_grad()
 
         # Backward pass: compute gradient of the loss with respect to model parameters
         loss_disc_total.backward(retain_graph = True)
@@ -235,17 +270,31 @@ if __name__ == "__main__":
         optimizer_disc.step()
 
         # generator
+        optimizer_disc.zero_grad()
         optimizer_gen.zero_grad()
         loss_gen.backward()
         optimizer_gen.step()
 
         if i % 100 == 0:
-            print '-----------------------------------'
+            print '-----------------------------------------------'
+            print '-----------------------------------------------'
             print 'iterations = ', str(i)
             print 'loss(generator)     = ', str(loss_gen)
             print 'loss(discriminator) = ', str(loss_disc_total)
+            print '-----------------------------------------------'
             print '(discriminator out-real) = ', output_disc_real[0]
             print '(discriminator out-fake) = ', output_disc_fake[0]
+            
+            # tf-board (scalar)
+            logger.scalar_summary('loss-generator', loss_gen, i)
+            logger.scalar_summary('loss-discriminator', loss_disc_total, i)
+            logger.scalar_summary('disc-out-for-real', output_disc_real[0], i)
+            logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], i)
+            
+            # tf-board (images - first 10 batches)
+            output_imgs = outputs_gen.cpu().data.numpy()[0:10]
+            #logger.an_image_summary('generated', output_img, i)
+            logger.image_summary('generated', output_imgs, i)
 
         if i % 500 == 0:
             # save the output images
@@ -253,7 +302,7 @@ if __name__ == "__main__":
 
             for file_idx in range(10):
                 # random noise z
-                noise_z = torch.randn(BATCH_SIZE, 3, 4, 4)
+                noise_z = torch.randn(BATCH_SIZE, 1, 4, 4)
 
                 if is_gpu_mode:
                     noise_z = Variable(noise_z.cuda())

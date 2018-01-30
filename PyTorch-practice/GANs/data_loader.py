@@ -7,11 +7,11 @@ import cv2
 #ANSWER_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/seg_result_until_20170911"
 
 # i7-2600k
-INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all"
+#INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all"
 #ANSWER_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/seg_result_until_20170823_without_cloth/seg_result_until_20170823_without_cloth"
 
-
 # tbt005 (10.161.31.83)
+INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/input_imgs/"
 '''
 INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/input_imgs/"
 ANSWER_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/answer_imgs/"
@@ -26,8 +26,8 @@ print 'data loader'
 ##############################################################################################
 # Image Buffer Management
 
-INPUT_IMAGE_WIDTH = 64
-INPUT_IMAGE_HEIGHT = 64
+INPUT_IMAGE_WIDTH = 78
+INPUT_IMAGE_HEIGHT = 78
 
 # image buffers
 image_buffer_size = 300
@@ -171,8 +171,8 @@ def main_alive_checker():
 
     while True:
         if is_main_alive == False:
-            # wait for the 5 secs for last chance
-            time.sleep(5)
+            # wait for the 7 secs for last chance
+            time.sleep(7)
             if is_main_alive == False:
                 exit_notification = True
                 print 'Exit(2)'

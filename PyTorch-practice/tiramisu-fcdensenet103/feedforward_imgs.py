@@ -11,7 +11,7 @@ import time, cv2
 import os, glob
 import numpy as np
 
-ENABLE_MODEL_ENSEMBLES = False
+ENABLE_MODEL_ENSEMBLES = True
 
 # svc003
 #INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/users/rklee/data_6T/data/hair_semantic_segmentation/until_2017_0823/original_all/"
@@ -48,12 +48,12 @@ if __name__ == "__main__":
             tiramisu_model_2.cuda()
             tiramisu_model_3.cuda()
 
-    tiramisu_model.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_lfw_added_zero_centr_lr_0_0001_iter_540000.pt'))
+    tiramisu_model.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_lfw_added_zero_centr_lr_0_0003_iter_960000.pt'))
 
     if ENABLE_MODEL_ENSEMBLES:
-        tiramisu_model_2.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_zero_centr_lr_0_0003_iter_950000.pt'))
+        tiramisu_model_2.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_lfw_added_zero_centr_lr_0_0001_iter_960000.pt'))
 
-        tiramisu_model_3.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_zero_centr_lr_0_0003_iter_600000.pt'))
+        tiramisu_model_3.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_lfw_added_zero_centr_lr_0_0003_iter_990000.pt'))
     
     # pytorch style
     input_img = np.empty(shape=(1, 3, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))

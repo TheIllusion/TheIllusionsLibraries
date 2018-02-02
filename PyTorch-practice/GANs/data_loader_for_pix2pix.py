@@ -3,16 +3,16 @@ import os, glob, random, re, time, threading
 import cv2
 
 # Macbook Pro
-#INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/original_all"
-#ANSWER_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/seg_result_until_20170911"
+# INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/original_all"
+# ANSWER_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/seg_result_until_20170911"
 
 # i7-2600k
-INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all"
-#ANSWER_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/seg_result_until_20170823_without_cloth/seg_result_until_20170823_without_cloth"
+INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/original_all/cany_edge_original_all/"
+ANSWER_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all"
 
 # tbt005 (10.161.31.83)
-#INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/input_imgs/"
-#INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/temp/original_resized_face/"
+# INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/input_imgs/"
+# INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/temp/original_resized_face/"
 
 IS_TRAINING = True
 
@@ -28,12 +28,12 @@ INPUT_IMAGE_HEIGHT = 53
 image_buffer_size = 3000
 
 # OpenCV format
-#input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
-#answer_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
+# input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
+# answer_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
 
 # PyTorch format
 input_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
-#answer_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
+answer_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
 
 buff_status = []
 for i in range(image_buffer_size):
@@ -43,7 +43,7 @@ current_buff_index = 0
 lineIdx = 0
 
 # load the filelist
-#os.chdir(ANSWER_IMAGE_DIRECTORY_PATH)
+# os.chdir(ANSWER_IMAGE_DIRECTORY_PATH)
 os.chdir(INPUT_IMAGE_DIRECTORY_PATH)
 jpg_files = glob.glob('*.jpg')
 random.shuffle(jpg_files)
@@ -51,6 +51,7 @@ random.shuffle(jpg_files)
 max_training_index = len(jpg_files)
 
 exit_notification = False
+
 
 def image_buffer_loader():
     global current_buff_index
@@ -113,15 +114,13 @@ def image_buffer_loader():
                                                         interpolation=cv2.INTER_LINEAR)
         '''
         input_img_tmp = cv2.resize(input_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
-                                                    interpolation=cv2.INTER_LINEAR)
-
+                                   interpolation=cv2.INTER_LINEAR)
 
         input_buff[current_buff_index][0, :, :] = input_img_tmp[:, :, 0]
         input_buff[current_buff_index][1, :, :] = input_img_tmp[:, :, 1]
         input_buff[current_buff_index][2, :, :] = input_img_tmp[:, :, 2]
 
         # Answer Image
-        '''
         filename = os.path.join(ANSWER_IMAGE_DIRECTORY_PATH, training_file_name)
         answer_img = cv2.imread(filename, cv2.IMREAD_COLOR)
 
@@ -139,8 +138,6 @@ def image_buffer_loader():
         answer_buff[current_buff_index][0, :, :] = answer_img_tmp[:, :, 0]
         answer_buff[current_buff_index][1, :, :] = answer_img_tmp[:, :, 1]
         answer_buff[current_buff_index][2, :, :] = answer_img_tmp[:, :, 2]
-        
-        '''
 
         buff_status[current_buff_index] = 'filled'
 
@@ -156,6 +153,7 @@ def image_buffer_loader():
         current_buff_index = current_buff_index + 1
         if current_buff_index >= image_buffer_size:
             current_buff_index = 0
+
 
 ##############################################################################################
 def main_alive_checker():
@@ -174,6 +172,7 @@ def main_alive_checker():
                 break
             else:
                 is_main_alive = False
+
 
 ##############################################################################################
 

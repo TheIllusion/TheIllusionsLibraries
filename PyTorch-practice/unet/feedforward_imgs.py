@@ -23,7 +23,7 @@ max_test_index = len(jpg_files)
 INPUT_TEST_IMAGE_WIDTH = 384
 INPUT_TEST_IMAGE_HEIGHT = 384
 
-TEST_SIZE = 50
+TEST_SIZE = 53
 
 if __name__ == "__main__":
     
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     if unet.is_gpu_mode:
         unet_model.cuda()
 
-    unet_model.load_state_dict(torch.load(unet.MODEL_SAVING_DIRECTORY + 'unet_zero_centr_lr_0_00005_total_augmented_iter_80000.pt'))
+    unet_model.load_state_dict(torch.load(unet.MODEL_SAVING_DIRECTORY + 'unet_zero_centr_lr_0_00005_total_augmented_iter_700000.pt'))
             
     # pytorch style
     input_img = np.empty(shape=(1, 3, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))

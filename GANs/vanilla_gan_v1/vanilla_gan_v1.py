@@ -36,17 +36,22 @@ initial_learning_rate_gen = tf.Variable(0.0002)
 # Macbook 12
 #INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Caricature/face_refined_1/original/"
 
+# tbt003
+INPUT_IMAGE_DIRECTORY_PATH = '/home1/irteamsu/data/rklee/hair_segmentation/seg_result_until_20170911_and_lfw/total_augmented_training_data/input_imgs/'
+
 # i7-2600k (Ubuntu)
 #INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_DATA_SSD_M550/KCeleb-all-faces/"
-INPUT_IMAGE_DIRECTORY_PATH = '/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all/'
+#INPUT_IMAGE_DIRECTORY_PATH = '/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all/'
 
 # output image save directory
 # Macbook Pro
 #OUTPUT_IMAGE_SAVE_DIRECTORY = "/Users/Illusion/Downloads/vanilla_gan_generated/"
 # svc002
 #OUTPUT_IMAGE_SAVE_DIRECTORY = "/home1/irteamsu/users/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/generated_face_imgs/"
+# tbt003
+OUTPUT_IMAGE_SAVE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/GANs/vanilla_gan_v1/gen_images/'
 # i7-2600k (Ubuntu)
-OUTPUT_IMAGE_SAVE_DIRECTORY = "/media/illusion/ML_Linux/temp/vanilla_gan_v1_gen_images/"
+#OUTPUT_IMAGE_SAVE_DIRECTORY = "/media/illusion/ML_Linux/temp/vanilla_gan_v1_gen_images/"
 ##############################################################################################
 # Image Buffer Management
 

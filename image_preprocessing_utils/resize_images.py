@@ -3,13 +3,13 @@ import sys
 import cv2
 
 # test purposes only
-'''
-ORIGINAL_IMAGE_DIRECTORY = '/Users/Illusion/Temp/pix2pixHD/datasets/cityscapes/train_label'
-sys.argv.append(ORIGINAL_IMAGE_DIRECTORY)
-'''
 
-DEST_WIDTH = 800
-DEST_HEIGHT = 800
+ORIGINAL_IMAGE_DIRECTORY = '/Users/Illusion/Temp/source_code'
+sys.argv.append(ORIGINAL_IMAGE_DIRECTORY)
+
+
+DEST_WIDTH = 1200
+DEST_HEIGHT = 900
 
 if __name__ == "__main__":
 
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     if not os.path.exists(dest_path):
         os.mkdir(dest_path)
 
-    img_files = glob.glob('*.png')
+    img_files = glob.glob('*.JPG')
 
     img_idx = 0
 

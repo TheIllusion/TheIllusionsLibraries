@@ -11,12 +11,12 @@ from logger import Logger
 is_gpu_mode = True
 
 # batch size
-BATCH_SIZE = 50
+BATCH_SIZE = 200
 TOTAL_ITERATION = 1000000
 
 # learning rate
-LEARNING_RATE_GENERATOR = 5 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 0.01 * 1e-4
+LEARNING_RATE_GENERATOR = 3 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 
 # zero centered
 #MEAN_VALUE_FOR_ZERO_CENTERED = 128
@@ -58,7 +58,7 @@ class TransitionDown(nn.Module):
 
 # Transition Up (TU) module from the paper of Tiramisu - Table 1.
 class TransitionUp(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size):
+    def __init__(self, in_channels, out_channels, stride, kernel_size):
         super(TransitionUp, self).__init__()
 
         '''
@@ -76,7 +76,7 @@ class TransitionUp(nn.Module):
         '''
 
         self.transpoed_conv = nn.ConvTranspose2d(in_channels=in_channels, out_channels=out_channels,
-                                                 kernel_size=kernel_size, stride=2, padding=0, output_padding=0, bias=True)
+                                                 kernel_size=kernel_size, stride=stride, padding=0, output_padding=0, bias=True)
 
         # weight initialization
         torch.nn.init.xavier_uniform(self.transpoed_conv.weight)
@@ -95,19 +95,19 @@ class Generator(nn.Module):
         super(Generator, self).__init__()
 
         # output feature map will have the size of 8x8x3
-        self.first_deconv = TransitionUp(in_channels=1, out_channels=1024, kernel_size=2)
+        self.first_deconv = TransitionUp(in_channels=1, out_channels=1024, stride=2, kernel_size=3)
         self.first_batch_norm = nn.BatchNorm2d(1024)
 
         # output feature map will have the size of 16x16x3
-        self.second_deconv = TransitionUp(in_channels=1024, out_channels=512, kernel_size=4)
+        self.second_deconv = TransitionUp(in_channels=1024, out_channels=512, stride=2, kernel_size=5)
         self.second_batch_norm = nn.BatchNorm2d(512)
         
         # output feature map will have the size of 32x32x3
-        self.third_deconv = TransitionUp(in_channels=512, out_channels=256, kernel_size=4)
+        self.third_deconv = TransitionUp(in_channels=512, out_channels=256, stride=2, kernel_size=7)
         self.third_batch_norm = nn.BatchNorm2d(256)
         
         # output feature map will have the size of 64x64x3
-        self.fourth_deconv = TransitionUp(in_channels=256, out_channels=3, kernel_size=4)
+        self.fourth_deconv = TransitionUp(in_channels=256, out_channels=3, stride=1, kernel_size=7)
 
     def forward(self, x):
         """
@@ -128,9 +128,14 @@ class Generator(nn.Module):
         x = F.leaky_relu(x)
         
         x = self.fourth_deconv(x)
-        sigmoid_out = nn.functional.sigmoid(x)
+        #sigmoid_out = nn.functional.sigmoid(x)
+        tanh_out = nn.functional.tanh(x)
 
-        return sigmoid_out * 255
+        out = (tanh_out + 1) * 255 /2
+        
+        #print 'out.shape =', out.shape
+        
+        return out
 
 class Discriminator(nn.Module):
     def __init__(self):
@@ -141,12 +146,12 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # input image will have the size of 64x64x3
-        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=128, kernel_size=3)
-        self.second_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
-        self.third_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
+        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=32, kernel_size=3)
+        self.second_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=3)
+        self.third_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
 
-        self.fc1 = nn.Linear(10*10*512, 200)
-        self.fc2 = nn.Linear(200, 1)
+        self.fc1 = nn.Linear(7*7*128, 1)
+        self.fc2 = nn.Linear(1, 1)
 
     def forward(self, x):
         """
@@ -159,7 +164,7 @@ class Discriminator(nn.Module):
         x = self.second_conv_layer(x)
         x = self.third_conv_layer(x)
         
-        x = x.view(-1, 10*10*512)
+        x = x.view(-1, 7*7*128)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
 
@@ -275,7 +280,7 @@ if __name__ == "__main__":
         loss_gen.backward()
         optimizer_gen.step()
 
-        if i % 100 == 0:
+        if i % 10 == 0:
             print '-----------------------------------------------'
             print '-----------------------------------------------'
             print 'iterations = ', str(i)
@@ -292,9 +297,11 @@ if __name__ == "__main__":
             logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], i)
             
             # tf-board (images - first 10 batches)
-            output_imgs = outputs_gen.cpu().data.numpy()[0:10]
+            output_imgs_temp = outputs_gen.cpu().data.numpy()[0:6]
+            input_imgs_temp = inputs.cpu().data.numpy()[0:4]
             #logger.an_image_summary('generated', output_img, i)
-            logger.image_summary('generated', output_imgs, i)
+            logger.image_summary('generated', output_imgs_temp, i)
+            logger.image_summary('real', input_imgs_temp, i)
 
         if i % 500 == 0:
             # save the output images

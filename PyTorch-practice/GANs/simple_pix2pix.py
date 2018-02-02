@@ -12,7 +12,7 @@ from tiramisu_model import Tiramisu
 is_gpu_mode = True
 
 # batch size
-BATCH_SIZE = 200
+BATCH_SIZE = 1
 TOTAL_ITERATION = 1000000
 
 # learning rate
@@ -60,89 +60,6 @@ class TransitionDown(nn.Module):
 
         return x
 
-# Transition Up (TU) module from the paper of Tiramisu - Table 1.
-class TransitionUp(nn.Module):
-    def __init__(self, in_channels, out_channels, stride, kernel_size):
-        super(TransitionUp, self).__init__()
-
-        '''
-        # nn.ConvTranspose2d
-        Args
-        in_channels (int): Number of channels in the input image
-        out_channels (int): Number of channels produced by the convolution
-        kernel_size (int or tuple): Size of the convolving kernel
-        stride (int or tuple, optional): Stride of the convolution
-        padding (int or tuple, optional): Zero-padding added to both sides of the input
-        output_padding (int or tuple, optional): Zero-padding added to one side of the output
-        groups (int, optional): Number of blocked connections from input channels to output channels
-        bias (bool, optional): If True, adds a learnable bias to the output
-        dilation (int or tuple, optional): Spacing between kernel elements
-        '''
-
-        self.transpoed_conv = nn.ConvTranspose2d(in_channels=in_channels, out_channels=out_channels,
-                                                 kernel_size=kernel_size, stride=stride, padding=0, output_padding=0,
-                                                 bias=True)
-
-        # weight initialization
-        torch.nn.init.xavier_uniform(self.transpoed_conv.weight)
-
-    def forward(self, x):
-        x = self.transpoed_conv(x)
-        return x
-
-
-# generator model (input random vector z will have the size of 4x4x3)
-class Generator(nn.Module):
-    def __init__(self):
-        """
-        In the constructor we instantiate our custom modules and assign them as
-        member variables.
-        """
-        super(Generator, self).__init__()
-
-        # output feature map will have the size of 8x8x3
-        self.first_deconv = TransitionUp(in_channels=1, out_channels=1024, stride=2, kernel_size=3)
-        self.first_batch_norm = nn.BatchNorm2d(1024)
-
-        # output feature map will have the size of 16x16x3
-        self.second_deconv = TransitionUp(in_channels=1024, out_channels=512, stride=2, kernel_size=5)
-        self.second_batch_norm = nn.BatchNorm2d(512)
-
-        # output feature map will have the size of 32x32x3
-        self.third_deconv = TransitionUp(in_channels=512, out_channels=256, stride=2, kernel_size=7)
-        self.third_batch_norm = nn.BatchNorm2d(256)
-
-        # output feature map will have the size of 64x64x3
-        self.fourth_deconv = TransitionUp(in_channels=256, out_channels=3, stride=1, kernel_size=7)
-
-    def forward(self, x):
-        """
-        In the forward function we accept a Variable of input data and we must return
-        a Variable of output data. We can use Modules defined in the constructor as
-        well as arbitrary operators on Variables.
-        """
-        x = self.first_deconv(x)
-        x = self.first_batch_norm(x)
-        x = F.leaky_relu(x)
-
-        x = self.second_deconv(x)
-        x = self.second_batch_norm(x)
-        x = F.leaky_relu(x)
-
-        x = self.third_deconv(x)
-        x = self.third_batch_norm(x)
-        x = F.leaky_relu(x)
-
-        x = self.fourth_deconv(x)
-        # sigmoid_out = nn.functional.sigmoid(x)
-        tanh_out = nn.functional.tanh(x)
-
-        out = (tanh_out + 1) * 255 / 2
-
-        # print 'out.shape =', out.shape
-
-        return out
-
 class Discriminator(nn.Module):
     def __init__(self):
         """
@@ -152,12 +69,13 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # input image will have the size of 64x64x3
-        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=32, kernel_size=3)
+        self.first_conv_layer = TransitionDown(in_channels=6, out_channels=32, kernel_size=3)
         self.second_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=3)
         self.third_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
+        self.fourth_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
 
-        self.fc1 = nn.Linear(7 * 7 * 128, 1)
-        self.fc2 = nn.Linear(1, 1)
+        self.fc1 = nn.Linear(16 * 16 * 256, 2)
+        self.fc2 = nn.Linear(2, 1)
 
     def forward(self, x):
         """
@@ -169,8 +87,9 @@ class Discriminator(nn.Module):
         x = self.first_conv_layer(x)
         x = self.second_conv_layer(x)
         x = self.third_conv_layer(x)
+        x = self.fourth_conv_layer(x)
 
-        x = x.view(-1, 7 * 7 * 128)
+        x = x.view(BATCH_SIZE, 16 * 16 * 256)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
 
@@ -261,15 +180,17 @@ if __name__ == "__main__":
         outputs_gen = gen_model(inputs)
 
         # feedforward the (input, answer) pairs. discriminator
-        output_disc_real = disc_model(inputs, answers)
-        output_disc_fake = disc_model(inputs, outputs_gen)
+        output_disc_real = disc_model(torch.cat((inputs, answers), 1))
+        output_disc_fake = disc_model(torch.cat((inputs, outputs_gen), 1))
 
         # loss functions
         loss_real_d = F.binary_cross_entropy(output_disc_real, ones_label)
         loss_fake_d = F.binary_cross_entropy(output_disc_fake, zeros_label)
         loss_disc_total = loss_real_d + loss_fake_d
 
+        l1_loss = F.l1_loss(outputs_gen, answers)
         loss_gen = F.binary_cross_entropy(output_disc_fake, ones_label)
+        loss_gen_total = loss_gen + 0.01 * l1_loss
 
         # loss_disc_total = -torch.mean(torch.log(output_disc_real) + torch.log(1. - output_disc_fake))
         # loss_gen = -torch.mean(torch.log(output_disc_fake))
@@ -289,14 +210,15 @@ if __name__ == "__main__":
         # generator
         optimizer_disc.zero_grad()
         optimizer_gen.zero_grad()
-        loss_gen.backward()
+        loss_gen_total.backward()
         optimizer_gen.step()
 
-        if i % 10 == 0:
+        if i % 50 == 0:
             print '-----------------------------------------------'
             print '-----------------------------------------------'
             print 'iterations = ', str(i)
             print 'loss(generator)     = ', str(loss_gen)
+            print 'loss(l1)     = ', str(l1_loss)
             print 'loss(discriminator) = ', str(loss_disc_total)
             print '-----------------------------------------------'
             print '(discriminator out-real) = ', output_disc_real[0]
@@ -304,31 +226,34 @@ if __name__ == "__main__":
 
             # tf-board (scalar)
             logger.scalar_summary('loss-generator', loss_gen, i)
+            logger.scalar_summary('loss-l1', l1_loss, i)
             logger.scalar_summary('loss-discriminator', loss_disc_total, i)
             logger.scalar_summary('disc-out-for-real', output_disc_real[0], i)
             logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], i)
 
-            # tf-board (images - first 10 batches)
-            output_imgs_temp = outputs_gen.cpu().data.numpy()[0:6]
-            input_imgs_temp = inputs.cpu().data.numpy()[0:4]
+            # tf-board (images - first 1 batches)
+            output_imgs_temp = outputs_gen.cpu().data.numpy()[0:1]
+            answer_imgs_temp = answers.cpu().data.numpy()[0:1]
             # logger.an_image_summary('generated', output_img, i)
             logger.image_summary('generated', output_imgs_temp, i)
-            logger.image_summary('real', input_imgs_temp, i)
+            logger.image_summary('real', answer_imgs_temp, i)
 
         if i % 500 == 0:
             # save the output images
             # feedforward the inputs. generator
 
-            for file_idx in range(10):
+            for file_idx in range(1):
                 # random noise z
+                '''
                 noise_z = torch.randn(BATCH_SIZE, 1, 4, 4)
 
                 if is_gpu_mode:
                     noise_z = Variable(noise_z.cuda())
                 else:
                     noise_z = Variable(noise_z)
+                '''
 
-                outputs_gen = gen_model(noise_z)
+                outputs_gen = gen_model(inputs)
                 output_img = outputs_gen.cpu().data.numpy()[0]
 
                 output_img_opencv[:, :, 0] = output_img[0, :, :]

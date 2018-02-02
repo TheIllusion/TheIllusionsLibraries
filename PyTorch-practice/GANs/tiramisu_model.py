@@ -3,6 +3,8 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 
+is_gpu_mode = True
+
 # Layer module from the paper - Table 1.
 class Layer(nn.Module):
     def __init__(self, kernel_size, in_channels, out_channels):
@@ -274,7 +276,7 @@ class Tiramisu(nn.Module):
         sigmoid_out = nn.functional.sigmoid(x_last_conv_out)
         #softmax_out = custom_softmax_for_segmentation(x_last_conv_out, 3)
 
-        #output = sigmoid_out * 255
+        output = sigmoid_out * 255
         #output = softmax_out
 
-        return sigmoid_out
+        return output

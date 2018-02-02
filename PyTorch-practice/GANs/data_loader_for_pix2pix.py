@@ -21,11 +21,11 @@ print 'data loader'
 ##############################################################################################
 # Image Buffer Management
 
-INPUT_IMAGE_WIDTH = 53
-INPUT_IMAGE_HEIGHT = 53
+INPUT_IMAGE_WIDTH = 256
+INPUT_IMAGE_HEIGHT = 256
 
 # image buffers
-image_buffer_size = 3000
+image_buffer_size = 300
 
 # OpenCV format
 # input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
@@ -181,7 +181,7 @@ if IS_TRAINING:
     timer = threading.Timer(1, image_buffer_loader)
     timer.start()
 
-    timer2 = threading.Timer(3, main_alive_checker)
+    timer2 = threading.Timer(1, main_alive_checker)
     timer2.start()
 
 ###############################################################################################

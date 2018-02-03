@@ -4,11 +4,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import cv2, time, os
 import numpy as np
-import data_loader_for_pix2pix as data_loader
+import itertools
+import data_loader_for_cyclegan as data_loader
 from logger import Logger
 from tiramisu_model import Tiramisu
 
-print 'simple_pix2pix.py'
+print 'simple_cyclegan.py'
 
 # gpu mode
 is_gpu_mode = True
@@ -77,8 +78,8 @@ class Discriminator(nn.Module):
         self.fourth_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
         self.fifth_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
 
-        self.fc1 = nn.Linear(8 * 8 * 512, 10)
-        self.fc2 = nn.Linear(10, 1)
+        self.fc1 = nn.Linear(8 * 8 * 512, 5)
+        self.fc2 = nn.Linear(5, 1)
 
     def forward(self, x):
         """
@@ -114,17 +115,24 @@ else:
 if __name__ == "__main__":
     print 'main'
 
-    gen_model = Tiramisu()
-    disc_model = Discriminator()
+    gen_model_a = Tiramisu()
+    gen_model_b = Tiramisu()
+    disc_model_a = Discriminator()
+    disc_model_b = Discriminator()
 
     if is_gpu_mode:
-        gen_model.cuda()
-        disc_model.cuda()
+        gen_model_a.cuda()
+        gen_model_b.cuda()
+        disc_model_a.cuda()
+        disc_model_b.cuda()
         # gen_model = torch.nn.DataParallel(gen_model).cuda()
         # disc_model = torch.nn.DataParallel(disc_model).cuda()
 
-    optimizer_gen = torch.optim.Adam(gen_model.parameters(), lr=LEARNING_RATE_GENERATOR)
-    optimizer_disc = torch.optim.Adam(disc_model.parameters(), lr=LEARNING_RATE_DISCRIMINATOR)
+    gen_params_total = itertools.chain(gen_model_a.parameters(), gen_model_b.parameters())
+    optimizer_gen = torch.optim.Adam(gen_params_total, lr=LEARNING_RATE_GENERATOR)
+
+    optimizer_disc_a = torch.optim.Adam(disc_model_a.parameters(), lr=LEARNING_RATE_DISCRIMINATOR)
+    optimizer_disc_b = torch.optim.Adam(disc_model_b.parameters(), lr=LEARNING_RATE_DISCRIMINATOR)
 
     # read imgs
     image_buff_read_index = 0
@@ -179,53 +187,58 @@ if __name__ == "__main__":
             answers = Variable(torch.from_numpy(answer_img).float())
             #noise_z = Variable(noise_z)
 
-        # feedforward the inputs. generator
-        #outputs_gen = gen_model(noise_z)
-        outputs_gen = gen_model(inputs)
+        # feedforward the inputs. generators.
+        outputs_gen_a_to_b = gen_model_a(inputs)
+        outputs_gen_b_to_a = gen_model_a(answers)
 
-        # feedforward the (input, answer) pairs. discriminator
-        output_disc_real = disc_model(torch.cat((inputs, answers), 1))
-        output_disc_fake = disc_model(torch.cat((inputs, outputs_gen), 1))
+        # feedforward the data to the discriminator_a
+        output_disc_real_a = disc_model_a(inputs)
+        output_disc_fake_a = disc_model_a(outputs_gen_b_to_a)
+
+        # feedforward the data to the discriminator_b
+        output_disc_real_b = disc_model_b(inputs)
+        output_disc_fake_b = disc_model_b(outputs_gen_a_to_b)
 
         # loss functions
-        # vanilla gan loss for the discriminator
-        '''
-        loss_real_d = F.binary_cross_entropy(output_disc_real, ones_label)
-        loss_fake_d = F.binary_cross_entropy(output_disc_fake, zeros_label)
-        loss_disc_total = loss_real_d + loss_fake_d
-        '''
 
-        # lsgan loss for the discriminator
-        loss_disc_total_lsgan = 0.5 * (torch.mean((output_disc_real - 1)**2) + torch.mean(output_disc_fake**2))
+        # lsgan loss for the discriminator_a
+        loss_disc_a_lsgan = 0.5 * (torch.mean((output_disc_real_a - 1)**2) + torch.mean(output_disc_fake_a**2))
 
-        # l1-loss between real and fake
-        l1_loss = F.l1_loss(outputs_gen, answers)
+        # lsgan loss for the discriminator_b
+        loss_disc_b_lsgan = 0.5 * (torch.mean((output_disc_real_b - 1) ** 2) + torch.mean(output_disc_fake_b ** 2))
 
-        # vanilla gan loss for the generator
-        #loss_gen_vanilla = F.binary_cross_entropy(output_disc_fake, ones_label)
+        # cycle-consistency loss(a)
+        reconstructed_a = gen_model_b(outputs_gen_a_to_b)
+        l1_loss_rec_a = F.l1_loss(reconstructed_a, inputs)
 
-        # lsgan loss for the generator
-        loss_gen_lsgan = 0.5 * torch.mean((output_disc_fake - 1)**2)
+        # cycle-consistency loss(b)
+        reconstructed_b = gen_model_a(outputs_gen_b_to_a)
+        l1_loss_rec_b = F.l1_loss(reconstructed_b, answers)
 
-        loss_gen_total_lsgan = 5 * loss_gen_lsgan + 0.01 * l1_loss
+        # lsgan loss for the generator_a
+        loss_gen_lsgan_a = 0.5 * torch.mean((output_disc_fake_b - 1)**2)
 
-        # loss_disc_total = -torch.mean(torch.log(output_disc_real) + torch.log(1. - output_disc_fake))
-        # loss_gen = -torch.mean(torch.log(output_disc_fake))
+        # lsgan loss for the generator_b
+        loss_gen_lsgan_b = 0.5 * torch.mean((output_disc_fake_a - 1) ** 2)
 
+        loss_gen_total_lsgan = l1_loss_rec_a + l1_loss_rec_b + loss_gen_lsgan_a + loss_gen_lsgan_b
+
+        # discriminator_a
         # Before the backward pass, use the optimizer object to zero all of the
         # gradients for the variables it will update (which are the learnable weights
         # of the model)
-        optimizer_disc.zero_grad()
-        optimizer_gen.zero_grad()
-
+        optimizer_disc_a.zero_grad()
         # Backward pass: compute gradient of the loss with respect to model parameters
-        loss_disc_total_lsgan.backward(retain_graph=True)
-
+        loss_disc_a_lsgan.backward(retain_graph=True)
         # Calling the step function on an Optimizer makes an update to its parameters
-        optimizer_disc.step()
+        optimizer_disc_a.step()
 
-        # generator
-        optimizer_disc.zero_grad()
+        # discriminator_b
+        optimizer_disc_b.zero_grad()
+        loss_disc_b_lsgan.backward(retain_graph=True)
+        optimizer_disc_b.step()
+
+        # generators
         optimizer_gen.zero_grad()
         loss_gen_total_lsgan.backward()
         optimizer_gen.step()
@@ -234,22 +247,32 @@ if __name__ == "__main__":
             print '-----------------------------------------------'
             print '-----------------------------------------------'
             print 'iterations = ', str(i)
-            print 'loss(generator)     = ', str(loss_gen_lsgan)
-            print 'loss(l1)     = ', str(l1_loss)
-            print 'loss(discriminator) = ', str(loss_disc_total_lsgan)
+            print 'loss(generator_a)     = ', str(loss_gen_lsgan_a)
+            print 'loss(generator_b)     = ', str(loss_gen_lsgan_b)
+            print 'loss(rec_a_l1)     = ', str(l1_loss_rec_a)
+            print 'loss(rec_b_l1)     = ', str(l1_loss_rec_b)
+            print 'loss(discriminator_a) = ', str(loss_disc_a_lsgan)
+            print 'loss(discriminator_b) = ', str(loss_disc_b_lsgan)
             print '-----------------------------------------------'
-            print '(discriminator out-real) = ', output_disc_real[0]
-            print '(discriminator out-fake) = ', output_disc_fake[0]
+            print '(discriminator_a out-real) = ', output_disc_real_a[0]
+            print '(discriminator_a out-fake) = ', output_disc_fake_a[0]
+            print '(discriminator_b out-real) = ', output_disc_real_b[0]
+            print '(discriminator_b out-fake) = ', output_disc_fake_b[0]
 
             # tf-board (scalar)
-            logger.scalar_summary('loss-generator', loss_gen_lsgan, i)
-            logger.scalar_summary('loss-l1', l1_loss, i)
-            logger.scalar_summary('loss-discriminator', loss_disc_total_lsgan, i)
-            logger.scalar_summary('disc-out-for-real', output_disc_real[0], i)
-            logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], i)
+            logger.scalar_summary('loss(generator_a)', loss_gen_lsgan_a, i)
+            logger.scalar_summary('loss(generator_b)', loss_gen_lsgan_b, i)
+            logger.scalar_summary('loss-rec_a-l1', l1_loss_rec_a, i)
+            logger.scalar_summary('loss-rec_b-l1', l1_loss_rec_b, i)
+            logger.scalar_summary('loss(discriminator_a)', loss_disc_a_lsgan, i)
+            logger.scalar_summary('loss(discriminator_b)', loss_disc_b_lsgan, i)
+            logger.scalar_summary('disc_a-out-for-real', output_disc_real_a[0], i)
+            logger.scalar_summary('disc_a-out-for-fake', output_disc_fake_a[0], i)
+            logger.scalar_summary('disc_b-out-for-real', output_disc_real_b[0], i)
+            logger.scalar_summary('disc_b-out-for-fake', output_disc_fake_b[0], i)
 
             # tf-board (images - first 1 batches)
-            output_imgs_temp = outputs_gen.cpu().data.numpy()[0:1]
+            output_imgs_temp = outputs_gen_a_to_b.cpu().data.numpy()[0:1]
             answer_imgs_temp = answers.cpu().data.numpy()[0:1]
             # logger.an_image_summary('generated', output_img, i)
             logger.image_summary('generated', output_imgs_temp, i)
@@ -270,7 +293,7 @@ if __name__ == "__main__":
                     noise_z = Variable(noise_z)
                 '''
 
-                outputs_gen = gen_model(inputs)
+                outputs_gen = gen_model_a(inputs)
                 output_img = outputs_gen.cpu().data.numpy()[0]
 
                 output_img_opencv[:, :, 0] = output_img[0, :, :]
@@ -278,9 +301,9 @@ if __name__ == "__main__":
                 output_img_opencv[:, :, 2] = output_img[2, :, :]
 
                 cv2.imwrite(os.path.join(RESULT_IMAGE_DIRECTORY, \
-                                         'pix2pix_generated_iter_' + str(i) + '_' + str(file_idx) + '.jpg'), output_img_opencv)
+                                         'cycle_gan_generated_iter_' + str(i) + '_' + str(file_idx) + '.jpg'), output_img_opencv)
 
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
-            torch.save(gen_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'pix2pix_gen_model_iter_' + str(i) + '.pt')
+            torch.save(gen_model_a.state_dict(),
+                       MODEL_SAVING_DIRECTORY + 'cycle_gen_model_iter_' + str(i) + '.pt')

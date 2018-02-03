@@ -16,8 +16,6 @@ ANSWER_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/o
 
 IS_TRAINING = True
 
-print 'data loader'
-
 ##############################################################################################
 # Image Buffer Management
 
@@ -51,7 +49,6 @@ random.shuffle(jpg_files)
 max_training_index = len(jpg_files)
 
 exit_notification = False
-
 
 def image_buffer_loader():
     global current_buff_index

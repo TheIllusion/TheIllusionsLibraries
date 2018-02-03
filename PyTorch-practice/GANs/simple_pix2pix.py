@@ -8,6 +8,8 @@ import data_loader_for_pix2pix as data_loader
 from logger import Logger
 from tiramisu_model import Tiramisu
 
+print 'simple_pix2pix.py'
+
 # gpu mode
 is_gpu_mode = True
 
@@ -73,9 +75,10 @@ class Discriminator(nn.Module):
         self.second_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=3)
         self.third_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
         self.fourth_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
+        self.fifth_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
 
-        self.fc1 = nn.Linear(16 * 16 * 256, 2)
-        self.fc2 = nn.Linear(2, 1)
+        self.fc1 = nn.Linear(8 * 8 * 512, 5)
+        self.fc2 = nn.Linear(5, 1)
 
     def forward(self, x):
         """
@@ -88,8 +91,9 @@ class Discriminator(nn.Module):
         x = self.second_conv_layer(x)
         x = self.third_conv_layer(x)
         x = self.fourth_conv_layer(x)
+        x = self.fifth_conv_layer(x)
 
-        x = x.view(BATCH_SIZE, 16 * 16 * 256)
+        x = x.view(BATCH_SIZE, 8 * 8 * 512)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
 
@@ -184,13 +188,26 @@ if __name__ == "__main__":
         output_disc_fake = disc_model(torch.cat((inputs, outputs_gen), 1))
 
         # loss functions
+        # vanilla gan loss for the discriminator
+        '''
         loss_real_d = F.binary_cross_entropy(output_disc_real, ones_label)
         loss_fake_d = F.binary_cross_entropy(output_disc_fake, zeros_label)
         loss_disc_total = loss_real_d + loss_fake_d
+        '''
 
+        # lsgan loss for the discriminator
+        loss_disc_total_lsgan = 0.5 * (torch.mean((output_disc_real - 1)**2) + torch.mean(output_disc_fake**2))
+
+        # l1-loss between real and fake
         l1_loss = F.l1_loss(outputs_gen, answers)
-        loss_gen = F.binary_cross_entropy(output_disc_fake, ones_label)
-        loss_gen_total = loss_gen + 0.01 * l1_loss
+
+        # vanilla gan loss for the generator
+        #loss_gen_vanilla = F.binary_cross_entropy(output_disc_fake, ones_label)
+
+        # lsgan loss for the generator
+        loss_gen_lsgan = 0.5 * torch.mean((output_disc_fake - 1)**2)
+
+        loss_gen_total_lsgan = 5 * loss_gen_lsgan + 0.01 * l1_loss
 
         # loss_disc_total = -torch.mean(torch.log(output_disc_real) + torch.log(1. - output_disc_fake))
         # loss_gen = -torch.mean(torch.log(output_disc_fake))
@@ -202,7 +219,7 @@ if __name__ == "__main__":
         optimizer_gen.zero_grad()
 
         # Backward pass: compute gradient of the loss with respect to model parameters
-        loss_disc_total.backward(retain_graph=True)
+        loss_disc_total_lsgan.backward(retain_graph=True)
 
         # Calling the step function on an Optimizer makes an update to its parameters
         optimizer_disc.step()
@@ -210,24 +227,24 @@ if __name__ == "__main__":
         # generator
         optimizer_disc.zero_grad()
         optimizer_gen.zero_grad()
-        loss_gen_total.backward()
+        loss_gen_total_lsgan.backward()
         optimizer_gen.step()
 
         if i % 50 == 0:
             print '-----------------------------------------------'
             print '-----------------------------------------------'
             print 'iterations = ', str(i)
-            print 'loss(generator)     = ', str(loss_gen)
+            print 'loss(generator)     = ', str(loss_gen_lsgan)
             print 'loss(l1)     = ', str(l1_loss)
-            print 'loss(discriminator) = ', str(loss_disc_total)
+            print 'loss(discriminator) = ', str(loss_disc_total_lsgan)
             print '-----------------------------------------------'
             print '(discriminator out-real) = ', output_disc_real[0]
             print '(discriminator out-fake) = ', output_disc_fake[0]
 
             # tf-board (scalar)
-            logger.scalar_summary('loss-generator', loss_gen, i)
+            logger.scalar_summary('loss-generator', loss_gen_lsgan, i)
             logger.scalar_summary('loss-l1', l1_loss, i)
-            logger.scalar_summary('loss-discriminator', loss_disc_total, i)
+            logger.scalar_summary('loss-discriminator', loss_disc_total_lsgan, i)
             logger.scalar_summary('disc-out-for-real', output_disc_real[0], i)
             logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], i)
 

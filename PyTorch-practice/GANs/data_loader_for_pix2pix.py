@@ -113,6 +113,7 @@ def image_buffer_loader():
         input_img_tmp = cv2.resize(input_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
                                    interpolation=cv2.INTER_LINEAR)
 
+        input_img_tmp = input_img_tmp[..., [2, 1, 0]]
         input_buff[current_buff_index][0, :, :] = input_img_tmp[:, :, 0]
         input_buff[current_buff_index][1, :, :] = input_img_tmp[:, :, 1]
         input_buff[current_buff_index][2, :, :] = input_img_tmp[:, :, 2]
@@ -132,6 +133,7 @@ def image_buffer_loader():
         answer_img_tmp = cv2.resize(answer_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
                                    interpolation=cv2.INTER_LINEAR)
 
+        answer_img_tmp = answer_img_tmp[..., [2, 1, 0]]
         answer_buff[current_buff_index][0, :, :] = answer_img_tmp[:, :, 0]
         answer_buff[current_buff_index][1, :, :] = answer_img_tmp[:, :, 1]
         answer_buff[current_buff_index][2, :, :] = answer_img_tmp[:, :, 2]

@@ -34,7 +34,7 @@ MODEL_SAVING_FREQUENCY = 10000
 
 # i7-2600k
 MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
-RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_simple_pix2pix/'
+RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_simple_cyclegan/'
 
 # tensor-board logger
 if not os.path.exists(MODEL_SAVING_DIRECTORY + 'tf_board_logger'):
@@ -72,7 +72,7 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # input image will have the size of 64x64x3
-        self.first_conv_layer = TransitionDown(in_channels=6, out_channels=32, kernel_size=3)
+        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=32, kernel_size=3)
         self.second_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=3)
         self.third_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
         self.fourth_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
@@ -221,7 +221,7 @@ if __name__ == "__main__":
         # lsgan loss for the generator_b
         loss_gen_lsgan_b = 0.5 * torch.mean((output_disc_fake_a - 1) ** 2)
 
-        loss_gen_total_lsgan = l1_loss_rec_a + l1_loss_rec_b + loss_gen_lsgan_a + loss_gen_lsgan_b
+        loss_gen_total_lsgan = loss_gen_lsgan_a + loss_gen_lsgan_b + 0.01 * (l1_loss_rec_a + l1_loss_rec_b)
 
         # discriminator_a
         # Before the backward pass, use the optimizer object to zero all of the
@@ -243,7 +243,7 @@ if __name__ == "__main__":
         loss_gen_total_lsgan.backward()
         optimizer_gen.step()
 
-        if i % 50 == 0:
+        if i % 10 == 0:
             print '-----------------------------------------------'
             print '-----------------------------------------------'
             print 'iterations = ', str(i)

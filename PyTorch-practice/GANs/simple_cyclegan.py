@@ -300,6 +300,7 @@ if __name__ == "__main__":
                 output_img_opencv[:, :, 1] = output_img[1, :, :]
                 output_img_opencv[:, :, 2] = output_img[2, :, :]
 
+                output_img_opencv = output_img_opencv[..., [2,1,0]]
                 cv2.imwrite(os.path.join(RESULT_IMAGE_DIRECTORY, \
                                          'cycle_gan_generated_iter_' + str(i) + '_' + str(file_idx) + '.jpg'), output_img_opencv)
 

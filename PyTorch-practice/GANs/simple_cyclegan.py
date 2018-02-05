@@ -15,12 +15,12 @@ print 'simple_cyclegan.py'
 is_gpu_mode = True
 
 # batch size
-BATCH_SIZE = 1
+BATCH_SIZE = 2
 TOTAL_ITERATION = 1000000
 
 # learning rate
 LEARNING_RATE_GENERATOR = 3 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
 
 # zero centered
 # MEAN_VALUE_FOR_ZERO_CENTERED = 128
@@ -28,13 +28,13 @@ LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 10000
 
-# tbt003
-#MODEL_SAVING_DIRECTORY = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/vanilla_gan_models/"
-#RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/gen_images/'
+# tbt005
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
+RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_simple_cyclegan/'
 
 # i7-2600k
-MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
-RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_simple_cyclegan/'
+#MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
+#RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_simple_cyclegan/'
 
 # tensor-board logger
 if not os.path.exists(MODEL_SAVING_DIRECTORY + 'tf_board_logger'):
@@ -196,7 +196,7 @@ if __name__ == "__main__":
         output_disc_fake_a = disc_model_a(outputs_gen_b_to_a)
 
         # feedforward the data to the discriminator_b
-        output_disc_real_b = disc_model_b(inputs)
+        output_disc_real_b = disc_model_b(answers)
         output_disc_fake_b = disc_model_b(outputs_gen_a_to_b)
 
         # loss functions
@@ -243,7 +243,7 @@ if __name__ == "__main__":
         loss_gen_total_lsgan.backward()
         optimizer_gen.step()
 
-        if i % 10 == 0:
+        if i % 30 == 0:
             print '-----------------------------------------------'
             print '-----------------------------------------------'
             print 'iterations = ', str(i)
@@ -272,10 +272,17 @@ if __name__ == "__main__":
             logger.scalar_summary('disc_b-out-for-fake', output_disc_fake_b[0], i)
 
             # tf-board (images - first 1 batches)
+            inputs_imgs_temp = inputs.cpu().data.numpy()[0:1]
             output_imgs_temp = outputs_gen_a_to_b.cpu().data.numpy()[0:1]
             answer_imgs_temp = answers.cpu().data.numpy()[0:1]
+            reconstructed_a_temp = reconstructed_a.cpu().data.numpy()[0:1]
+            reconstructed_b_temp = reconstructed_b.cpu().data.numpy()[0:1]
+            
             # logger.an_image_summary('generated', output_img, i)
+            logger.image_summary('input', inputs_imgs_temp, i)
             logger.image_summary('generated', output_imgs_temp, i)
+            logger.image_summary('reconstructed_a', reconstructed_a_temp, i)
+            logger.image_summary('reconstructed_b', reconstructed_b_temp, i)
             logger.image_summary('real', answer_imgs_temp, i)
 
         if i % 500 == 0:

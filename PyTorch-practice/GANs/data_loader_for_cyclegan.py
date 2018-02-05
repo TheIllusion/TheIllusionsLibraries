@@ -8,12 +8,12 @@ import cv2
 
 # i7-2600k
 # black to blonde (hair dyeing)
-INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_DATA_SSD_M550/hair_dyeing/black_to_blonde/trainA/"
-ANSWER_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_DATA_SSD_M550/hair_dyeing/black_to_blonde/trainB/"
+#INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_DATA_SSD_M550/hair_dyeing/black_to_blonde/trainA/"
+#ANSWER_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_DATA_SSD_M550/hair_dyeing/black_to_blonde/trainB/"
 
 # tbt005 (10.161.31.83)
-# INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/input_imgs/"
-# INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/temp/original_resized_face/"
+INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_dyeing/black_to_blonde/trainA/"
+ANSWER_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_dyeing/black_to_blonde/trainB/"
 
 IS_TRAINING = True
 
@@ -187,7 +187,6 @@ def image_buffer_loader():
         current_buff_index = current_buff_index + 1
         if current_buff_index >= image_buffer_size:
             current_buff_index = 0
-
 
 ##############################################################################################
 def main_alive_checker():

@@ -146,21 +146,21 @@ def encode_jpg_image_at_target_ssim(input_img, target_quality, output_jpg_filena
 
 if __name__ == '__main__':
 
-    IS_DEBUG = True
+    IS_DEBUG = False
 
     parser = argparse.ArgumentParser()
 
     if not IS_DEBUG:
         parser.add_argument('--input', type=str, help='--input inpug.png', required=True)
         parser.add_argument('--criterion', type=str, default='PSNR', help='--criterion PSNR')
-        parser.add_argument('--quality', type=int, help='--quality 35', required=True)
+        parser.add_argument('--quality', type=float, help='--quality 35', required=True)
         parser.add_argument('--output', type=str, help='--output output_encode_trial.jpg', required=True)
     else:
         # debug purposes only
         parser.add_argument('--input', type=str, default='images/jp_gates_original.png', help='--input inpug.png')
         parser.add_argument('--criterion', type=str, default='SSIM', help='--criterion PSNR')
         #parser.add_argument('--quality', type=int, default=35, help='--target 35')
-        parser.add_argument('--quality', type=int, default=0.7, help='--target 35')
+        parser.add_argument('--quality', type=float, default=0.7, help='--target 35')
         parser.add_argument('--output', type=str, default='output_encode_trial.jpg',
                             help='--output output_encode_trial.jpg')
 

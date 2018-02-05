@@ -2,6 +2,7 @@ from skimage.measure import compare_ssim
 import numpy as np
 import math
 import cv2
+import argparse
 
 MAX_PIXEL_VALUE = 255.0
 
@@ -29,6 +30,7 @@ def try_encode_a_jpg(input_img, jpeg_encoding_quality, output_filename):
     ssim_val = get_ssim(input_img, decoded_img)
     return psnr_val, ssim_val
 
+# FIND THE BEST MATCHING ENCODING FACTOR
 def encode_jpg_image_at_target_psnr(input_img, target_psnr_val, output_jpg_filename):
 
     # dict: (quality_factor, psnr_diff)
@@ -86,12 +88,22 @@ def encode_jpg_image_at_target_psnr(input_img, target_psnr_val, output_jpg_filen
     return True
 
 if __name__ == '__main__':
-    # load the images -- the original, the original + contrast,
-    # and the original + photoshop
-    original = cv2.imread("images/jp_gates_original.png")
-    original_grayscale = cv2.imread("images/jp_gates_original.png", cv2.IMREAD_GRAYSCALE)
-    contrast = cv2.imread("images/jp_gates_contrast.png")
-    shopped = cv2.imread("images/jp_gates_photoshopped.png")
 
-    output_jpg_filename = 'output_encode_trial.jpg'
-    encode_jpg_image_at_target_psnr(input_img=original, target_psnr_val=34, output_jpg_filename=output_jpg_filename)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input', type=str, help='--input inpug.png', required=True)
+    parser.add_argument('--psnr', type=int, help='--psnr 35', required=True)
+    parser.add_argument('--output', type=str, help='--output output_encode_trial.jpg', required=True)
+
+    # debug purposes only
+    '''
+    parser.add_argument('--input', type=str, default='images/jp_gates_original.png', help='--input inpug.png')
+    parser.add_argument('--psnr', type=int, default=35, help='--psnr 35')
+    parser.add_argument('--output', type=str, default='output_encode_trial.jpg',
+                        help='--output output_encode_trial.jpg')
+    '''
+
+    args = parser.parse_args()
+    print args
+
+    input_img = cv2.imread(args.input, cv2.IMREAD_COLOR)
+    encode_jpg_image_at_target_psnr(input_img, target_psnr_val=args.psnr, output_jpg_filename=args.output)

@@ -146,7 +146,7 @@ def encode_jpg_image_at_target_ssim(input_img, target_quality, output_jpg_filena
 
 if __name__ == '__main__':
 
-    IS_DEBUG = False
+    IS_DEBUG = True
 
     parser = argparse.ArgumentParser()
 

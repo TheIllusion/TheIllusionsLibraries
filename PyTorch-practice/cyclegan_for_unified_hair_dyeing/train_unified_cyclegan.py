@@ -8,15 +8,13 @@ import itertools
 import data_loader_for_unified_cyclegan as data_loader
 from logger import Logger
 from generator_network_tiramisu import Tiramisu
-from discriminator_network import Discriminator
+from discriminator_network import Discriminator, BATCH_SIZE
 
 print 'unified_cyclegan_for_hair_dyeing'
 
 # gpu mode
 is_gpu_mode = True
 
-# batch size
-BATCH_SIZE = 2
 TOTAL_ITERATION = 1000000
 
 # learning rate
@@ -33,8 +31,8 @@ MODEL_SAVING_FREQUENCY = 10000
 ENABLE_TRANSFER_LEARNING = False
 
 # tbt005
-MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
-RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_simple_cyclegan/'
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/models/'
+RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/result_images/'
 
 # i7-2600k
 # MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
@@ -89,7 +87,7 @@ if __name__ == "__main__":
 
     # pytorch style
     input_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
-    answer_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
+    answer_img_blonde = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
 
     # opencv style
     output_img_opencv = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT, 3))
@@ -116,7 +114,7 @@ if __name__ == "__main__":
                 break
 
             np.copyto(input_img[j], data_loader.input_buff[image_buff_read_index])
-            np.copyto(answer_img[j], data_loader.answer_buff[image_buff_read_index])
+            np.copyto(answer_img_blonde[j], data_loader.answer_buff_blonde[image_buff_read_index])
 
             data_loader.buff_status[image_buff_read_index] = 'empty'
 
@@ -130,23 +128,23 @@ if __name__ == "__main__":
 
         if is_gpu_mode:
             inputs = Variable(torch.from_numpy(input_img).float().cuda())
-            answers = Variable(torch.from_numpy(answer_img).float().cuda())
+            answers_blonde = Variable(torch.from_numpy(answer_img_blonde).float().cuda())
             # noise_z = Variable(noise_z.cuda())
         else:
             inputs = Variable(torch.from_numpy(input_img).float())
-            answers = Variable(torch.from_numpy(answer_img).float())
+            answers_blonde = Variable(torch.from_numpy(answer_img_blonde).float())
             # noise_z = Variable(noise_z)
 
         # feedforward the inputs. generators.
         outputs_gen_a_to_b = gen_model_a(inputs)
-        outputs_gen_b_to_a = gen_model_a(answers)
+        outputs_gen_b_to_a = gen_model_a(answers_blonde)
 
         # feedforward the data to the discriminator_a
         output_disc_real_a = disc_model_a(inputs)
         output_disc_fake_a = disc_model_a(outputs_gen_b_to_a)
 
         # feedforward the data to the discriminator_b
-        output_disc_real_b = disc_model_b(answers)
+        output_disc_real_b = disc_model_b(answers_blonde)
         output_disc_fake_b = disc_model_b(outputs_gen_a_to_b)
 
         # loss functions
@@ -163,7 +161,7 @@ if __name__ == "__main__":
 
         # cycle-consistency loss(b)
         reconstructed_b = gen_model_a(outputs_gen_b_to_a)
-        l1_loss_rec_b = F.l1_loss(reconstructed_b, answers)
+        l1_loss_rec_b = F.l1_loss(reconstructed_b, answers_blonde)
 
         # lsgan loss for the generator_a
         loss_gen_lsgan_a = 0.5 * torch.mean((output_disc_fake_b - 1) ** 2)
@@ -224,7 +222,7 @@ if __name__ == "__main__":
             # tf-board (images - first 1 batches)
             inputs_imgs_temp = inputs.cpu().data.numpy()[0:1]
             output_imgs_temp = outputs_gen_a_to_b.cpu().data.numpy()[0:1]
-            answer_imgs_temp = answers.cpu().data.numpy()[0:1]
+            answer_imgs_temp = answers_blonde.cpu().data.numpy()[0:1]
             reconstructed_a_temp = reconstructed_a.cpu().data.numpy()[0:1]
             reconstructed_b_temp = reconstructed_b.cpu().data.numpy()[0:1]
 
@@ -259,10 +257,10 @@ if __name__ == "__main__":
 
                 output_img_opencv = output_img_opencv[..., [2, 1, 0]]
                 cv2.imwrite(os.path.join(RESULT_IMAGE_DIRECTORY, \
-                                         'cycle_gan_generated_iter_' + str(i) + '_' + str(file_idx) + '.jpg'),
+                                         'unified_cycle_gan_generated_iter_' + str(i) + '_' + str(file_idx) + '.jpg'),
                             output_img_opencv)
 
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(gen_model_a.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'cycle_gen_model_iter_' + str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'unified_cycle_gen_model_iter_' + str(i) + '.pt')

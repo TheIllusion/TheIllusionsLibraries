@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from train_unified_cyclegan import BATCH_SIZE
+
+BATCH_SIZE = 2
 
 class ConvolutionDown(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):

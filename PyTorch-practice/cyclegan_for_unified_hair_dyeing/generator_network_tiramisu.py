@@ -2,7 +2,6 @@ import torch
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
-from train_unified_cyclegan import is_gpu_mode
 
 # Layer module from the paper - Table 1.
 class Layer(nn.Module):
@@ -81,7 +80,7 @@ class TransitionUp(nn.Module):
 
 # Dense Block - Figure 2.
 class DenseBlock(nn.Module):
-    def __init__(self, layers, in_channels, k_feature_maps, is_gpu_mode):
+    def __init__(self, layers, in_channels, k_feature_maps):
         super(DenseBlock, self).__init__()
 
         self.num_layers = layers
@@ -95,13 +94,6 @@ class DenseBlock(nn.Module):
 
             # add_module to this instance
             self.add_module('denseblock_idx_' + str(i), self.layers_list[i])
-
-        # gpu
-        '''
-        if is_gpu_mode:
-            for model in self.layers_list:
-                model.cuda()
-        '''
 
     def forward(self, x):
 
@@ -143,59 +135,59 @@ class Tiramisu(nn.Module):
         self.first_conv_layer = Layer(kernel_size=3, in_channels=3, out_channels=48)
 
         # first dense block
-        self.first_dense_block = DenseBlock(layers=4, in_channels=48, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
+        self.first_dense_block = DenseBlock(layers=4, in_channels=48, k_feature_maps=16)
         # first transition down
         self.first_transition_down = TransitionDown(112)
 
         # second dense block
-        self.second_dense_block = DenseBlock(layers=5, in_channels=112, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
+        self.second_dense_block = DenseBlock(layers=5, in_channels=112, k_feature_maps=16)
         # second transition down
         self.second_transition_down = TransitionDown(192)
         # third dense block
 
-        self.third_dense_block = DenseBlock(layers=7, in_channels=192, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
+        self.third_dense_block = DenseBlock(layers=7, in_channels=192, k_feature_maps=16)
         # third transition down
         self.third_transition_down = TransitionDown(304)
 
         # fourth dense block
-        self.fourth_dense_block = DenseBlock(layers=10, in_channels=304, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
+        self.fourth_dense_block = DenseBlock(layers=10, in_channels=304, k_feature_maps=16)
         # fourth transition down
         self.fourth_transition_down = TransitionDown(464)
 
         # fifth dense block
-        self.fifth_dense_block = DenseBlock(layers=12, in_channels=464, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
+        self.fifth_dense_block = DenseBlock(layers=12, in_channels=464, k_feature_maps=16)
         # fifth transition down
         self.fifth_transition_down = TransitionDown(656)
 
         # middle dense block
-        self.middle_dense_block = DenseBlock(layers=15, in_channels=656, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
+        self.middle_dense_block = DenseBlock(layers=15, in_channels=656, k_feature_maps=16)
 
         # later-first transition up
         #self.later_first_transition_up = TransitionUp(896)
         self.later_first_transition_up = TransitionUp(240)
         # later-first dense block
-        self.later_first_dense_block = DenseBlock(layers=12, in_channels=896, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
+        self.later_first_dense_block = DenseBlock(layers=12, in_channels=896, k_feature_maps=16)
 
         # later-second transition up
         #self.later_second_transition_up = TransitionUp(1088)
         self.later_second_transition_up = TransitionUp(192)
         # later-second dense block
-        self.later_second_dense_block = DenseBlock(layers=10, in_channels=656, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
+        self.later_second_dense_block = DenseBlock(layers=10, in_channels=656, k_feature_maps=16)
 
         # later-third transition up
         self.later_third_transition_up = TransitionUp(160)
         # later-third dense block
-        self.later_third_dense_block = DenseBlock(layers=7, in_channels=464, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
+        self.later_third_dense_block = DenseBlock(layers=7, in_channels=464, k_feature_maps=16)
 
         # later-fourth transition up
         self.later_fourth_transition_up = TransitionUp(112)
         # later-fourth dense block
-        self.later_fourth_dense_block = DenseBlock(layers=5, in_channels=304, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
+        self.later_fourth_dense_block = DenseBlock(layers=5, in_channels=304, k_feature_maps=16)
 
         # later-fifth transition up
         self.later_fifth_transition_up = TransitionUp(80)
         # later-fifth dense block
-        self.later_fifth_dense_block = DenseBlock(layers=4, in_channels=192, k_feature_maps=16, is_gpu_mode=is_gpu_mode)
+        self.later_fifth_dense_block = DenseBlock(layers=4, in_channels=192, k_feature_maps=16)
 
         # last convolution - cifar10 has 10 classes
         #self.last_conv_layer = Layer(64, 10)

@@ -90,7 +90,7 @@ def image_buffer_loader():
         training_file_name_input = filename_input
 
         # read an answer image filename (BLONDE)
-        filename_answer_ = jpg_files_answer_blonde[lineIdxAnswer]
+        filename_answer_ = jpg_files_answer_blonde[lineIdxAnswer_BLONDE]
 
         end_index = 0
 

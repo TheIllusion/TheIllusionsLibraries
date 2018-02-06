@@ -10,7 +10,7 @@ from logger import Logger
 from generator_network_tiramisu import Tiramisu
 from discriminator_network import Discriminator
 
-print 'simple_cyclegan.py'
+print 'unified_cyclegan_for_hair_dyeing'
 
 # gpu mode
 is_gpu_mode = True
@@ -30,7 +30,7 @@ LEARNING_RATE_DISCRIMINATOR = 0.3 * 1e-4
 MODEL_SAVING_FREQUENCY = 10000
 
 # transfer learning option
-ENABLE_TRANSFER_LEARNING = True
+ENABLE_TRANSFER_LEARNING = False
 
 # tbt005
 MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/models/'

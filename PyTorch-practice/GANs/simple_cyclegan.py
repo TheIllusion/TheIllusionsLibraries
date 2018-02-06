@@ -20,13 +20,16 @@ TOTAL_ITERATION = 1000000
 
 # learning rate
 LEARNING_RATE_GENERATOR = 3 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 0.3 * 1e-4
 
 # zero centered
 # MEAN_VALUE_FOR_ZERO_CENTERED = 128
 
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 10000
+
+# transfer learning option
+ENABLE_TRANSFER_LEARNING = True
 
 # tbt005
 MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
@@ -128,6 +131,11 @@ if __name__ == "__main__":
         # gen_model = torch.nn.DataParallel(gen_model).cuda()
         # disc_model = torch.nn.DataParallel(disc_model).cuda()
 
+    if ENABLE_TRANSFER_LEARNING:
+        # load the saved checkpoints for hair semantic segmentation
+        gen_model_a.load_state_dict(torch.load('/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/tiramisu_lfw_added_zero_centr_lr_0_0002_iter_1870000.pt'))
+        gen_model_b.load_state_dict(torch.load('/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/tiramisu_lfw_added_zero_centr_lr_0_0002_iter_1870000.pt'))
+        
     gen_params_total = itertools.chain(gen_model_a.parameters(), gen_model_b.parameters())
     optimizer_gen = torch.optim.Adam(gen_params_total, lr=LEARNING_RATE_GENERATOR)
 

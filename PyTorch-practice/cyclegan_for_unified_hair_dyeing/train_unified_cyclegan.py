@@ -5,9 +5,10 @@ import torch.nn.functional as F
 import cv2, time, os
 import numpy as np
 import itertools
-import data_loader_for_cyclegan as data_loader
+import data_loader_for_unified_cyclegan as data_loader
 from logger import Logger
-from tiramisu_model import Tiramisu
+from generator_network_tiramisu import Tiramisu
+from discriminator_network import Discriminator
 
 print 'simple_cyclegan.py'
 

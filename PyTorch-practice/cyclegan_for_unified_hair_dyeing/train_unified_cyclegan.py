@@ -18,8 +18,8 @@ is_gpu_mode = True
 TOTAL_ITERATION = 1000000
 
 # learning rate
-LEARNING_RATE_GENERATOR = 3 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 0.3 * 1e-4
+LEARNING_RATE_GENERATOR = 2 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 0.05 * 1e-4
 
 # zero centered
 # MEAN_VALUE_FOR_ZERO_CENTERED = 128
@@ -220,11 +220,11 @@ if __name__ == "__main__":
             logger.scalar_summary('disc_b-out-for-fake', output_disc_fake_b[0], i)
 
             # tf-board (images - first 1 batches)
-            inputs_imgs_temp = inputs.cpu().data.numpy()[0:1]
-            output_imgs_temp = outputs_gen_a_to_b.cpu().data.numpy()[0:1]
-            answer_imgs_temp = answers_blonde.cpu().data.numpy()[0:1]
-            reconstructed_a_temp = reconstructed_a.cpu().data.numpy()[0:1]
-            reconstructed_b_temp = reconstructed_b.cpu().data.numpy()[0:1]
+            inputs_imgs_temp = inputs.cpu().data.numpy()[0:BATCH_SIZE]
+            output_imgs_temp = outputs_gen_a_to_b.cpu().data.numpy()[0:BATCH_SIZE]
+            answer_imgs_temp = answers_blonde.cpu().data.numpy()[0:BATCH_SIZE]
+            reconstructed_a_temp = reconstructed_a.cpu().data.numpy()[0:BATCH_SIZE]
+            reconstructed_b_temp = reconstructed_b.cpu().data.numpy()[0:BATCH_SIZE]
 
             # logger.an_image_summary('generated', output_img, i)
             logger.image_summary('input', inputs_imgs_temp, i)

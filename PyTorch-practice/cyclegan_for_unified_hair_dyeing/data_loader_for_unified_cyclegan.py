@@ -2,22 +2,16 @@ import numpy as np
 import os, glob, random, re, time, threading
 import cv2
 
-# Macbook Pro
-# INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/original_all"
-# ANSWER_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/seg_result_until_20170911"
+IS_TRAINING = True
 
-# i7-2600k
-# black to blonde (hair dyeing)
-#INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_DATA_SSD_M550/hair_dyeing/black_to_blonde/trainA/"
-#ANSWER_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_DATA_SSD_M550/hair_dyeing/black_to_blonde/trainB/"
+##############################################################################################
+# directory settings 
 
 # tbt005 (10.161.31.83)
 INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_dyeing/black_to_blonde/trainA/"
 ANSWER_IMAGE_DIRECTORY_PATH_BLONDE = "/data/rklee/hair_dyeing/black_to_blonde/trainB/"
 ANSWER_IMAGE_DIRECTORY_PATH_BROWN = '/home1/irteamsu/data/rklee/hair_dyeing/black2brown/trainB/'
 ANSWER_IMAGE_DIRECTORY_PATH_WINE = '/home1/irteamsu/data/rklee/hair_dyeing/black_to_wine_female/trainB/'
-
-IS_TRAINING = True
 
 ##############################################################################################
 # Image Buffer Management
@@ -32,36 +26,84 @@ image_buffer_size = 100
 # input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
 # answer_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
 
+# Hair Color List
+hair_color_list = ['BLONDE', 'WINE']
+
+##############################################################################################
+# input buffers
 # PyTorch format
 input_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
-answer_buff_blonde = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
 
+# answer buffers
+answer_buff_blonde = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
+answer_buff_wine = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
+
+##############################################################################################
 buff_status = []
+
 for i in range(image_buffer_size):
     buff_status.append('empty')
 
 current_buff_index = 0
 lineIdxInput = 0
-lineIdxAnswer_BLONDE = 0
+lineIdxAnswer_blonde = 0
+lineIdxAnswer_wine = 0
 
+##############################################################################################
 # load the filelist
+
+# input (probably black)
 os.chdir(INPUT_IMAGE_DIRECTORY_PATH)
 jpg_files_input = glob.glob('*.jpg')
 random.shuffle(jpg_files_input)
 
+# blonde
 os.chdir(ANSWER_IMAGE_DIRECTORY_PATH_BLONDE)
 jpg_files_answer_blonde = glob.glob('*.jpg')
 random.shuffle(jpg_files_answer_blonde)
 
+# wine
+os.chdir(ANSWER_IMAGE_DIRECTORY_PATH_WINE)
+jpg_files_answer_wine = glob.glob('*.jpg')
+random.shuffle(jpg_files_answer_wine)
+
+# estimate the length of the file lists
 max_training_index_input = len(jpg_files_input)
 max_training_index_answer_blonde = len(jpg_files_answer_blonde)
+max_training_index_answer_wine = len(jpg_files_answer_wine)
+
+##############################################################################################
+# Dictionary for answer buffers 
+answer_buff_dict = {}
+answer_buff_dict['BLONDE'] = answer_buff_blonde
+answer_buff_dict['WINE'] = answer_buff_wine
+
+jpg_files_answer_dict = {}
+jpg_files_answer_dict['BLONDE'] = jpg_files_answer_blonde
+jpg_files_answer_dict['WINE'] = jpg_files_answer_wine
+
+lineIdxAnswer_dict = {}
+lineIdxAnswer_dict['BLONDE'] = lineIdxAnswer_blonde
+lineIdxAnswer_dict['WINE'] = lineIdxAnswer_wine
+
+max_training_index_answer_dict = {}
+max_training_index_answer_dict['BLONDE'] = max_training_index_answer_blonde
+max_training_index_answer_dict['WINE'] = max_training_index_answer_wine
+
+answer_directory_dict = {}
+answer_directory_dict['BLONDE'] = ANSWER_IMAGE_DIRECTORY_PATH_BLONDE
+answer_directory_dict['WINE'] = ANSWER_IMAGE_DIRECTORY_PATH_WINE
+
+# temporary filenames for each iteration
+training_file_name_answer_dict = {}
+
+##############################################################################################
 
 exit_notification = False
 
 def image_buffer_loader():
     global current_buff_index
     global lineIdxInput
-    global lineIdxAnswer_BLONDE
     global exit_notification
 
     print 'image_buffer_loader'
@@ -69,7 +111,9 @@ def image_buffer_loader():
     epoch = 0
 
     while True:
-        # read a input image filename
+        
+        ################################################################
+        # read an input image filename
         filename_input_ = jpg_files_input[lineIdxInput]
 
         end_index = 0
@@ -89,25 +133,34 @@ def image_buffer_loader():
 
         training_file_name_input = filename_input
 
-        # read an answer image filename (BLONDE)
-        filename_answer_ = jpg_files_answer_blonde[lineIdxAnswer_BLONDE]
+        ################################################################
+        # read an answer image filename (iterate through the colors)
+        
+        for color in hair_color_list:
 
-        end_index = 0
+            #filename_answer_ = jpg_files_answer_blonde[lineIdxAnswer_BLONDE]
+            file_list = jpg_files_answer_dict[color]
+            filename_answer_ = file_list[lineIdxAnswer_dict[color]]
 
-        match = re.search(".jpg", filename_answer_)
-        if match:
-            end_index = match.end()
-            filename_answer = filename_answer_[0:end_index]
+            end_index = 0
 
-        if end_index == 0:
-            lineIdxAnswer_BLONDE = lineIdxAnswer_BLONDE + 1
-            if lineIdxAnswer_BLONDE >= max_training_index_answer_blonde:
-                lineIdxAnswer_BLONDE = 0
+            match = re.search(".jpg", filename_answer_)
+            if match:
+                end_index = match.end()
+                filename_answer = filename_answer_[0:end_index]
 
-            print 'skip this answer jpg file. continue.'
-            continue
+            if end_index == 0:
+                lineIdxAnswer_dict[color] = lineIdxAnswer_dict[color] + 1
+                
+                if lineIdxAnswer_dict[color] >= max_training_index_answer_dict[color]:
+                    lineIdxAnswer_dict[color] = 0
 
-        training_file_name_answer_blonde = filename_answer
+                print 'skip this answer jpg file. continue. color =', color
+                continue
+
+            training_file_name_answer_dict[color] = filename_answer
+        
+        ################################################################
 
         while_start_time = time.time()
         while buff_status[current_buff_index] == 'filled':
@@ -124,6 +177,7 @@ def image_buffer_loader():
             print 'Exit(1)'
             break
 
+        #############################################################################
         # Input Image
         filename = os.path.join(INPUT_IMAGE_DIRECTORY_PATH, training_file_name_input)
         input_img = cv2.imread(filename, cv2.IMREAD_COLOR)
@@ -136,10 +190,6 @@ def image_buffer_loader():
             print '(cannot read) skip this input jpg file. continue.'
             continue
 
-        '''
-            input_buff[current_buff_index] = cv2.resize(input_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
-                                                        interpolation=cv2.INTER_LINEAR)
-        '''
         input_img_tmp = cv2.resize(input_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
                                    interpolation=cv2.INTER_LINEAR)
 
@@ -148,44 +198,56 @@ def image_buffer_loader():
         input_buff[current_buff_index][1, :, :] = input_img_tmp[:, :, 1]
         input_buff[current_buff_index][2, :, :] = input_img_tmp[:, :, 2]
 
-        # Answer Image (BLONDE)
-        filename = os.path.join(ANSWER_IMAGE_DIRECTORY_PATH_BLONDE, training_file_name_answer_blonde)
-        answer_img = cv2.imread(filename, cv2.IMREAD_COLOR)
+        #############################################################################
+        # Answer Image (iterate through the colors)
+        
+        for color in hair_color_list:
+            filename = os.path.join(answer_directory_dict[color], training_file_name_answer_dict[color])
+            answer_img = cv2.imread(filename, cv2.IMREAD_COLOR)
 
-        if (type(answer_img) is not np.ndarray):
-            lineIdxAnswer_BLONDE = lineIdxAnswer_BLONDE + 1
-            if lineIdxAnswer_BLONDE >= max_training_index_answer_blonde:
-                lineIdxAnswer_BLONDE = 0
+            if (type(answer_img) is not np.ndarray):
+                lineIdxAnswer_dict[color] = lineIdxAnswer_dict[color] + 1
+                if lineIdxAnswer_dict[color] >= max_training_index_answer_dict[color]:
+                    lineIdxAnswer_dict[color] = 0
 
-            print '(cannot read) skip this answer jpg file. continue.'
-            continue
+                print '(cannot read) skip this answer jpg file. continue. color =', color
+                continue
 
-        answer_img_tmp = cv2.resize(answer_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
-                                   interpolation=cv2.INTER_LINEAR)
+            answer_img_tmp = cv2.resize(answer_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
+                                       interpolation=cv2.INTER_LINEAR)
 
-        answer_img_tmp = answer_img_tmp[..., [2, 1, 0]]
-        answer_buff_blonde[current_buff_index][0, :, :] = answer_img_tmp[:, :, 0]
-        answer_buff_blonde[current_buff_index][1, :, :] = answer_img_tmp[:, :, 1]
-        answer_buff_blonde[current_buff_index][2, :, :] = answer_img_tmp[:, :, 2]
+            answer_img_tmp = answer_img_tmp[..., [2, 1, 0]]
+            
+            answer_buff = answer_buff_dict[color]
+            answer_buff[current_buff_index][0, :, :] = answer_img_tmp[:, :, 0]
+            answer_buff[current_buff_index][1, :, :] = answer_img_tmp[:, :, 1]
+            answer_buff[current_buff_index][2, :, :] = answer_img_tmp[:, :, 2]
 
         buff_status[current_buff_index] = 'filled'
 
-        if lineIdxInput % 1000 == 0:
-            print 'training_jpg_line_idx_input =', str(lineIdxInput), 'epoch =', str(epoch)
-            print 'training_jpg_line_idx_answer_blonde =', str(lineIdxAnswer_BLONDE), 'epoch =', str(epoch)
-
-        # increment the index
+        #############################################################################
+        if lineIdxInput % 300 == 0:
+            print 'jpg_idx_input =', str(lineIdxInput), 'epoch =', str(epoch)
+            
+            for color in hair_color_list:
+                print 'jpg_idx_answer_' + color, '= ' + str(lineIdxAnswer_dict[color]), 'epoch =', str(epoch)
+                
+        #############################################################################
+        # increment the input index
         lineIdxInput = lineIdxInput + 1
         if lineIdxInput >= max_training_index_input:
             lineIdxInput = 0
             epoch = epoch + 1
             print 'epoch = ', str(epoch)
 
-        # increment the index
-        lineIdxAnswer_BLONDE = lineIdxAnswer_BLONDE + 1
-        if lineIdxAnswer_BLONDE >= max_training_index_answer_blonde:
-            lineIdxAnswer_BLONDE = 0
+        #############################################################################
+        # increment the answers index (iterate through the colors)
+        for color in hair_color_list:
+            lineIdxAnswer_dict[color] = lineIdxAnswer_dict[color] + 1
+            if lineIdxAnswer_dict[color] >= max_training_index_answer_dict[color]:
+                lineIdxAnswer_dict[color] = 0
 
+        #############################################################################
         current_buff_index = current_buff_index + 1
         if current_buff_index >= image_buffer_size:
             current_buff_index = 0

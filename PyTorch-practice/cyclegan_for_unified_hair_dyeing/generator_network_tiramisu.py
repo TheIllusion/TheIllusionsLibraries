@@ -132,7 +132,7 @@ class Tiramisu(nn.Module):
 
         # define parameters
         # first convolution
-        self.first_conv_layer = Layer(kernel_size=3, in_channels=3, out_channels=48)
+        self.first_conv_layer = Layer(kernel_size=3, in_channels=5, out_channels=48)
 
         # first dense block
         self.first_dense_block = DenseBlock(layers=4, in_channels=48, k_feature_maps=16)

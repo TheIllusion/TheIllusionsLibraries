@@ -28,6 +28,7 @@ image_buffer_size = 100
 
 # Hair Color List
 hair_color_list = ['BLONDE', 'WINE']
+#hair_color_list = ['BLONDE']
 
 ##############################################################################################
 # input buffers

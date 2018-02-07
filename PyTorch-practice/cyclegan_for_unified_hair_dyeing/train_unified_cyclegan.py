@@ -9,6 +9,7 @@ import data_loader_for_unified_cyclegan as data_loader
 from logger import Logger
 from generator_network_tiramisu import Tiramisu
 from discriminator_network import Discriminator, BATCH_SIZE
+from data_loader_for_unified_cyclegan import hair_color_list, answer_buff_dict
 
 print 'unified_cyclegan_for_hair_dyeing'
 
@@ -19,7 +20,7 @@ TOTAL_ITERATION = 1000000
 
 # learning rate
 LEARNING_RATE_GENERATOR = 2 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 0.05 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 0.1 * 1e-4
 
 # zero centered
 # MEAN_VALUE_FOR_ZERO_CENTERED = 128
@@ -87,168 +88,188 @@ if __name__ == "__main__":
 
     # pytorch style
     input_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
-    answer_img_blonde = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
 
+    answer_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
+    
+    # conditional vectors
+    condition_vectors = np.zeros(shape=(BATCH_SIZE, len(hair_color_list), data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
+
+    if is_gpu_mode:
+        condition_vectors = Variable(torch.from_numpy(condition_vectors).float().cuda())
+    else:
+        condition_vectors = Variable(torch.from_numpy(condition_vectors).float())
+            
     # opencv style
     output_img_opencv = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT, 3))
 
     if not os.path.exists(RESULT_IMAGE_DIRECTORY):
         os.mkdir(RESULT_IMAGE_DIRECTORY)
 
+    # each iteration
     for i in range(TOTAL_ITERATION):
 
         exit_notification = False
+            
+        ############################################################################
+        # iterate through colors and manipulate the input data and condition vectors
+        for color in hair_color_list:
 
-        for j in range(BATCH_SIZE):
-            data_loader.is_main_alive = True
+            # each batch
+            for j in range(BATCH_SIZE):
 
-            while data_loader.buff_status[image_buff_read_index] == 'empty':
+                data_loader.is_main_alive = True
+
+                ####################################################################
+                # choose the buffer which is associated with the color
+                answer_buff = answer_buff_dict[color]
+
+                while data_loader.buff_status[image_buff_read_index] == 'empty':
+                    if exit_notification == True:
+                        break
+
+                    time.sleep(1)
+                    if data_loader.buff_status[image_buff_read_index] == 'filled':
+                        break
+
                 if exit_notification == True:
                     break
 
-                time.sleep(1)
-                if data_loader.buff_status[image_buff_read_index] == 'filled':
-                    break
+                np.copyto(input_img[j], data_loader.input_buff[image_buff_read_index])
+                np.copyto(answer_img[j], answer_buff[image_buff_read_index])
 
-            if exit_notification == True:
-                break
+                data_loader.buff_status[image_buff_read_index] = 'empty'
 
-            np.copyto(input_img[j], data_loader.input_buff[image_buff_read_index])
-            np.copyto(answer_img_blonde[j], data_loader.answer_buff_blonde[image_buff_read_index])
+                image_buff_read_index = image_buff_read_index + 1
+                if image_buff_read_index >= data_loader.image_buffer_size:
+                    image_buff_read_index = 0
 
-            data_loader.buff_status[image_buff_read_index] = 'empty'
+            ####################################################################
+            # manipulate the condition vector
+            # set the values of the target plain to 100. and others to 0.
 
-            image_buff_read_index = image_buff_read_index + 1
-            if image_buff_read_index >= data_loader.image_buffer_size:
-                image_buff_read_index = 0
+            condition_vectors[:,:,:,:] = 0
 
-        # random noise z
-        # noise_z is no longer necessary for pix2pix
-        # noise_z = torch.randn(BATCH_SIZE, 1, 4, 4)
+            color_idx = hair_color_list.index(color)
+            condition_vectors[:,color_idx,:,:] = 100
+            ####################################################################
 
-        if is_gpu_mode:
-            inputs = Variable(torch.from_numpy(input_img).float().cuda())
-            answers_blonde = Variable(torch.from_numpy(answer_img_blonde).float().cuda())
-            # noise_z = Variable(noise_z.cuda())
-        else:
-            inputs = Variable(torch.from_numpy(input_img).float())
-            answers_blonde = Variable(torch.from_numpy(answer_img_blonde).float())
-            # noise_z = Variable(noise_z)
+            ############################################################################
 
-        # feedforward the inputs. generators.
-        outputs_gen_a_to_b = gen_model_a(inputs)
-        outputs_gen_b_to_a = gen_model_a(answers_blonde)
+            if is_gpu_mode:
+                inputs = Variable(torch.from_numpy(input_img).float().cuda())
+                answers = Variable(torch.from_numpy(answer_img).float().cuda())
+            else:
+                inputs = Variable(torch.from_numpy(input_img).float())
+                answers = Variable(torch.from_numpy(answer_img).float())
 
-        # feedforward the data to the discriminator_a
-        output_disc_real_a = disc_model_a(inputs)
-        output_disc_fake_a = disc_model_a(outputs_gen_b_to_a)
+            # feedforward the inputs. generators.
+            outputs_gen_a_to_b = gen_model_a(torch.cat((inputs, condition_vectors), 1))
+            outputs_gen_b_to_a = gen_model_b(torch.cat((answers, condition_vectors), 1))
 
-        # feedforward the data to the discriminator_b
-        output_disc_real_b = disc_model_b(answers_blonde)
-        output_disc_fake_b = disc_model_b(outputs_gen_a_to_b)
+            # feedforward the data to the discriminator_a
+            output_disc_real_a = disc_model_a(torch.cat((inputs, condition_vectors), 1))
+            output_disc_fake_a = disc_model_a(torch.cat((outputs_gen_b_to_a, condition_vectors), 1))
 
-        # loss functions
+            # feedforward the data to the discriminator_b
+            output_disc_real_b = disc_model_b(torch.cat((answers, condition_vectors), 1))
+            output_disc_fake_b = disc_model_b(torch.cat((outputs_gen_a_to_b, condition_vectors), 1))
 
-        # lsgan loss for the discriminator_a
-        loss_disc_a_lsgan = 0.5 * (torch.mean((output_disc_real_a - 1) ** 2) + torch.mean(output_disc_fake_a ** 2))
+            # loss functions
 
-        # lsgan loss for the discriminator_b
-        loss_disc_b_lsgan = 0.5 * (torch.mean((output_disc_real_b - 1) ** 2) + torch.mean(output_disc_fake_b ** 2))
+            # lsgan loss for the discriminator_a
+            loss_disc_a_lsgan = 0.5 * (torch.mean((output_disc_real_a - 1) ** 2) + torch.mean(output_disc_fake_a ** 2))
 
-        # cycle-consistency loss(a)
-        reconstructed_a = gen_model_b(outputs_gen_a_to_b)
-        l1_loss_rec_a = F.l1_loss(reconstructed_a, inputs)
+            # lsgan loss for the discriminator_b
+            loss_disc_b_lsgan = 0.5 * (torch.mean((output_disc_real_b - 1) ** 2) + torch.mean(output_disc_fake_b ** 2))
 
-        # cycle-consistency loss(b)
-        reconstructed_b = gen_model_a(outputs_gen_b_to_a)
-        l1_loss_rec_b = F.l1_loss(reconstructed_b, answers_blonde)
+            # cycle-consistency loss(a)
+            reconstructed_a = gen_model_b(torch.cat((outputs_gen_a_to_b, condition_vectors), 1))
+            l1_loss_rec_a = F.l1_loss(reconstructed_a, inputs)
 
-        # lsgan loss for the generator_a
-        loss_gen_lsgan_a = 0.5 * torch.mean((output_disc_fake_b - 1) ** 2)
+            # cycle-consistency loss(b)
+            reconstructed_b = gen_model_a(torch.cat((outputs_gen_b_to_a, condition_vectors), 1))
+            l1_loss_rec_b = F.l1_loss(reconstructed_b, answers)
 
-        # lsgan loss for the generator_b
-        loss_gen_lsgan_b = 0.5 * torch.mean((output_disc_fake_a - 1) ** 2)
+            # lsgan loss for the generator_a
+            loss_gen_lsgan_a = 0.5 * torch.mean((output_disc_fake_b - 1) ** 2)
 
-        loss_gen_total_lsgan = loss_gen_lsgan_a + loss_gen_lsgan_b + 0.01 * (l1_loss_rec_a + l1_loss_rec_b)
+            # lsgan loss for the generator_b
+            loss_gen_lsgan_b = 0.5 * torch.mean((output_disc_fake_a - 1) ** 2)
 
-        # discriminator_a
-        # Before the backward pass, use the optimizer object to zero all of the
-        # gradients for the variables it will update (which are the learnable weights
-        # of the model)
-        optimizer_disc_a.zero_grad()
-        # Backward pass: compute gradient of the loss with respect to model parameters
-        loss_disc_a_lsgan.backward(retain_graph=True)
-        # Calling the step function on an Optimizer makes an update to its parameters
-        optimizer_disc_a.step()
+            loss_gen_total_lsgan = loss_gen_lsgan_a + loss_gen_lsgan_b + 0.01 * (l1_loss_rec_a + l1_loss_rec_b)
 
-        # discriminator_b
-        optimizer_disc_b.zero_grad()
-        loss_disc_b_lsgan.backward(retain_graph=True)
-        optimizer_disc_b.step()
+            # discriminator_a
+            # Before the backward pass, use the optimizer object to zero all of the
+            # gradients for the variables it will update (which are the learnable weights
+            # of the model)
+            optimizer_disc_a.zero_grad()
+            # Backward pass: compute gradient of the loss with respect to model parameters
+            loss_disc_a_lsgan.backward(retain_graph=True)
+            # Calling the step function on an Optimizer makes an update to its parameters
+            optimizer_disc_a.step()
 
-        # generators
-        optimizer_gen.zero_grad()
-        loss_gen_total_lsgan.backward()
-        optimizer_gen.step()
+            # discriminator_b
+            optimizer_disc_b.zero_grad()
+            loss_disc_b_lsgan.backward(retain_graph=True)
+            optimizer_disc_b.step()
 
-        if i % 30 == 0:
-            print '-----------------------------------------------'
-            print '-----------------------------------------------'
-            print 'iterations = ', str(i)
-            print 'loss(generator_a)     = ', str(loss_gen_lsgan_a)
-            print 'loss(generator_b)     = ', str(loss_gen_lsgan_b)
-            print 'loss(rec_a_l1)     = ', str(l1_loss_rec_a)
-            print 'loss(rec_b_l1)     = ', str(l1_loss_rec_b)
-            print 'loss(discriminator_a) = ', str(loss_disc_a_lsgan)
-            print 'loss(discriminator_b) = ', str(loss_disc_b_lsgan)
-            print '-----------------------------------------------'
-            print '(discriminator_a out-real) = ', output_disc_real_a[0]
-            print '(discriminator_a out-fake) = ', output_disc_fake_a[0]
-            print '(discriminator_b out-real) = ', output_disc_real_b[0]
-            print '(discriminator_b out-fake) = ', output_disc_fake_b[0]
+            # generators
+            optimizer_gen.zero_grad()
+            loss_gen_total_lsgan.backward()
+            optimizer_gen.step()
 
-            # tf-board (scalar)
-            logger.scalar_summary('loss(generator_a)', loss_gen_lsgan_a, i)
-            logger.scalar_summary('loss(generator_b)', loss_gen_lsgan_b, i)
-            logger.scalar_summary('loss-rec_a-l1', l1_loss_rec_a, i)
-            logger.scalar_summary('loss-rec_b-l1', l1_loss_rec_b, i)
-            logger.scalar_summary('loss(discriminator_a)', loss_disc_a_lsgan, i)
-            logger.scalar_summary('loss(discriminator_b)', loss_disc_b_lsgan, i)
-            logger.scalar_summary('disc_a-out-for-real', output_disc_real_a[0], i)
-            logger.scalar_summary('disc_a-out-for-fake', output_disc_fake_a[0], i)
-            logger.scalar_summary('disc_b-out-for-real', output_disc_real_b[0], i)
-            logger.scalar_summary('disc_b-out-for-fake', output_disc_fake_b[0], i)
+            if i % 30 == 0:
+                print '-----------------------------------------------'
+                print '-----------------------------------------------'
+                print 'iterations = ', str(i)
+                print 'loss(generator_a)     = ', str(loss_gen_lsgan_a)
+                print 'loss(generator_b)     = ', str(loss_gen_lsgan_b)
+                print 'loss(rec_a_l1)     = ', str(l1_loss_rec_a)
+                print 'loss(rec_b_l1)     = ', str(l1_loss_rec_b)
+                print 'loss(discriminator_a) = ', str(loss_disc_a_lsgan)
+                print 'loss(discriminator_b) = ', str(loss_disc_b_lsgan)
+                print '-----------------------------------------------'
+                print '(discriminator_a out-real) = ', output_disc_real_a[0]
+                print '(discriminator_a out-fake) = ', output_disc_fake_a[0]
+                print '(discriminator_b out-real) = ', output_disc_real_b[0]
+                print '(discriminator_b out-fake) = ', output_disc_fake_b[0]
 
-            # tf-board (images - first 1 batches)
-            inputs_imgs_temp = inputs.cpu().data.numpy()[0:BATCH_SIZE]
-            output_imgs_temp = outputs_gen_a_to_b.cpu().data.numpy()[0:BATCH_SIZE]
-            answer_imgs_temp = answers_blonde.cpu().data.numpy()[0:BATCH_SIZE]
-            reconstructed_a_temp = reconstructed_a.cpu().data.numpy()[0:BATCH_SIZE]
-            reconstructed_b_temp = reconstructed_b.cpu().data.numpy()[0:BATCH_SIZE]
+                # tf-board (scalar)
+                logger.scalar_summary(color + ':loss(generator_a)', loss_gen_lsgan_a, i)
+                logger.scalar_summary(color + ':loss(generator_b)', loss_gen_lsgan_b, i)
+                logger.scalar_summary(color + ':loss-rec_a-l1', l1_loss_rec_a, i)
+                logger.scalar_summary(color + ':loss-rec_b-l1', l1_loss_rec_b, i)
+                logger.scalar_summary(color + ':loss(discriminator_a)', loss_disc_a_lsgan, i)
+                logger.scalar_summary(color + ':loss(discriminator_b)', loss_disc_b_lsgan, i)
+                logger.scalar_summary(color + ':disc_a-out-for-real', output_disc_real_a[0], i)
+                logger.scalar_summary(color + ':disc_a-out-for-fake', output_disc_fake_a[0], i)
+                logger.scalar_summary(color + ':disc_b-out-for-real', output_disc_real_b[0], i)
+                logger.scalar_summary(color + ':disc_b-out-for-fake', output_disc_fake_b[0], i)
 
-            # logger.an_image_summary('generated', output_img, i)
-            logger.image_summary('input', inputs_imgs_temp, i)
-            logger.image_summary('generated', output_imgs_temp, i)
-            logger.image_summary('reconstructed_a', reconstructed_a_temp, i)
-            logger.image_summary('reconstructed_b', reconstructed_b_temp, i)
-            logger.image_summary('real', answer_imgs_temp, i)
+                # tf-board (images - first 1 batches)
+                inputs_imgs_temp = inputs.cpu().data.numpy()[0:BATCH_SIZE]
+                output_imgs_temp = outputs_gen_a_to_b.cpu().data.numpy()[0:BATCH_SIZE]
+                answer_imgs_temp = answers.cpu().data.numpy()[0:BATCH_SIZE]
+                reconstructed_a_temp = reconstructed_a.cpu().data.numpy()[0:BATCH_SIZE]
+                reconstructed_b_temp = reconstructed_b.cpu().data.numpy()[0:BATCH_SIZE]
 
+                # logger.an_image_summary('generated', output_img, i)
+                logger.image_summary(color + ':input', inputs_imgs_temp, i)
+                logger.image_summary(color + ':generated', output_imgs_temp, i)
+                logger.image_summary(color + ':reconstructed_a', reconstructed_a_temp, i)
+                logger.image_summary(color + ':reconstructed_b', reconstructed_b_temp, i)
+                logger.image_summary(color + ':real', answer_imgs_temp, i)
+        
+        # iterate through colors and manipulate the input data and condition vectors
+        ############################################################################
+        
         if i % 500 == 0:
             # save the output images
             # feedforward the inputs. generator
 
             for file_idx in range(1):
-                # random noise z
-                '''
-                noise_z = torch.randn(BATCH_SIZE, 1, 4, 4)
 
-                if is_gpu_mode:
-                    noise_z = Variable(noise_z.cuda())
-                else:
-                    noise_z = Variable(noise_z)
-                '''
-
-                outputs_gen = gen_model_a(inputs)
+                outputs_gen = gen_model_a(torch.cat((inputs, condition_vectors), 1))
                 output_img = outputs_gen.cpu().data.numpy()[0]
 
                 output_img_opencv[:, :, 0] = output_img[0, :, :]

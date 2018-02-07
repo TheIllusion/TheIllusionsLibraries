@@ -34,7 +34,7 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # input image will have the size of 64x64x3
-        self.first_conv_layer = ConvolutionDown(in_channels=3, out_channels=32, kernel_size=3)
+        self.first_conv_layer = ConvolutionDown(in_channels=5, out_channels=32, kernel_size=3)
         self.second_conv_layer = ConvolutionDown(in_channels=32, out_channels=64, kernel_size=3)
         self.third_conv_layer = ConvolutionDown(in_channels=64, out_channels=128, kernel_size=3)
         self.fourth_conv_layer = ConvolutionDown(in_channels=128, out_channels=256, kernel_size=3)

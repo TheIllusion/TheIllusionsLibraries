@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from data_loader_for_unified_cyclegan import hair_color_list
 
 BATCH_SIZE = 2
 
@@ -34,7 +35,7 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # input image will have the size of 64x64x3
-        self.first_conv_layer = ConvolutionDown(in_channels=5, out_channels=32, kernel_size=3)
+        self.first_conv_layer = ConvolutionDown(in_channels=3+len(hair_color_list), out_channels=32, kernel_size=3)
         self.second_conv_layer = ConvolutionDown(in_channels=32, out_channels=64, kernel_size=3)
         self.third_conv_layer = ConvolutionDown(in_channels=64, out_channels=128, kernel_size=3)
         self.fourth_conv_layer = ConvolutionDown(in_channels=128, out_channels=256, kernel_size=3)

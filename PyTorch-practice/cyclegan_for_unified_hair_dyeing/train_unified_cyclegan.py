@@ -19,8 +19,8 @@ is_gpu_mode = True
 TOTAL_ITERATION = 1000000
 
 # learning rate
-LEARNING_RATE_GENERATOR = 2 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 0.1 * 1e-4
+LEARNING_RATE_GENERATOR = 3 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 0.01 * 1e-4
 
 # zero centered
 # MEAN_VALUE_FOR_ZERO_CENTERED = 128
@@ -67,9 +67,13 @@ if __name__ == "__main__":
         gen_model_b.cuda()
         disc_model_a.cuda()
         disc_model_b.cuda()
-        # gen_model = torch.nn.DataParallel(gen_model).cuda()
-        # disc_model = torch.nn.DataParallel(disc_model).cuda()
-
+        '''
+        gen_model_a = torch.nn.DataParallel(gen_model_a).cuda()
+        gen_model_b = torch.nn.DataParallel(gen_model_b).cuda()
+        disc_model_a = torch.nn.DataParallel(disc_model_a).cuda()
+        disc_model_b = torch.nn.DataParallel(disc_model_b).cuda()
+        '''
+        
     if ENABLE_TRANSFER_LEARNING:
         # load the saved checkpoints for hair semantic segmentation
         gen_model_a.load_state_dict(torch.load(
@@ -85,6 +89,7 @@ if __name__ == "__main__":
 
     # read imgs
     image_buff_read_index = 0
+    saved_image_buff_read_index = 0
 
     # pytorch style
     input_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
@@ -115,6 +120,8 @@ if __name__ == "__main__":
         for color in hair_color_list:
 
             # each batch
+            image_buff_read_index = saved_image_buff_read_index
+            
             for j in range(BATCH_SIZE):
 
                 data_loader.is_main_alive = True
@@ -137,12 +144,14 @@ if __name__ == "__main__":
                 np.copyto(input_img[j], data_loader.input_buff[image_buff_read_index])
                 np.copyto(answer_img[j], answer_buff[image_buff_read_index])
 
-                data_loader.buff_status[image_buff_read_index] = 'empty'
+                # empty the buffer if the current color is the last color
+                if hair_color_list.index(color) == (len(hair_color_list) -1):
+                    data_loader.buff_status[image_buff_read_index] = 'empty'
 
                 image_buff_read_index = image_buff_read_index + 1
                 if image_buff_read_index >= data_loader.image_buffer_size:
                     image_buff_read_index = 0
-
+           
             ####################################################################
             # manipulate the condition vector
             # set the values of the target plain to 100. and others to 0.
@@ -248,18 +257,23 @@ if __name__ == "__main__":
 
                 # tf-board (images - first 1 batches)
                 inputs_imgs_temp = inputs.cpu().data.numpy()[0:BATCH_SIZE]
-                output_imgs_temp = outputs_gen_a_to_b.cpu().data.numpy()[0:BATCH_SIZE]
+                output_imgs_temp_b = outputs_gen_a_to_b.cpu().data.numpy()[0:BATCH_SIZE]
+                output_imgs_temp_a = outputs_gen_b_to_a.cpu().data.numpy()[0:BATCH_SIZE]
                 answer_imgs_temp = answers.cpu().data.numpy()[0:BATCH_SIZE]
                 reconstructed_a_temp = reconstructed_a.cpu().data.numpy()[0:BATCH_SIZE]
                 reconstructed_b_temp = reconstructed_b.cpu().data.numpy()[0:BATCH_SIZE]
 
                 # logger.an_image_summary('generated', output_img, i)
                 logger.image_summary(color + ':input', inputs_imgs_temp, i)
-                logger.image_summary(color + ':generated', output_imgs_temp, i)
+                logger.image_summary(color + ':generated_b', output_imgs_temp_b, i)
+                logger.image_summary(color + ':generated_a', output_imgs_temp_a, i)
                 logger.image_summary(color + ':reconstructed_a', reconstructed_a_temp, i)
                 logger.image_summary(color + ':reconstructed_b', reconstructed_b_temp, i)
                 logger.image_summary(color + ':real', answer_imgs_temp, i)
-        
+            
+        # prepare for the next iter
+        saved_image_buff_read_index = image_buff_read_index
+       
         # iterate through colors and manipulate the input data and condition vectors
         ############################################################################
         

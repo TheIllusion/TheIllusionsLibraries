@@ -12,6 +12,8 @@ INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_dyeing/black_to_blonde/trainA/"
 ANSWER_IMAGE_DIRECTORY_PATH_BLONDE = "/data/rklee/hair_dyeing/black_to_blonde/trainB/"
 ANSWER_IMAGE_DIRECTORY_PATH_BROWN = '/home1/irteamsu/data/rklee/hair_dyeing/black2brown/trainB/'
 ANSWER_IMAGE_DIRECTORY_PATH_WINE = '/home1/irteamsu/data/rklee/hair_dyeing/black_to_wine_female/trainB/'
+ANSWER_IMAGE_DIRECTORY_PATH_CYAN = '/home1/irteamsu/data/rklee/hair_dyeing/black_to_cyan_female/trainB/'
+ANSWER_IMAGE_DIRECTORY_PATH_BLUE = '/home1/irteamsu/data/rklee/hair_dyeing/black_to_blue_female/trainB/'
 
 ##############################################################################################
 # Image Buffer Management
@@ -27,7 +29,7 @@ image_buffer_size = 100
 # answer_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
 
 # Hair Color List
-hair_color_list = ['BLONDE', 'WINE']
+hair_color_list = ['BLONDE', 'WINE', 'BROWN', 'CYAN', 'BLUE']
 #hair_color_list = ['BLONDE']
 
 ##############################################################################################
@@ -38,6 +40,9 @@ input_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAG
 # answer buffers
 answer_buff_blonde = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
 answer_buff_wine = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
+answer_buff_brown = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
+answer_buff_cyan = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
+answer_buff_blue = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
 
 ##############################################################################################
 buff_status = []
@@ -46,10 +51,14 @@ for i in range(image_buffer_size):
     buff_status.append('empty')
 
 current_buff_index = 0
+
 lineIdxInput = 0
+
 lineIdxAnswer_blonde = 0
 lineIdxAnswer_wine = 0
-
+lineIdxAnswer_brown = 0
+lineIdxAnswer_cyan = 0
+lineIdxAnswer_blue = 0
 ##############################################################################################
 # load the filelist
 
@@ -68,32 +77,65 @@ os.chdir(ANSWER_IMAGE_DIRECTORY_PATH_WINE)
 jpg_files_answer_wine = glob.glob('*.jpg')
 random.shuffle(jpg_files_answer_wine)
 
+# brown
+os.chdir(ANSWER_IMAGE_DIRECTORY_PATH_BROWN)
+jpg_files_answer_brown = glob.glob('*.jpg')
+random.shuffle(jpg_files_answer_brown)
+
+# cyan
+os.chdir(ANSWER_IMAGE_DIRECTORY_PATH_CYAN)
+jpg_files_answer_cyan = glob.glob('*.jpg')
+random.shuffle(jpg_files_answer_cyan)
+
+# blue
+os.chdir(ANSWER_IMAGE_DIRECTORY_PATH_BLUE)
+jpg_files_answer_blue = glob.glob('*.jpg')
+random.shuffle(jpg_files_answer_blue)
+
 # estimate the length of the file lists
 max_training_index_input = len(jpg_files_input)
 max_training_index_answer_blonde = len(jpg_files_answer_blonde)
 max_training_index_answer_wine = len(jpg_files_answer_wine)
+max_training_index_answer_brown = len(jpg_files_answer_brown)
+max_training_index_answer_cyan = len(jpg_files_answer_cyan)
+max_training_index_answer_blue = len(jpg_files_answer_blue)
 
 ##############################################################################################
 # Dictionary for answer buffers 
 answer_buff_dict = {}
 answer_buff_dict['BLONDE'] = answer_buff_blonde
 answer_buff_dict['WINE'] = answer_buff_wine
+answer_buff_dict['BROWN'] = answer_buff_brown
+answer_buff_dict['CYAN'] = answer_buff_cyan
+answer_buff_dict['BLUE'] = answer_buff_blue
 
 jpg_files_answer_dict = {}
 jpg_files_answer_dict['BLONDE'] = jpg_files_answer_blonde
 jpg_files_answer_dict['WINE'] = jpg_files_answer_wine
+jpg_files_answer_dict['BROWN'] = jpg_files_answer_brown
+jpg_files_answer_dict['CYAN'] = jpg_files_answer_cyan
+jpg_files_answer_dict['BLUE'] = jpg_files_answer_blue
 
 lineIdxAnswer_dict = {}
 lineIdxAnswer_dict['BLONDE'] = lineIdxAnswer_blonde
 lineIdxAnswer_dict['WINE'] = lineIdxAnswer_wine
+lineIdxAnswer_dict['BROWN'] = lineIdxAnswer_brown
+lineIdxAnswer_dict['CYAN'] = lineIdxAnswer_cyan
+lineIdxAnswer_dict['BLUE'] = lineIdxAnswer_blue
 
 max_training_index_answer_dict = {}
 max_training_index_answer_dict['BLONDE'] = max_training_index_answer_blonde
 max_training_index_answer_dict['WINE'] = max_training_index_answer_wine
+max_training_index_answer_dict['BROWN'] = max_training_index_answer_brown
+max_training_index_answer_dict['CYAN'] = max_training_index_answer_cyan
+max_training_index_answer_dict['BLUE'] = max_training_index_answer_blue
 
 answer_directory_dict = {}
 answer_directory_dict['BLONDE'] = ANSWER_IMAGE_DIRECTORY_PATH_BLONDE
 answer_directory_dict['WINE'] = ANSWER_IMAGE_DIRECTORY_PATH_WINE
+answer_directory_dict['BROWN'] = ANSWER_IMAGE_DIRECTORY_PATH_BROWN
+answer_directory_dict['CYAN'] = ANSWER_IMAGE_DIRECTORY_PATH_CYAN
+answer_directory_dict['BLUE'] = ANSWER_IMAGE_DIRECTORY_PATH_BLUE
 
 # temporary filenames for each iteration
 training_file_name_answer_dict = {}

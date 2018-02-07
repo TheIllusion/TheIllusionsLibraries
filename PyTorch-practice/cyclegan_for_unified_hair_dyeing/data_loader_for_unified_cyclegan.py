@@ -14,6 +14,10 @@ ANSWER_IMAGE_DIRECTORY_PATH_BROWN = '/home1/irteamsu/data/rklee/hair_dyeing/blac
 ANSWER_IMAGE_DIRECTORY_PATH_WINE = '/home1/irteamsu/data/rklee/hair_dyeing/black_to_wine_female/trainB/'
 ANSWER_IMAGE_DIRECTORY_PATH_CYAN = '/home1/irteamsu/data/rklee/hair_dyeing/black_to_cyan_female/trainB/'
 ANSWER_IMAGE_DIRECTORY_PATH_BLUE = '/home1/irteamsu/data/rklee/hair_dyeing/black_to_blue_female/trainB/'
+ANSWER_IMAGE_DIRECTORY_PATH_SILVER = '/home1/irteamsu/data/rklee/hair_dyeing/black_to_silver_female/trainB/'
+ANSWER_IMAGE_DIRECTORY_PATH_RED = '/home1/irteamsu/data/rklee/hair_dyeing/black_to_pure_red_female/trainB/'
+ANSWER_IMAGE_DIRECTORY_PATH_ORANGE = '/home1/irteamsu/data/rklee/hair_dyeing/black_to_red_orange_female/trainB/'
+ANSWER_IMAGE_DIRECTORY_PATH_GRAY = '/home1/irteamsu/data/rklee/hair_dyeing/black2gray/trainB/'
 
 ##############################################################################################
 # Image Buffer Management
@@ -29,7 +33,7 @@ image_buffer_size = 100
 # answer_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
 
 # Hair Color List
-hair_color_list = ['BLONDE', 'WINE', 'BROWN', 'CYAN', 'BLUE']
+hair_color_list = ['BLONDE', 'WINE', 'BROWN', 'CYAN', 'BLUE', 'SILVER', 'RED', 'ORANGE', 'GRAY']
 #hair_color_list = ['BLONDE']
 
 ##############################################################################################
@@ -43,6 +47,10 @@ answer_buff_wine = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPU
 answer_buff_brown = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
 answer_buff_cyan = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
 answer_buff_blue = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
+answer_buff_silver = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
+answer_buff_red = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
+answer_buff_orange = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
+answer_buff_gray = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
 
 ##############################################################################################
 buff_status = []
@@ -59,6 +67,10 @@ lineIdxAnswer_wine = 0
 lineIdxAnswer_brown = 0
 lineIdxAnswer_cyan = 0
 lineIdxAnswer_blue = 0
+lineIdxAnswer_silver = 0
+lineIdxAnswer_red = 0
+lineIdxAnswer_orange = 0
+lineIdxAnswer_gray = 0
 ##############################################################################################
 # load the filelist
 
@@ -92,6 +104,26 @@ os.chdir(ANSWER_IMAGE_DIRECTORY_PATH_BLUE)
 jpg_files_answer_blue = glob.glob('*.jpg')
 random.shuffle(jpg_files_answer_blue)
 
+# silver
+os.chdir(ANSWER_IMAGE_DIRECTORY_PATH_SILVER)
+jpg_files_answer_silver = glob.glob('*.jpg')
+random.shuffle(jpg_files_answer_silver)
+
+# red
+os.chdir(ANSWER_IMAGE_DIRECTORY_PATH_RED)
+jpg_files_answer_red = glob.glob('*.jpg')
+random.shuffle(jpg_files_answer_red)
+
+# orange
+os.chdir(ANSWER_IMAGE_DIRECTORY_PATH_ORANGE)
+jpg_files_answer_orange = glob.glob('*.jpg')
+random.shuffle(jpg_files_answer_orange)
+
+# gray
+os.chdir(ANSWER_IMAGE_DIRECTORY_PATH_GRAY)
+jpg_files_answer_gray = glob.glob('*.jpg')
+random.shuffle(jpg_files_answer_gray)
+
 # estimate the length of the file lists
 max_training_index_input = len(jpg_files_input)
 max_training_index_answer_blonde = len(jpg_files_answer_blonde)
@@ -99,6 +131,10 @@ max_training_index_answer_wine = len(jpg_files_answer_wine)
 max_training_index_answer_brown = len(jpg_files_answer_brown)
 max_training_index_answer_cyan = len(jpg_files_answer_cyan)
 max_training_index_answer_blue = len(jpg_files_answer_blue)
+max_training_index_answer_silver = len(jpg_files_answer_silver)
+max_training_index_answer_red = len(jpg_files_answer_red)
+max_training_index_answer_orange = len(jpg_files_answer_orange)
+max_training_index_answer_gray = len(jpg_files_answer_gray)
 
 ##############################################################################################
 # Dictionary for answer buffers 
@@ -108,6 +144,10 @@ answer_buff_dict['WINE'] = answer_buff_wine
 answer_buff_dict['BROWN'] = answer_buff_brown
 answer_buff_dict['CYAN'] = answer_buff_cyan
 answer_buff_dict['BLUE'] = answer_buff_blue
+answer_buff_dict['SILVER'] = answer_buff_silver
+answer_buff_dict['RED'] = answer_buff_red
+answer_buff_dict['ORANGE'] = answer_buff_orange
+answer_buff_dict['GRAY'] = answer_buff_gray
 
 jpg_files_answer_dict = {}
 jpg_files_answer_dict['BLONDE'] = jpg_files_answer_blonde
@@ -115,6 +155,10 @@ jpg_files_answer_dict['WINE'] = jpg_files_answer_wine
 jpg_files_answer_dict['BROWN'] = jpg_files_answer_brown
 jpg_files_answer_dict['CYAN'] = jpg_files_answer_cyan
 jpg_files_answer_dict['BLUE'] = jpg_files_answer_blue
+jpg_files_answer_dict['SILVER'] = jpg_files_answer_silver
+jpg_files_answer_dict['RED'] = jpg_files_answer_red
+jpg_files_answer_dict['ORANGE'] = jpg_files_answer_orange
+jpg_files_answer_dict['GRAY'] = jpg_files_answer_gray
 
 lineIdxAnswer_dict = {}
 lineIdxAnswer_dict['BLONDE'] = lineIdxAnswer_blonde
@@ -122,6 +166,10 @@ lineIdxAnswer_dict['WINE'] = lineIdxAnswer_wine
 lineIdxAnswer_dict['BROWN'] = lineIdxAnswer_brown
 lineIdxAnswer_dict['CYAN'] = lineIdxAnswer_cyan
 lineIdxAnswer_dict['BLUE'] = lineIdxAnswer_blue
+lineIdxAnswer_dict['SILVER'] = lineIdxAnswer_silver
+lineIdxAnswer_dict['RED'] = lineIdxAnswer_red
+lineIdxAnswer_dict['ORANGE'] = lineIdxAnswer_orange
+lineIdxAnswer_dict['GRAY'] = lineIdxAnswer_gray
 
 max_training_index_answer_dict = {}
 max_training_index_answer_dict['BLONDE'] = max_training_index_answer_blonde
@@ -129,6 +177,10 @@ max_training_index_answer_dict['WINE'] = max_training_index_answer_wine
 max_training_index_answer_dict['BROWN'] = max_training_index_answer_brown
 max_training_index_answer_dict['CYAN'] = max_training_index_answer_cyan
 max_training_index_answer_dict['BLUE'] = max_training_index_answer_blue
+max_training_index_answer_dict['SILVER'] = max_training_index_answer_silver
+max_training_index_answer_dict['RED'] = max_training_index_answer_red
+max_training_index_answer_dict['ORANGE'] = max_training_index_answer_orange
+max_training_index_answer_dict['GRAY'] = max_training_index_answer_gray
 
 answer_directory_dict = {}
 answer_directory_dict['BLONDE'] = ANSWER_IMAGE_DIRECTORY_PATH_BLONDE
@@ -136,6 +188,10 @@ answer_directory_dict['WINE'] = ANSWER_IMAGE_DIRECTORY_PATH_WINE
 answer_directory_dict['BROWN'] = ANSWER_IMAGE_DIRECTORY_PATH_BROWN
 answer_directory_dict['CYAN'] = ANSWER_IMAGE_DIRECTORY_PATH_CYAN
 answer_directory_dict['BLUE'] = ANSWER_IMAGE_DIRECTORY_PATH_BLUE
+answer_directory_dict['SILVER'] = ANSWER_IMAGE_DIRECTORY_PATH_SILVER
+answer_directory_dict['RED'] = ANSWER_IMAGE_DIRECTORY_PATH_RED
+answer_directory_dict['ORANGE'] = ANSWER_IMAGE_DIRECTORY_PATH_ORANGE
+answer_directory_dict['GRAY'] = ANSWER_IMAGE_DIRECTORY_PATH_GRAY
 
 # temporary filenames for each iteration
 training_file_name_answer_dict = {}

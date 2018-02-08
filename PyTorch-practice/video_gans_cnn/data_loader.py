@@ -24,7 +24,8 @@ image_buffer_size = 100
 
 # PyTorch format
 input_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
-# answer_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
+answer_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
+motion_vector_buff = np.empty(shape=(image_buffer_size, 1, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
 
 buff_status = []
 for i in range(image_buffer_size):

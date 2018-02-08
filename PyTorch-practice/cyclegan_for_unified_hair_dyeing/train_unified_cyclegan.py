@@ -148,6 +148,9 @@ if __name__ == "__main__":
                 if hair_color_list.index(color) == (len(hair_color_list) -1):
                     data_loader.buff_status[image_buff_read_index] = 'empty'
 
+                # debug purposes only
+                #print 'color =', color, 'image_buff_read_index =', image_buff_read_index
+                
                 image_buff_read_index = image_buff_read_index + 1
                 if image_buff_read_index >= data_loader.image_buffer_size:
                     image_buff_read_index = 0

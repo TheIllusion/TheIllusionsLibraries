@@ -5,6 +5,9 @@ import random
 
 RESULT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/gans_for_video/mug_concat_custom/happiness/'
 
+DEST_HEIGHT = 300
+DESIRED_TOTAL_FRAME_LENGTH = 21
+
 # result_image = first_frame + 20 sampled future frames
 def create_concat_imgs_in_directory(directory_path):
 
@@ -16,11 +19,12 @@ def create_concat_imgs_in_directory(directory_path):
     jpg_filelist = glob.glob('*.jpg')
 
     list_length = len(jpg_filelist)
-    if list_length < 60:
-        print 'the length of the file list is less than 60. return False.'
+    if list_length < 50:
+        print 'the length of the file list is less than 50. return False.'
         return False
 
-    sample_interval = int(float(list_length) / 30)
+    # get rid of the last several frames
+    sample_interval = int(float(list_length) / (DESIRED_TOTAL_FRAME_LENGTH * 1.4))
 
     if not os.path.exists(RESULT_IMAGE_DIRECTORY):
         os.mkdir(RESULT_IMAGE_DIRECTORY)
@@ -31,6 +35,14 @@ def create_concat_imgs_in_directory(directory_path):
 
     first_jpg_img = cv2.imread(first_jpg_file, cv2.IMREAD_UNCHANGED)
 
+    # get the aspect ratio of the first frame
+    rows = first_jpg_img.shape[0]
+    cols = first_jpg_img.shape[1]
+    aspect_ratio = float(cols)/rows
+    desired_width = int(DEST_HEIGHT * aspect_ratio)
+
+    # resize the img
+    first_jpg_img = cv2.resize(first_jpg_img, (desired_width, DEST_HEIGHT), interpolation=cv2.INTER_CUBIC)
     frames_list = []
     frames_list.append(first_jpg_img)
 
@@ -40,6 +52,7 @@ def create_concat_imgs_in_directory(directory_path):
         jpg_file = jpg_filelist[i * sample_interval]
 
         current_jpg_img = cv2.imread(jpg_file, cv2.IMREAD_UNCHANGED)
+        current_jpg_img = cv2.resize(current_jpg_img, (desired_width, DEST_HEIGHT), interpolation=cv2.INTER_CUBIC)
 
         frames_list.append(current_jpg_img)
 

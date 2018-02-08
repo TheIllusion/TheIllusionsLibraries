@@ -275,9 +275,9 @@ if __name__ == "__main__":
                 output_img_opencv[:, :, 2] = output_img[2, :, :]
 
                 cv2.imwrite(os.path.join(RESULT_IMAGE_DIRECTORY, \
-                                         'pix2pix_generated_iter_' + str(i) + '_' + str(file_idx) + '.jpg'), output_img_opencv)
+                                         'video_gans_generated_iter_' + str(i) + '_' + str(file_idx) + '.jpg'), output_img_opencv)
 
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(gen_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'pix2pix_gen_model_iter_' + str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'video_gans_genenerator_iter_' + str(i) + '.pt')

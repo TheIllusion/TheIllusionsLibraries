@@ -1,1 +1,1 @@
-tensorboard --logdir=/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/models/tf_board_logger --reload_interval 5
+tensorboard --logdir=/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/tf_board_logger --port 8632

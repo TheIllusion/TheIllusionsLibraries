@@ -24,7 +24,7 @@ LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 10000
 
-# tbt003
+# tbt005 (10.161.31.83)
 MODEL_SAVING_DIRECTORY = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/vanilla_gan_models/"
 RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/gen_images/'
 

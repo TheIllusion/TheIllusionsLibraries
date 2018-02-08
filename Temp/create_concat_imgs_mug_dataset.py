@@ -54,12 +54,17 @@ def create_concat_imgs_in_directory(directory_path):
         current_jpg_img = cv2.imread(jpg_file, cv2.IMREAD_UNCHANGED)
         current_jpg_img = cv2.resize(current_jpg_img, (desired_width, DEST_HEIGHT), interpolation=cv2.INTER_CUBIC)
 
-        frames_list.append(current_jpg_img)
+        concated_img = np.hstack((first_jpg_img, current_jpg_img))
 
-    concated_img = np.hstack(tuple(frames_list))
+        # save the result
+        cv2.imwrite(RESULT_IMAGE_DIRECTORY + 'concat_happy_' + str(random_num) + '_idx_' + str(i) + '.jpg', concated_img)
+
+        #frames_list.append(current_jpg_img)
+
+    #concated_img = np.hstack(tuple(frames_list))
 
     # save the result
-    cv2.imwrite(RESULT_IMAGE_DIRECTORY + 'concat_happy_' + str(random_num) + '_' + jpg_file, concated_img)
+    #cv2.imwrite(RESULT_IMAGE_DIRECTORY + 'concat_happy_' + str(random_num) + '_' + jpg_file, concated_img)
 
     return True
 

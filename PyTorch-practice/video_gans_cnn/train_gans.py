@@ -7,6 +7,7 @@ import numpy as np
 import data_loader
 from logger import Logger
 from generator_tiramisu import Tiramisu
+from discriminator import Discriminator, BATCH_SIZE
 
 print 'train_gans.py'
 
@@ -14,12 +15,12 @@ print 'train_gans.py'
 is_gpu_mode = True
 
 # batch size
-BATCH_SIZE = 1
+#BATCH_SIZE = 1
 TOTAL_ITERATION = 1000000
 
 # learning rate
 LEARNING_RATE_GENERATOR = 3 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
 
 # zero centered
 # MEAN_VALUE_FOR_ZERO_CENTERED = 128
@@ -32,72 +33,18 @@ MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-pr
 RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/result_imgs/'
 TENSORBOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/tf_board_logger/'
 
+# single test face image
+SINGLE_TEST_FACE_IMAGE = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/rk_face.jpg'
+
+test_face_img = cv2.imread(SINGLE_TEST_FACE_IMAGE, cv2.IMREAD_UNCHANGED)
+test_face_img = cv2.resize(test_face_img, (data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT), interpolation=cv2.INTER_LINEAR)
+test_face_img = test_face_img[..., [2,1,0]]
+
 # tensor-board logger
 if not os.path.exists(TENSORBOARD_DIRECTORY):
     os.mkdir(TENSORBOARD_DIRECTORY)
 
 logger = Logger(TENSORBOARD_DIRECTORY)
-
-class TransitionDown(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size):
-        super(TransitionDown, self).__init__()
-
-        # self.drop_out = nn.Dropout2d(p=0.2)
-        self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels,
-                              kernel_size=3, padding=1, stride=2, bias=True)
-
-        # weight initialization
-        torch.nn.init.xavier_uniform(self.conv.weight)
-
-        self.batch_norm = nn.BatchNorm2d(out_channels)
-
-    def forward(self, x):
-        # x = F.max_pool2d(input=x, kernel_size=2)
-        # x = self.drop_out(x)
-        x = F.relu(self.conv(x))
-        x = self.batch_norm(x)
-
-        return x
-
-class Discriminator(nn.Module):
-    def __init__(self):
-        """
-        In the constructor we instantiate our custom modules and assign them as
-        member variables.
-        """
-        super(Discriminator, self).__init__()
-
-        # input image will have the size of 64x64x3
-        self.first_conv_layer = TransitionDown(in_channels=6, out_channels=32, kernel_size=3)
-        self.second_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=3)
-        self.third_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
-        self.fourth_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
-        self.fifth_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
-
-        self.fc1 = nn.Linear(8 * 8 * 512, 10)
-        self.fc2 = nn.Linear(10, 1)
-
-    def forward(self, x):
-        """
-        In the forward function we accept a Variable of input data and we must return
-        a Variable of output data. We can use Modules defined in the constructor as
-        well as arbitrary operators on Variables.
-        """
-
-        x = self.first_conv_layer(x)
-        x = self.second_conv_layer(x)
-        x = self.third_conv_layer(x)
-        x = self.fourth_conv_layer(x)
-        x = self.fifth_conv_layer(x)
-
-        x = x.view(BATCH_SIZE, 8 * 8 * 512)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-
-        sigmoid_out = nn.functional.sigmoid(x)
-
-        return sigmoid_out
-
 
 ###################################################################################
 
@@ -128,8 +75,13 @@ if __name__ == "__main__":
 
     # pytorch style
     input_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
+    
     answer_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
-
+    
+    motion_vec_img = np.empty(shape=(BATCH_SIZE, 1, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
+    
+    fake_motion_vec_img = np.empty(shape=(BATCH_SIZE, 1, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
+    
     # opencv style
     output_img_opencv = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT, 3))
 
@@ -156,44 +108,43 @@ if __name__ == "__main__":
 
             np.copyto(input_img[j], data_loader.input_buff[image_buff_read_index])
             np.copyto(answer_img[j], data_loader.answer_buff[image_buff_read_index])
+            np.copyto(motion_vec_img[j], data_loader.motion_vector_buff[image_buff_read_index])
+            np.copyto(fake_motion_vec_img[j], data_loader.fake_motion_vector_buff[image_buff_read_index])
 
             data_loader.buff_status[image_buff_read_index] = 'empty'
 
             image_buff_read_index = image_buff_read_index + 1
             if image_buff_read_index >= data_loader.image_buffer_size:
                 image_buff_read_index = 0
-
-        # random noise z
-        # noise_z is no longer necessary for pix2pix
-        #noise_z = torch.randn(BATCH_SIZE, 1, 4, 4)
-
+            
         if is_gpu_mode:
             inputs = Variable(torch.from_numpy(input_img).float().cuda())
             answers = Variable(torch.from_numpy(answer_img).float().cuda())
-            #noise_z = Variable(noise_z.cuda())
+            motion_vec = Variable(torch.from_numpy(motion_vec_img).float().cuda())
+            fake_motion_vec = Variable(torch.from_numpy(fake_motion_vec_img).float().cuda())
+            
         else:
             inputs = Variable(torch.from_numpy(input_img).float())
             answers = Variable(torch.from_numpy(answer_img).float())
-            #noise_z = Variable(noise_z)
+            motion_vec = Variable(torch.from_numpy(motion_vec_img).float())
+            fake_motion_vec = Variable(torch.from_numpy(fake_motion_vec_img).float())
 
+        # concatenate the motion vector
+        inputs_with_mv = torch.cat((motion_vec, inputs), 1)
+        inputs_with_fake_mv = torch.cat((fake_motion_vec, inputs), 1)
+        
         # feedforward the inputs. generator
-        #outputs_gen = gen_model(noise_z)
-        outputs_gen = gen_model(inputs)
+        outputs_gen = gen_model(inputs_with_mv)
 
         # feedforward the (input, answer) pairs. discriminator
-        output_disc_real = disc_model(torch.cat((inputs, answers), 1))
-        output_disc_fake = disc_model(torch.cat((inputs, outputs_gen), 1))
+        output_disc_real = disc_model(torch.cat((inputs_with_mv, answers), 1))
+        output_disc_fake_vec = disc_model(torch.cat((inputs_with_fake_mv, answers), 1))
+        output_disc_fake = disc_model(torch.cat((inputs_with_mv, outputs_gen), 1))
 
         # loss functions
-        # vanilla gan loss for the discriminator
-        '''
-        loss_real_d = F.binary_cross_entropy(output_disc_real, ones_label)
-        loss_fake_d = F.binary_cross_entropy(output_disc_fake, zeros_label)
-        loss_disc_total = loss_real_d + loss_fake_d
-        '''
 
         # lsgan loss for the discriminator
-        loss_disc_total_lsgan = 0.5 * (torch.mean((output_disc_real - 1)**2) + torch.mean(output_disc_fake**2))
+        loss_disc_total_lsgan = 0.5 * (torch.mean((output_disc_real - 1)**2) + torch.mean(output_disc_fake**2) + torch.mean(output_disc_fake_vec**2))
 
         # l1-loss between real and fake
         l1_loss = F.l1_loss(outputs_gen, answers)
@@ -227,31 +178,6 @@ if __name__ == "__main__":
         loss_gen_total_lsgan.backward()
         optimizer_gen.step()
 
-        if i % 50 == 0:
-            print '-----------------------------------------------'
-            print '-----------------------------------------------'
-            print 'iterations = ', str(i)
-            print 'loss(generator)     = ', str(loss_gen_lsgan)
-            print 'loss(l1)     = ', str(l1_loss)
-            print 'loss(discriminator) = ', str(loss_disc_total_lsgan)
-            print '-----------------------------------------------'
-            print '(discriminator out-real) = ', output_disc_real[0]
-            print '(discriminator out-fake) = ', output_disc_fake[0]
-
-            # tf-board (scalar)
-            logger.scalar_summary('loss-generator', loss_gen_lsgan, i)
-            logger.scalar_summary('loss-l1', l1_loss, i)
-            logger.scalar_summary('loss-discriminator', loss_disc_total_lsgan, i)
-            logger.scalar_summary('disc-out-for-real', output_disc_real[0], i)
-            logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], i)
-
-            # tf-board (images - first 1 batches)
-            output_imgs_temp = outputs_gen.cpu().data.numpy()[0:1]
-            answer_imgs_temp = answers.cpu().data.numpy()[0:1]
-            # logger.an_image_summary('generated', output_img, i)
-            logger.image_summary('generated', output_imgs_temp, i)
-            logger.image_summary('real', answer_imgs_temp, i)
-
         if i % 500 == 0:
             # save the output images
             # feedforward the inputs. generator
@@ -267,7 +193,12 @@ if __name__ == "__main__":
                     noise_z = Variable(noise_z)
                 '''
 
-                outputs_gen = gen_model(inputs)
+                inputs_with_mv = torch.cat((inputs, motion_vec), 1)
+                
+                motion_vec[:,:,:] = 10
+                
+                outputs_gen = gen_model(inputs_with_mv)
+                
                 output_img = outputs_gen.cpu().data.numpy()[0]
 
                 output_img_opencv[:, :, 0] = output_img[0, :, :]
@@ -276,6 +207,57 @@ if __name__ == "__main__":
 
                 cv2.imwrite(os.path.join(RESULT_IMAGE_DIRECTORY, \
                                          'video_gans_generated_iter_' + str(i) + '_' + str(file_idx) + '.jpg'), output_img_opencv)
+                
+        if i % 200 == 0:
+            print '-----------------------------------------------'
+            print '-----------------------------------------------'
+            print 'iterations = ', str(i)
+            print 'loss(generator)     = ', str(loss_gen_lsgan)
+            print 'loss(l1)     = ', str(l1_loss)
+            print 'loss(discriminator) = ', str(loss_disc_total_lsgan)
+            print '-----------------------------------------------'
+            print '(discriminator out-real)   = ', output_disc_real[0]
+            print '(discriminator out-fake)   = ', output_disc_fake[0]
+            print '(discriminator out-fake-v) = ', output_disc_fake_vec[0]
+
+            # tf-board (scalar)
+            logger.scalar_summary('loss-generator', loss_gen_lsgan, i)
+            logger.scalar_summary('loss-l1', l1_loss, i)
+            logger.scalar_summary('loss-discriminator', loss_disc_total_lsgan, i)
+            logger.scalar_summary('disc-out-for-real', output_disc_real[0], i)
+            logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], i)
+            logger.scalar_summary('disc-out-for-fake-vec', output_disc_fake_vec[0], i)
+            
+            # tf-board (images - first 1 batches)
+            input_imgs_temp = inputs.cpu().data.numpy()[0:1]
+            logger.image_summary('first_batch_input', input_imgs_temp, i)
+            
+            output_imgs_temp = outputs_gen.cpu().data.numpy()[0:1]
+            logger.image_summary('first_batch_generate', output_imgs_temp, i)
+                
+            answer_imgs_temp = answers.cpu().data.numpy()[0:1]
+            logger.image_summary('first_batch_real', answer_imgs_temp, i)
+            
+            # tf-board (images - generated from test image)
+            input_img[0][0, :, :] = test_face_img[:, :, 0]
+            input_img[0][1, :, :] = test_face_img[:, :, 1]
+            input_img[0][2, :, :] = test_face_img[:, :, 2]
+            
+            if is_gpu_mode:
+                inputs = Variable(torch.from_numpy(input_img).float().cuda())
+            else:
+                inputs = Variable(torch.from_numpy(input_img).float())
+            
+            for loop_idx in range(1,21):
+                mv_idx = loop_idx * 10
+                motion_vec[:,:,:] = mv_idx
+                
+                # concat
+                inputs_with_mv = torch.cat((inputs, motion_vec), 1)
+                outputs_gen = gen_model(inputs_with_mv)
+                output_imgs_temp = outputs_gen.cpu().data.numpy()[0:1]
+                logger.image_summary('generated_from_test_img_mv_idx_' + str(mv_idx), output_imgs_temp, i)
+                
 
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:

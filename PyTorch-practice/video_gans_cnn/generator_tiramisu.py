@@ -2,7 +2,6 @@ import torch
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
-from data_loader_for_unified_cyclegan import hair_color_list
 
 # Layer module from the paper - Table 1.
 class Layer(nn.Module):
@@ -133,7 +132,7 @@ class Tiramisu(nn.Module):
 
         # define parameters
         # first convolution
-        self.first_conv_layer = Layer(kernel_size=3, in_channels=3+len(hair_color_list), out_channels=48)
+        self.first_conv_layer = Layer(kernel_size=3, in_channels=4, out_channels=48)
 
         # first dense block
         self.first_dense_block = DenseBlock(layers=4, in_channels=48, k_feature_maps=16)

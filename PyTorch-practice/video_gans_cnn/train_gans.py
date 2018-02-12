@@ -29,14 +29,16 @@ LEARNING_RATE_DISCRIMINATOR = 2 * 1e-4
 MODEL_SAVING_FREQUENCY = 10000
 
 # tbt005 (10.161.31.83)
-MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/models_debug/'
-RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/result_imgs_debug/'
-TENSORBOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/tf_board_logger_debug/'
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/models_sketch/'
+RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/result_imgs_sketch/'
+TENSORBOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/tf_board_logger_sketch/'
 
 # single test face image
-SINGLE_TEST_FACE_IMAGE = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/rk_face.jpg'
+#SINGLE_TEST_FACE_IMAGE = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/rk_face.jpg'
 
-test_face_img = cv2.imread(SINGLE_TEST_FACE_IMAGE, cv2.IMREAD_UNCHANGED)
+SINGLE_TEST_FACE_IMAGE = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/toast_faces_photoshop/trn_result_rockyu.jpg'
+
+test_face_img = cv2.imread(SINGLE_TEST_FACE_IMAGE, cv2.IMREAD_COLOR)
 test_face_img = cv2.resize(test_face_img, (data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT), interpolation=cv2.INTER_LINEAR)
 test_face_img = test_face_img[..., [2,1,0]]
 
@@ -177,36 +179,6 @@ if __name__ == "__main__":
         loss_gen_total_lsgan.backward()
         optimizer_gen.step()
 
-        if i % 500 == 0:
-            # save the output images
-            # feedforward the inputs. generator
-
-            for file_idx in range(1):
-                # random noise z
-                '''
-                noise_z = torch.randn(BATCH_SIZE, 1, 4, 4)
-
-                if is_gpu_mode:
-                    noise_z = Variable(noise_z.cuda())
-                else:
-                    noise_z = Variable(noise_z)
-                '''
-
-                inputs_with_mv = torch.cat((motion_vec, inputs), 1)
-                
-                motion_vec[:,:,:] = 10
-                
-                outputs_gen = gen_model(inputs_with_mv)
-                
-                output_img = outputs_gen.cpu().data.numpy()[0]
-
-                output_img_opencv[:, :, 0] = output_img[0, :, :]
-                output_img_opencv[:, :, 1] = output_img[1, :, :]
-                output_img_opencv[:, :, 2] = output_img[2, :, :]
-
-                cv2.imwrite(os.path.join(RESULT_IMAGE_DIRECTORY, \
-                                         'video_gans_generated_iter_' + str(i) + '_' + str(file_idx) + '.jpg'), output_img_opencv)
-                
         if i % 200 == 0:
             print '-----------------------------------------------'
             print '-----------------------------------------------'
@@ -263,4 +235,4 @@ if __name__ == "__main__":
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(gen_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + '2x_cost_video_gans_genenerator_iter_' + str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + '2x_cost_video_gans_sketch_genenerator_iter_' + str(i) + '.pt')

@@ -3,7 +3,9 @@ import os, glob, random, re, time, threading
 import cv2
 
 # tbt005 (10.161.31.83)
-INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/happiness/"
+#INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/happiness/"
+
+INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/happiness_photoshop/"
 
 IS_TRAINING = True
 

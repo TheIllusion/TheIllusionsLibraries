@@ -24,20 +24,12 @@ if __name__ == "__main__":
 
     for jpg_file in jpg_files:
 
-        img = cv2.imread(jpg_file, cv2.IMREAD_GRAYSCALE)
+        img = cv2.imread(jpg_file, cv2.IMREAD_COLOR)
         if (type(img) is not np.ndarray):
             print jpg_file + ' load failed!'
             continue
 
-        try:
-            edges = cv2.Canny(img, 20, 100)
-        except:
-            print "Exception occurred in " + jpg_file
-            continue
+        img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        img_blur = cv2.GaussianBlur(img_gray, (21, 21), 0, 0)
 
-        invert = (255 - edges)
-
-        cv2.imwrite(RESULT_IMAGE_DIRECTORY_PATH + jpg_file, invert)
-
-
-
+        cv2.imwrite(RESULT_IMAGE_DIRECTORY_PATH + jpg_file, img_blur)

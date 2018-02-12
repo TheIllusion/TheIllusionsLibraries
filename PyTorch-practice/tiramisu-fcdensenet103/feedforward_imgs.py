@@ -41,20 +41,24 @@ if __name__ == "__main__":
         tiramisu_model_2 = tiramisu.Tiramisu()
         tiramisu_model_3 = tiramisu.Tiramisu()
     
+    tiramisu_model.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_lfw_added_zero_centr_lr_0_0002_iter_2760000.pt'))
+
+    if ENABLE_MODEL_ENSEMBLES:
+        tiramisu_model_2.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_lfw_added_zero_centr_lr_0_0002_iter_1000000.pt'))
+
+        tiramisu_model_3.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_lfw_added_zero_centr_lr_0_0002_iter_1500000.pt'))
+
     if tiramisu.is_gpu_mode:
         tiramisu_model.cuda()
+        tiramisu_model.eval()
 
         if ENABLE_MODEL_ENSEMBLES:
             tiramisu_model_2.cuda()
+            tiramisu_model_2.eval()
+
             tiramisu_model_3.cuda()
+            tiramisu_model_3.eval()
 
-    tiramisu_model.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_lfw_added_zero_centr_lr_0_0003_iter_960000.pt'))
-
-    if ENABLE_MODEL_ENSEMBLES:
-        tiramisu_model_2.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_lfw_added_zero_centr_lr_0_0001_iter_960000.pt'))
-
-        tiramisu_model_3.load_state_dict(torch.load(tiramisu.MODEL_SAVING_DIRECTORY + 'tiramisu_lfw_added_zero_centr_lr_0_0003_iter_990000.pt'))
-    
     # pytorch style
     input_img = np.empty(shape=(1, 3, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))
     

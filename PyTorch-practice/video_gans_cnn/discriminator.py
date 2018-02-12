@@ -40,8 +40,9 @@ class Discriminator(nn.Module):
         self.fourth_conv_layer = ConvolutionDown(in_channels=128, out_channels=256, kernel_size=3)
         self.fifth_conv_layer = ConvolutionDown(in_channels=256, out_channels=512, kernel_size=3)
 
-        self.fc1 = nn.Linear(8 * 8 * 512, 5)
-        self.fc2 = nn.Linear(5, 1)
+        self.fc1 = nn.Linear(8 * 8 * 512, 50)
+        self.fc2 = nn.Linear(50, 10)
+        self.fc3 = nn.Linear(10, 1)
 
     def forward(self, x):
         """
@@ -59,6 +60,7 @@ class Discriminator(nn.Module):
         x = x.view(BATCH_SIZE, 8 * 8 * 512)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
 
         sigmoid_out = nn.functional.sigmoid(x)
 

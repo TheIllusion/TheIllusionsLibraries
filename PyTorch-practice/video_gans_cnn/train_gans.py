@@ -19,8 +19,8 @@ is_gpu_mode = True
 TOTAL_ITERATION = 1000000
 
 # learning rate
-LEARNING_RATE_GENERATOR = 3 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
+LEARNING_RATE_GENERATOR = 2 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 2 * 1e-4
 
 # zero centered
 # MEAN_VALUE_FOR_ZERO_CENTERED = 128
@@ -29,9 +29,9 @@ LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
 MODEL_SAVING_FREQUENCY = 10000
 
 # tbt005 (10.161.31.83)
-MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/models/'
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/models_3/'
 RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/result_imgs/'
-TENSORBOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/tf_board_logger/'
+TENSORBOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/tf_board_logger_3/'
 
 # single test face image
 SINGLE_TEST_FACE_IMAGE = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/rk_face.jpg'
@@ -138,13 +138,14 @@ if __name__ == "__main__":
 
         # feedforward the (input, answer) pairs. discriminator
         output_disc_real = disc_model(torch.cat((inputs_with_mv, answers), 1))
-        output_disc_fake_vec = disc_model(torch.cat((inputs_with_fake_mv, answers), 1))
+        output_disc_real_with_fake_vec = disc_model(torch.cat((inputs_with_fake_mv, answers), 1))
         output_disc_fake = disc_model(torch.cat((inputs_with_mv, outputs_gen), 1))
+        output_disc_fake_with_fake_vec = disc_model(torch.cat((inputs_with_fake_mv, outputs_gen), 1))
 
         # loss functions
 
         # lsgan loss for the discriminator
-        loss_disc_total_lsgan = 0.5 * (torch.mean((output_disc_real - 1)**2) + torch.mean(output_disc_fake**2) + torch.mean(output_disc_fake_vec**2))
+        loss_disc_total_lsgan = 0.5 * (torch.mean((output_disc_real - 1)**2) + torch.mean(output_disc_fake**2) + 2 * torch.mean(output_disc_real_with_fake_vec**2) + 2 * torch.mean(output_disc_fake_with_fake_vec**2))
 
         # l1-loss between real and fake
         l1_loss = F.l1_loss(outputs_gen, answers)
@@ -164,7 +165,6 @@ if __name__ == "__main__":
         # gradients for the variables it will update (which are the learnable weights
         # of the model)
         optimizer_disc.zero_grad()
-        optimizer_gen.zero_grad()
 
         # Backward pass: compute gradient of the loss with respect to model parameters
         loss_disc_total_lsgan.backward(retain_graph=True)
@@ -173,7 +173,6 @@ if __name__ == "__main__":
         optimizer_disc.step()
 
         # generator
-        optimizer_disc.zero_grad()
         optimizer_gen.zero_grad()
         loss_gen_total_lsgan.backward()
         optimizer_gen.step()
@@ -218,7 +217,8 @@ if __name__ == "__main__":
             print '-----------------------------------------------'
             print '(discriminator out-real)   = ', output_disc_real[0]
             print '(discriminator out-fake)   = ', output_disc_fake[0]
-            print '(discriminator out-fake-v) = ', output_disc_fake_vec[0]
+            print '(discriminator out-real-with-fake-v) = ', output_disc_real_with_fake_vec[0]
+            print '(discriminator out-fake-with-fake-v) = ', output_disc_fake_with_fake_vec[0]
 
             # tf-board (scalar)
             logger.scalar_summary('loss-generator', loss_gen_lsgan, i)
@@ -226,7 +226,8 @@ if __name__ == "__main__":
             logger.scalar_summary('loss-discriminator', loss_disc_total_lsgan, i)
             logger.scalar_summary('disc-out-for-real', output_disc_real[0], i)
             logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], i)
-            logger.scalar_summary('disc-out-for-fake-vec', output_disc_fake_vec[0], i)
+            logger.scalar_summary('output_disc_real_with_fake_vec', output_disc_real_with_fake_vec[0], i)
+            logger.scalar_summary('output_disc_fake_with_fake_vec', output_disc_fake_with_fake_vec[0], i)
             
             # tf-board (images - first 1 batches)
             input_imgs_temp = inputs.cpu().data.numpy()[0:1]
@@ -256,10 +257,10 @@ if __name__ == "__main__":
                 inputs_with_mv = torch.cat((inputs, motion_vec), 1)
                 outputs_gen = gen_model(inputs_with_mv)
                 output_imgs_temp = outputs_gen.cpu().data.numpy()[0:1]
-                logger.image_summary('generated_from_test_img_mv_idx_' + str(mv_idx), output_imgs_temp, i)
+                logger.image_summary('2x_cost_generated_from_test_img_mv_idx_' + str(mv_idx), output_imgs_temp, i)
                 
 
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(gen_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'video_gans_genenerator_iter_' + str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + '2x_cost_video_gans_genenerator_iter_' + str(i) + '.pt')

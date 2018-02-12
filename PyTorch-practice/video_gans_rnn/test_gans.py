@@ -19,8 +19,7 @@ FIXED_GENERATION_LENGTH = 20
 
 # tbt005
 #INPUT_TEST_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/official_test_set/original/"
-#INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/toast_faces_photoshop/"
-INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/test_first_frames/"
+INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/toast_faces_photoshop/"
 
 # tbt005 (10.161.31.83)
 MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/models_sketch/'
@@ -41,7 +40,7 @@ max_test_index = len(jpg_files)
 
 #TEST_SIZE = 53
 #TEST_SIZE = 300
-TEST_SIZE = 1 
+TEST_SIZE = 8
 
 def create_gif(filenames, result_filename, duration):
     images = []

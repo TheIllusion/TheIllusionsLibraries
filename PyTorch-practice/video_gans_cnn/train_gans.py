@@ -29,9 +29,9 @@ LEARNING_RATE_DISCRIMINATOR = 2 * 1e-4
 MODEL_SAVING_FREQUENCY = 10000
 
 # tbt005 (10.161.31.83)
-MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/models_3/'
-RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/result_imgs/'
-TENSORBOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/tf_board_logger_3/'
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/models_debug/'
+RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/result_imgs_debug/'
+TENSORBOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/tf_board_logger_debug/'
 
 # single test face image
 SINGLE_TEST_FACE_IMAGE = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/rk_face.jpg'
@@ -192,7 +192,7 @@ if __name__ == "__main__":
                     noise_z = Variable(noise_z)
                 '''
 
-                inputs_with_mv = torch.cat((inputs, motion_vec), 1)
+                inputs_with_mv = torch.cat((motion_vec, inputs), 1)
                 
                 motion_vec[:,:,:] = 10
                 
@@ -254,7 +254,7 @@ if __name__ == "__main__":
                 motion_vec[:,:,:] = mv_idx
                 
                 # concat
-                inputs_with_mv = torch.cat((inputs, motion_vec), 1)
+                inputs_with_mv = torch.cat((motion_vec, inputs), 1)
                 outputs_gen = gen_model(inputs_with_mv)
                 output_imgs_temp = outputs_gen.cpu().data.numpy()[0:1]
                 logger.image_summary('2x_cost_generated_from_test_img_mv_idx_' + str(mv_idx), output_imgs_temp, i)

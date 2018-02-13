@@ -20,7 +20,7 @@ TOTAL_ITERATION = 1000000
 
 # learning rate
 LEARNING_RATE_GENERATOR = 3 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 0.01 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 
 # zero centered
 # MEAN_VALUE_FOR_ZERO_CENTERED = 128
@@ -32,18 +32,29 @@ MODEL_SAVING_FREQUENCY = 10000
 ENABLE_TRANSFER_LEARNING = False
 
 # tbt005
+'''
 MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/models/'
 RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/result_images/'
+'''
 
-# i7-2600k
-# MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
-# RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_simple_cyclegan/'
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/models_2/'
+RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/result_images_2/'
 
 # tensor-board logger
+'''
 if not os.path.exists(MODEL_SAVING_DIRECTORY + 'tf_board_logger'):
     os.mkdir(MODEL_SAVING_DIRECTORY + 'tf_board_logger')
 
 logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger')
+'''
+if not os.path.exists(MODEL_SAVING_DIRECTORY + 'tf_board_logger_2'):
+    os.mkdir(MODEL_SAVING_DIRECTORY + 'tf_board_logger_2')
+
+logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger_2')
+
+# i7-2600k
+# MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
+# RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_simple_cyclegan/'
 
 ###################################################################################
 
@@ -175,16 +186,16 @@ if __name__ == "__main__":
                 answers = Variable(torch.from_numpy(answer_img).float())
 
             # feedforward the inputs. generators.
-            outputs_gen_a_to_b = gen_model_a(torch.cat((inputs, condition_vectors), 1))
-            outputs_gen_b_to_a = gen_model_b(torch.cat((answers, condition_vectors), 1))
+            outputs_gen_a_to_b = gen_model_a(torch.cat((condition_vectors, inputs), 1))
+            outputs_gen_b_to_a = gen_model_b(torch.cat((condition_vectors, answers), 1))
 
             # feedforward the data to the discriminator_a
-            output_disc_real_a = disc_model_a(torch.cat((inputs, condition_vectors), 1))
-            output_disc_fake_a = disc_model_a(torch.cat((outputs_gen_b_to_a, condition_vectors), 1))
+            output_disc_real_a = disc_model_a(torch.cat((condition_vectors, inputs), 1))
+            output_disc_fake_a = disc_model_a(torch.cat((condition_vectors, outputs_gen_b_to_a), 1))
 
             # feedforward the data to the discriminator_b
-            output_disc_real_b = disc_model_b(torch.cat((answers, condition_vectors), 1))
-            output_disc_fake_b = disc_model_b(torch.cat((outputs_gen_a_to_b, condition_vectors), 1))
+            output_disc_real_b = disc_model_b(torch.cat((condition_vectors, answers), 1))
+            output_disc_fake_b = disc_model_b(torch.cat((condition_vectors, outputs_gen_a_to_b), 1))
 
             # loss functions
 
@@ -195,11 +206,11 @@ if __name__ == "__main__":
             loss_disc_b_lsgan = 0.5 * (torch.mean((output_disc_real_b - 1) ** 2) + torch.mean(output_disc_fake_b ** 2))
 
             # cycle-consistency loss(a)
-            reconstructed_a = gen_model_b(torch.cat((outputs_gen_a_to_b, condition_vectors), 1))
+            reconstructed_a = gen_model_b(torch.cat((condition_vectors, outputs_gen_a_to_b), 1))
             l1_loss_rec_a = F.l1_loss(reconstructed_a, inputs)
 
             # cycle-consistency loss(b)
-            reconstructed_b = gen_model_a(torch.cat((outputs_gen_b_to_a, condition_vectors), 1))
+            reconstructed_b = gen_model_a(torch.cat((condition_vectors, outputs_gen_b_to_a), 1))
             l1_loss_rec_b = F.l1_loss(reconstructed_b, answers)
 
             # lsgan loss for the generator_a
@@ -286,7 +297,7 @@ if __name__ == "__main__":
 
             for file_idx in range(1):
 
-                outputs_gen = gen_model_a(torch.cat((inputs, condition_vectors), 1))
+                outputs_gen = gen_model_a(torch.cat((condition_vectors, inputs), 1))
                 output_img = outputs_gen.cpu().data.numpy()[0]
 
                 output_img_opencv[:, :, 0] = output_img[0, :, :]

@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 #import torchvision.transforms as transforms
 from generator_tiramisu import Tiramisu
-from discriminator import Discriminator
+#from discriminator import Discriminator
 import time, cv2
 import os, glob
 import numpy as np
@@ -19,12 +19,15 @@ FIXED_GENERATION_LENGTH = 20
 
 # tbt005
 #INPUT_TEST_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/official_test_set/original/"
-INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/toast_faces_photoshop/"
+#INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/toast_faces_photoshop/"
+INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_rnn/happiness_first_frames_photoshop/"
 
 # tbt005 (10.161.31.83)
-MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/models_sketch/'
-RESULT_JPG_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/generated_test_imgs/'
-RESULT_GIF_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/gif_generated_imgs/'
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_rnn/models_sketch_2_b/'
+
+RESULT_JPG_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_rnn/generated_test_imgs/'
+
+RESULT_GIF_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_rnn/gif_generated_imgs/'
 
 if not os.path.exists(RESULT_JPG_DIRECTORY):
     os.mkdir(RESULT_JPG_DIRECTORY)
@@ -40,7 +43,48 @@ max_test_index = len(jpg_files)
 
 #TEST_SIZE = 53
 #TEST_SIZE = 300
-TEST_SIZE = 8
+TEST_SIZE = 168
+#TEST_SIZE = 11
+
+BATCH_SIZE = 1
+#############################################################################
+# RNN Model (Many-to-One)
+# from https://github.com/yunjey/pytorch-tutorial/blob/master/tutorials/02-intermediate/recurrent_neural_network/main-gpu.py
+
+# Hyper Parameters
+#sequence_length = 28
+#input_size = 28
+input_size = 256
+#hidden_size = 128
+hidden_size = 256
+num_layers = 2
+num_classes = INPUT_TEST_IMAGE_WIDTH * INPUT_TEST_IMAGE_HEIGHT
+#batch_size = 100
+#num_epochs = 2
+#learning_rate = 0.01
+
+class RNN(nn.Module):
+    def __init__(self, input_size, hidden_size, num_layers, num_classes):
+        super(RNN, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, num_classes)
+    
+    def forward(self, x):
+        # Set initial states 
+        h0 = Variable(torch.zeros(self.num_layers, x.size(0), self.hidden_size).cuda()) 
+        c0 = Variable(torch.zeros(self.num_layers, x.size(0), self.hidden_size).cuda())
+        
+        # Forward propagate RNN
+        out, _ = self.lstm(x, (h0, c0))  
+        
+        # Decode hidden state of last time step
+        #out = self.fc(out[:, -1, :])  
+        out = out.view(BATCH_SIZE, 1, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT)
+        return out
+
+#############################################################################
 
 def create_gif(filenames, result_filename, duration):
     images = []
@@ -53,7 +97,12 @@ if __name__ == "__main__":
     
     generator_model = Tiramisu()
         
-    generator_model.load_state_dict(torch.load(MODEL_SAVING_DIRECTORY + '2x_cost_video_gans_sketch_genenerator_iter_240000.pt'))
+    generator_model.load_state_dict(torch.load(MODEL_SAVING_DIRECTORY + 'cost2_rnn_video_gans_sketch_genenerator_iter_370000.pt'))
+    
+    rnn_model = RNN(input_size, hidden_size, num_layers, num_classes)
+    rnn_model.cuda()
+    
+    rnn_model.load_state_dict(torch.load(MODEL_SAVING_DIRECTORY + 'cost2_rnn_video_gans_sketch_rnn_iter_370000.pt'))
     
     # for gpu mode
     generator_model.cuda()
@@ -63,8 +112,6 @@ if __name__ == "__main__":
     input_img = np.empty(shape=(1, 3, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))
     
     motion_vec_img = np.empty(shape=(1, 1, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))
-    
-    motion_vector = np.empty(shape=(1, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))
     
     # opencv style
     output_img_opencv = np.empty(shape=(INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT, 3))
@@ -84,22 +131,22 @@ if __name__ == "__main__":
         
         # force gpu mode
         inputs = Variable(torch.from_numpy(input_img).float().cuda())
-        #motion_vec = Variable(torch.from_numpy(motion_vec_img).float().cuda())
+        motion_vec = Variable(torch.from_numpy(motion_vec_img).float().cuda())
         
         saved_filelist = []
         
         for loop_idx in range(1,FIXED_GENERATION_LENGTH + 1):
             mv_idx = loop_idx * 10
-            motion_vector[:,:,:] = mv_idx
-            motion_vec_img[0] = motion_vector
+            motion_vec[:,:,:] = mv_idx
+            mv_rnn = rnn_model(motion_vec[0])
             
-            # gpu
-            motion_vec = Variable(torch.from_numpy(motion_vec_img).float().cuda())
-
             start_time = time.time()
+        
+            #debug
+            #print motion_vec
             
             # concat
-            inputs_with_mv = torch.cat((inputs, motion_vec), 1)
+            inputs_with_mv = torch.cat((motion_vec, inputs), 1)
             outputs_gen = generator_model(inputs_with_mv)
 
             elapsed_time = time.time() - start_time

@@ -41,19 +41,25 @@ class TransitionDown(nn.Module):
         super(TransitionDown, self).__init__()
 
         # self.drop_out = nn.Dropout2d(p=0.2)
+
+        # GAN's doesn't work well with stride=2
         self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels,
-                              kernel_size=3, padding=1, stride=2, bias=True)
+                              kernel_size=3, padding=1, stride=1, bias=True)
 
         # weight initialization
         torch.nn.init.xavier_uniform(self.conv.weight)
 
         self.batch_norm = nn.BatchNorm2d(out_channels)
 
+        self.maxpool = nn.MaxPool2d((3,3), stride=1)
+
     def forward(self, x):
         # x = F.max_pool2d(input=x, kernel_size=2)
         # x = self.drop_out(x)
         x = F.relu(self.conv(x))
         x = self.batch_norm(x)
+
+        x = F.max_pool2d(input=x, kernel_size=2)
 
         return x
 
@@ -158,16 +164,18 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # input image will have the size of 64x64x3
-        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=64, kernel_size=3)
-        self.second_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
-        self.third_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
-        self.fourth_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
+        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=128, kernel_size=3)
+        self.second_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
+        self.third_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
+        self.fourth_conv_layer = TransitionDown(in_channels=512, out_channels=1, kernel_size=3)
 
+        '''
         self.fc1 = nn.Linear(4 * 4 * 512, 10)
         self.fc2 = nn.Linear(10, 1)
 
         torch.nn.init.xavier_uniform(self.fc1.weight)
         torch.nn.init.xavier_uniform(self.fc2.weight)
+        '''
 
     def forward(self, x):
         """
@@ -181,9 +189,11 @@ class Discriminator(nn.Module):
         x = self.third_conv_layer(x)
         x = self.fourth_conv_layer(x)
 
+        '''
         x = x.view(-1, 4 * 4 * 512)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
+        '''
 
         sigmoid_out = nn.functional.sigmoid(x)
 
@@ -319,8 +329,8 @@ if __name__ == "__main__":
             # tf-board (scalar)
             logger.scalar_summary('loss-generator', loss_gen, i)
             logger.scalar_summary('loss-discriminator', loss_disc_total, i)
-            logger.scalar_summary('disc-out-for-real', output_disc_real[0], i)
-            logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], i)
+            #logger.scalar_summary('disc-out-for-real', output_disc_real[0], i)
+            #logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], i)
 
             # tf-board (images - first 10 batches)
             output_imgs_temp = outputs_gen.cpu().data.numpy()[0:6]

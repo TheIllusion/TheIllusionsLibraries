@@ -15,8 +15,8 @@ BATCH_SIZE = 30
 TOTAL_ITERATION = 1000000
 
 # learning rate
-LEARNING_RATE_GENERATOR = 3 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 2 * 1e-4
+LEARNING_RATE_GENERATOR = 5 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 
 # zero centered
 # MEAN_VALUE_FOR_ZERO_CENTERED = 128
@@ -158,11 +158,12 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # input image will have the size of 64x64x3
-        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=32, kernel_size=3)
-        self.second_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=3)
-        self.third_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
+        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=64, kernel_size=3)
+        self.second_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
+        self.third_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
+        self.fourth_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
 
-        self.fc1 = nn.Linear(8 * 8 * 128, 10)
+        self.fc1 = nn.Linear(4 * 4 * 512, 10)
         self.fc2 = nn.Linear(10, 1)
 
         torch.nn.init.xavier_uniform(self.fc1.weight)
@@ -178,8 +179,9 @@ class Discriminator(nn.Module):
         x = self.first_conv_layer(x)
         x = self.second_conv_layer(x)
         x = self.third_conv_layer(x)
+        x = self.fourth_conv_layer(x)
 
-        x = x.view(-1, 8 * 8 * 128)
+        x = x.view(-1, 4 * 4 * 512)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
 

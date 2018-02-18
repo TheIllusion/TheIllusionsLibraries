@@ -11,7 +11,7 @@ from logger import Logger
 is_gpu_mode = True
 
 # batch size
-BATCH_SIZE = 30
+BATCH_SIZE = 10
 TOTAL_ITERATION = 1000000
 
 # learning rate
@@ -39,20 +39,26 @@ class TransitionDown(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):
         super(TransitionDown, self).__init__()
 
-        #self.drop_out = nn.Dropout2d(p=0.2)
+        # self.drop_out = nn.Dropout2d(p=0.2)
+
+        # GAN's doesn't work well with stride=2
         self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels,
-                              kernel_size=3, padding=1, stride=2, bias=True)
+                              kernel_size=3, padding=1, stride=1, bias=True)
 
         # weight initialization
         torch.nn.init.xavier_uniform(self.conv.weight)
 
         self.batch_norm = nn.BatchNorm2d(out_channels)
 
+        self.maxpool = nn.MaxPool2d((3,3), stride=1)
+
     def forward(self, x):
-        #x = F.max_pool2d(input=x, kernel_size=2)
-        #x = self.drop_out(x)
+        # x = F.max_pool2d(input=x, kernel_size=2)
+        # x = self.drop_out(x)
         x = F.relu(self.conv(x))
         x = self.batch_norm(x)
+
+        x = F.max_pool2d(input=x, kernel_size=2)
 
         return x
 
@@ -157,7 +163,7 @@ class Discriminator(nn.Module):
         self.second_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=3)
         self.third_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
 
-        self.fc1 = nn.Linear(8*8*128, 10)
+        self.fc1 = nn.Linear(7*7*128, 10)
         self.fc2 = nn.Linear(10, 1)
 
         torch.nn.init.xavier_uniform(self.fc1.weight)
@@ -174,7 +180,7 @@ class Discriminator(nn.Module):
         x = self.second_conv_layer(x)
         x = self.third_conv_layer(x)
         
-        x = x.view(-1, 8*8*128)
+        x = x.view(-1, 7*7*128)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
 
@@ -290,7 +296,7 @@ if __name__ == "__main__":
         loss_gen.backward()
         optimizer_gen.step()
 
-        if i % 100 == 0:
+        if i % 200 == 0:
             print '-----------------------------------------------'
             print '-----------------------------------------------'
             print 'iterations = ', str(i)

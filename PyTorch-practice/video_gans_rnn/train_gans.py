@@ -30,9 +30,9 @@ LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
 MODEL_SAVING_FREQUENCY = 10000
 
 # tbt005 (10.161.31.83)
-MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_rnn/models_sketch_2/'
-RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_rnn/result_imgs_sketch_2/'
-TENSORBOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_rnn/tf_board_logger_sketch_2/'
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_rnn/models_sketch_2_b/'
+RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_rnn/result_imgs_sketch_2_b/'
+TENSORBOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_rnn/tf_board_logger_sketch_2_b/'
 
 # single test face image
 #SINGLE_TEST_FACE_IMAGE = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/rk_face.jpg'
@@ -299,3 +299,5 @@ if __name__ == "__main__":
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(gen_model.state_dict(),
                        MODEL_SAVING_DIRECTORY + 'cost2_rnn_video_gans_sketch_genenerator_iter_' + str(i) + '.pt')
+            torch.save(rnn.state_dict(),
+                       MODEL_SAVING_DIRECTORY + 'cost2_rnn_video_gans_sketch_rnn_iter_' + str(i) + '.pt')

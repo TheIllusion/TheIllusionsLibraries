@@ -20,7 +20,7 @@ FIXED_GENERATION_LENGTH = 20
 # tbt005
 #INPUT_TEST_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/official_test_set/original/"
 #INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/toast_faces_photoshop/"
-INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/test_first_frames/"
+INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_rnn/happiness_first_frames_photoshop/"
 
 # tbt005 (10.161.31.83)
 MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/video_gans_cnn/models_sketch/'
@@ -41,7 +41,8 @@ max_test_index = len(jpg_files)
 
 #TEST_SIZE = 53
 #TEST_SIZE = 300
-TEST_SIZE = 1 
+TEST_SIZE = 168
+#TEST_SIZE = 11
 
 def create_gif(filenames, result_filename, duration):
     images = []
@@ -54,7 +55,7 @@ if __name__ == "__main__":
     
     generator_model = Tiramisu()
         
-    generator_model.load_state_dict(torch.load(MODEL_SAVING_DIRECTORY + '2x_cost_video_gans_sketch_genenerator_iter_240000.pt'))
+    generator_model.load_state_dict(torch.load(MODEL_SAVING_DIRECTORY + '2x_cost_video_gans_sketch_genenerator_iter_880000.pt'))
     
     # for gpu mode
     generator_model.cuda()

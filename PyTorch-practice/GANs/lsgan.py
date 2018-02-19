@@ -11,29 +11,30 @@ from logger import Logger
 is_gpu_mode = True
 
 # batch size
-BATCH_SIZE = 10
+BATCH_SIZE = 30
 TOTAL_ITERATION = 1000000
 
 # learning rate
-LEARNING_RATE_GENERATOR = 3 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 2 * 1e-4
+LEARNING_RATE_GENERATOR = 5 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 
 # zero centered
-#MEAN_VALUE_FOR_ZERO_CENTERED = 128
+# MEAN_VALUE_FOR_ZERO_CENTERED = 128
 
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 10000
 
 # tbt005 (10.161.31.83)
-#MODEL_SAVING_DIRECTORY = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/vanilla_gan_models/"
-#RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/gen_images/'
+# MODEL_SAVING_DIRECTORY = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/vanilla_gan_models/"
+# RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/gen_images/'
 
 # i7-2600k
 MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
-RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_vanilla_gan/'
+RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_lsgan/'
 
 # tensor-board logger
-logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger')
+logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger_lsgan')
+
 
 class TransitionDown(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):
@@ -62,6 +63,7 @@ class TransitionDown(nn.Module):
 
         return x
 
+
 # Transition Up (TU) module from the paper of Tiramisu - Table 1.
 class TransitionUp(nn.Module):
     def __init__(self, in_channels, out_channels, stride, kernel_size):
@@ -82,7 +84,8 @@ class TransitionUp(nn.Module):
         '''
 
         self.transpoed_conv = nn.ConvTranspose2d(in_channels=in_channels, out_channels=out_channels,
-                                                 kernel_size=kernel_size, stride=stride, padding=0, output_padding=0, bias=True)
+                                                 kernel_size=kernel_size, stride=stride, padding=0, output_padding=0,
+                                                 bias=True)
 
         # weight initialization
         torch.nn.init.xavier_uniform(self.transpoed_conv.weight)
@@ -90,6 +93,7 @@ class TransitionUp(nn.Module):
     def forward(self, x):
         x = self.transpoed_conv(x)
         return x
+
 
 # generator model (input random vector z will have the size of 4x4x3)
 class Generator(nn.Module):
@@ -107,7 +111,7 @@ class Generator(nn.Module):
         # output feature map will have the size of 16x16x3
         self.second_deconv = TransitionUp(in_channels=1024, out_channels=512, stride=2, kernel_size=5)
         self.second_batch_norm = nn.BatchNorm2d(512)
-        
+
         # output feature map will have the size of 32x32x3
         self.third_deconv = TransitionUp(in_channels=512, out_channels=256, stride=2, kernel_size=7)
         self.third_batch_norm = nn.BatchNorm2d(256)
@@ -128,27 +132,28 @@ class Generator(nn.Module):
         x = self.first_deconv(x)
         x = self.first_batch_norm(x)
         x = F.leaky_relu(x)
-        
+
         x = self.second_deconv(x)
         x = self.second_batch_norm(x)
         x = F.leaky_relu(x)
-        
+
         x = self.third_deconv(x)
         x = self.third_batch_norm(x)
         x = F.leaky_relu(x)
-        
+
         x = self.fourth_deconv(x)
         x = self.fourth_batch_norm(x)
 
         x = self.fifth_deconv(x)
-        #sigmoid_out = nn.functional.sigmoid(x)
+        # sigmoid_out = nn.functional.sigmoid(x)
         tanh_out = nn.functional.tanh(x)
 
-        out = (tanh_out + 1) * 255 /2
-        
-        #print 'out.shape =', out.shape
-        
+        out = (tanh_out + 1) * 255 / 2
+
+        # print 'out.shape =', out.shape
+
         return out
+
 
 class Discriminator(nn.Module):
     def __init__(self):
@@ -159,15 +164,18 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # input image will have the size of 64x64x3
-        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=32, kernel_size=3)
-        self.second_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=3)
-        self.third_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
+        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=128, kernel_size=3)
+        self.second_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
+        self.third_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
+        self.fourth_conv_layer = TransitionDown(in_channels=512, out_channels=1, kernel_size=3)
 
-        self.fc1 = nn.Linear(7*7*128, 10)
+        '''
+        self.fc1 = nn.Linear(4 * 4 * 512, 10)
         self.fc2 = nn.Linear(10, 1)
 
         torch.nn.init.xavier_uniform(self.fc1.weight)
         torch.nn.init.xavier_uniform(self.fc2.weight)
+        '''
 
     def forward(self, x):
         """
@@ -175,18 +183,22 @@ class Discriminator(nn.Module):
         a Variable of output data. We can use Modules defined in the constructor as
         well as arbitrary operators on Variables.
         """
-                
+
         x = self.first_conv_layer(x)
         x = self.second_conv_layer(x)
         x = self.third_conv_layer(x)
-        
-        x = x.view(-1, 7*7*128)
+        x = self.fourth_conv_layer(x)
+
+        '''
+        x = x.view(-1, 4 * 4 * 512)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
+        '''
 
         sigmoid_out = nn.functional.sigmoid(x)
 
         return sigmoid_out
+
 
 ###################################################################################
 
@@ -196,7 +208,7 @@ if is_gpu_mode:
 else:
     ones_label = Variable(torch.ones(BATCH_SIZE))
     zeros_label = Variable(torch.zeros(BATCH_SIZE))
-        
+
 if __name__ == "__main__":
     print 'main'
 
@@ -206,8 +218,8 @@ if __name__ == "__main__":
     if is_gpu_mode:
         gen_model.cuda()
         disc_model.cuda()
-        #gen_model = torch.nn.DataParallel(gen_model).cuda()
-        #disc_model = torch.nn.DataParallel(disc_model).cuda()
+        # gen_model = torch.nn.DataParallel(gen_model).cuda()
+        # disc_model = torch.nn.DataParallel(disc_model).cuda()
 
     optimizer_gen = torch.optim.Adam(gen_model.parameters(), lr=LEARNING_RATE_GENERATOR)
     optimizer_disc = torch.optim.Adam(disc_model.parameters(), lr=LEARNING_RATE_DISCRIMINATOR)
@@ -217,7 +229,7 @@ if __name__ == "__main__":
 
     # pytorch style
     input_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
-    #answer_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
+    # answer_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
 
     # opencv style
     output_img_opencv = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT, 3))
@@ -268,15 +280,23 @@ if __name__ == "__main__":
         output_disc_real = disc_model(inputs)
         output_disc_fake = disc_model(outputs_gen)
 
-        # loss functions
+        # loss functions (vanilla gan)
+        '''
         loss_real_d = F.binary_cross_entropy(output_disc_real, ones_label)
         loss_fake_d = F.binary_cross_entropy(output_disc_fake, zeros_label)
         loss_disc_total = loss_real_d + loss_fake_d
 
         loss_gen = F.binary_cross_entropy(output_disc_fake, ones_label)
-        
-        #loss_disc_total = -torch.mean(torch.log(output_disc_real) + torch.log(1. - output_disc_fake))
-        #loss_gen = -torch.mean(torch.log(output_disc_fake))
+
+        # loss_disc_total = -torch.mean(torch.log(output_disc_real) + torch.log(1. - output_disc_fake))
+        # loss_gen = -torch.mean(torch.log(output_disc_fake))
+        '''
+
+        # lsgan loss for the discriminator
+        loss_disc_total = 0.5 * (torch.mean((output_disc_real - 1) ** 2) + torch.mean(output_disc_fake ** 2))
+
+        # lsgan loss for the generator
+        loss_gen = 0.5 * torch.mean((output_disc_fake - 1) ** 2)
 
         # Before the backward pass, use the optimizer object to zero all of the
         # gradients for the variables it will update (which are the learnable weights
@@ -285,7 +305,7 @@ if __name__ == "__main__":
         optimizer_gen.zero_grad()
 
         # Backward pass: compute gradient of the loss with respect to model parameters
-        loss_disc_total.backward(retain_graph = True)
+        loss_disc_total.backward(retain_graph=True)
 
         # Calling the step function on an Optimizer makes an update to its parameters
         optimizer_disc.step()
@@ -296,7 +316,7 @@ if __name__ == "__main__":
         loss_gen.backward()
         optimizer_gen.step()
 
-        if i % 200 == 0:
+        if i % 100 == 0:
             print '-----------------------------------------------'
             print '-----------------------------------------------'
             print 'iterations = ', str(i)
@@ -305,17 +325,17 @@ if __name__ == "__main__":
             print '-----------------------------------------------'
             print '(discriminator out-real) = ', output_disc_real[0]
             print '(discriminator out-fake) = ', output_disc_fake[0]
-            
+
             # tf-board (scalar)
             logger.scalar_summary('loss-generator', loss_gen, i)
             logger.scalar_summary('loss-discriminator', loss_disc_total, i)
-            logger.scalar_summary('disc-out-for-real', output_disc_real[0], i)
-            logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], i)
-            
+            #logger.scalar_summary('disc-out-for-real', output_disc_real[0], i)
+            #logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], i)
+
             # tf-board (images - first 10 batches)
             output_imgs_temp = outputs_gen.cpu().data.numpy()[0:6]
             input_imgs_temp = inputs.cpu().data.numpy()[0:4]
-            #logger.an_image_summary('generated', output_img, i)
+            # logger.an_image_summary('generated', output_img, i)
             logger.image_summary('generated', output_imgs_temp, i)
             logger.image_summary('real', input_imgs_temp, i)
 
@@ -340,9 +360,9 @@ if __name__ == "__main__":
                 output_img_opencv[:, :, 2] = output_img[2, :, :]
 
                 cv2.imwrite(os.path.join(RESULT_IMAGE_DIRECTORY, \
-                            'generated_iter_' + str(i) + '_' + str(file_idx) + '.jpg'), output_img_opencv)
+                                         'lsgan_generated_iter_' + str(i) + '_' + str(file_idx) + '.jpg'), output_img_opencv)
 
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(gen_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'vanilla_gan_pytorch_iter_' + str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'lsgangan_pytorch_iter_' + str(i) + '.pt')

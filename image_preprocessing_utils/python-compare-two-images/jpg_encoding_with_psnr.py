@@ -3,6 +3,7 @@ import numpy as np
 import math
 import cv2
 import argparse
+import glob, os
 
 MAX_PIXEL_VALUE = 255.0
 
@@ -41,12 +42,12 @@ def encode_jpg_image_at_target_psnr(input_img, target_quality, output_jpg_filena
     min_quality_trial_factor = 0
 
     # initial encoding quality (the best quality)
-    max_psnr_val, _ = try_encode_a_jpg(input_img, max_quality_trial_factor, output_jpg_filename)
-    print 'possible max_psnr_val =', max_psnr_val
+    max_psnr_val, _ = try_encode_a_jpg(input_img, max_quality_trial_factor, "temp.jpg")
+    #print 'possible max_psnr_val =', max_psnr_val
 
     # initial encoding quality (the lowest quality)
-    min_psnr_val, _ = try_encode_a_jpg(input_img, min_quality_trial_factor, output_jpg_filename)
-    print 'possible min_psnr_val =', min_psnr_val
+    min_psnr_val, _ = try_encode_a_jpg(input_img, min_quality_trial_factor, "temp.jpg")
+    #print 'possible min_psnr_val =', min_psnr_val
 
     # error handling if the target psnr is out of the possible range
     if target_quality < min_psnr_val or target_quality > max_psnr_val:
@@ -63,9 +64,9 @@ def encode_jpg_image_at_target_psnr(input_img, target_quality, output_jpg_filena
             break
 
         print 'try encoding with the jpg encoding quality factor', middle_quality_trial_factor
-        current_psnr_val, current_ssim_val = try_encode_a_jpg(input_img, middle_quality_trial_factor, output_jpg_filename)
-        print 'current psnr value =', current_psnr_val
-        print 'current_ssim_val =', current_ssim_val
+        current_psnr_val, current_ssim_val = try_encode_a_jpg(input_img, middle_quality_trial_factor, "temp.jpg")
+        #print 'current psnr value =', current_psnr_val
+        #print 'current_ssim_val =', current_ssim_val
 
         # record the data
         psnr_diff_dict[middle_quality_trial_factor] = abs(float(target_quality) - current_psnr_val)
@@ -98,12 +99,12 @@ def encode_jpg_image_at_target_ssim(input_img, target_quality, output_jpg_filena
     min_quality_trial_factor = 0
 
     # initial encoding quality (the best quality)
-    _, max_ssim_val = try_encode_a_jpg(input_img, max_quality_trial_factor, output_jpg_filename)
-    print 'possible max_ssim_val =', max_ssim_val
+    _, max_ssim_val = try_encode_a_jpg(input_img, max_quality_trial_factor, "temp.jpg")
+    #print 'possible max_ssim_val =', max_ssim_val
 
     # initial encoding quality (the lowest quality)
-    _, min_ssim_val = try_encode_a_jpg(input_img, min_quality_trial_factor, output_jpg_filename)
-    print 'possible min_ssim_val =', min_ssim_val
+    _, min_ssim_val = try_encode_a_jpg(input_img, min_quality_trial_factor, "temp.jpg")
+    #print 'possible min_ssim_val =', min_ssim_val
 
     # error handling if the target psnr is out of the possible range
     if target_quality < min_ssim_val or target_quality > max_ssim_val:
@@ -120,9 +121,9 @@ def encode_jpg_image_at_target_ssim(input_img, target_quality, output_jpg_filena
             break
 
         print 'try encoding with the jpg encoding quality factor', middle_quality_trial_factor
-        current_psnr_val, current_ssim_val = try_encode_a_jpg(input_img, middle_quality_trial_factor, output_jpg_filename)
-        print 'current psnr value =', current_psnr_val
-        print 'current_ssim_val =', current_ssim_val
+        current_psnr_val, current_ssim_val = try_encode_a_jpg(input_img, middle_quality_trial_factor, "temp.jpg")
+        #print 'current psnr value =', current_psnr_val
+        #print 'current_ssim_val =', current_ssim_val
 
         # record the data
         ssim_diff_dict[middle_quality_trial_factor] = abs(float(current_ssim_val) - target_quality)
@@ -146,6 +147,8 @@ def encode_jpg_image_at_target_ssim(input_img, target_quality, output_jpg_filena
 
 if __name__ == '__main__':
 
+    # single image based operation
+    '''
     IS_DEBUG = True
 
     parser = argparse.ArgumentParser()
@@ -173,3 +176,33 @@ if __name__ == '__main__':
         encode_jpg_image_at_target_psnr(input_img, target_quality=args.quality, output_jpg_filename=args.output)
     elif args.criterion == 'SSIM':
         encode_jpg_image_at_target_ssim(input_img, target_quality=args.quality, output_jpg_filename=args.output)
+    '''
+
+    # directory based operation (for mass production)
+    INPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/ava_image_image/'
+    OUTPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/encoded_jpg_images_psnr_'
+
+    TARGET_PSNRs = [29,31,33,35,36,37,38,39,41,42]
+
+    input_jpg_files = glob.glob(INPUT_IMAGE_DIRECTORY_PATH + '*.jpg')
+
+    loop_idx = 0
+
+    for target_psnr in TARGET_PSNRs:
+
+        OUTPUT_IMAGE_DIRECTORY_PATH = OUTPUT_IMAGE_DIRECTORY_PATH + str(target_psnr) + '/'
+
+        if not os.path.exists(OUTPUT_IMAGE_DIRECTORY_PATH):
+            os.mkdir(OUTPUT_IMAGE_DIRECTORY_PATH)
+
+        for jpg_file in input_jpg_files:
+
+            input_img = cv2.imread(jpg_file, cv2.IMREAD_COLOR)
+
+            ret_code = encode_jpg_image_at_target_psnr(input_img, target_quality=target_psnr, \
+                                                       output_jpg_filename=OUTPUT_IMAGE_DIRECTORY_PATH + os.path.basename(jpg_file))
+            print '********************************'
+            print 'ret_code =', ret_code
+            loop_idx = loop_idx + 1
+            print 'file idx =', loop_idx
+            print '********************************'

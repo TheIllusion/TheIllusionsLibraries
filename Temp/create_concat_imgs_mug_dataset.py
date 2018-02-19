@@ -3,7 +3,8 @@ import cv2
 import numpy as np
 import random
 
-RESULT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/gans_for_video/mug_concat_custom/happiness/'
+#RESULT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/gans_for_video/mug_concat_custom/happiness/'
+RESULT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/gans_for_video/mug_concat_custom/happiness_first_frames/'
 
 DEST_HEIGHT = 300
 DESIRED_TOTAL_FRAME_LENGTH = 21

@@ -53,6 +53,7 @@ logger = Logger(TENSORBOARD_DIRECTORY)
 
 # RNN Model (Many-to-One)
 # from https://github.com/yunjey/pytorch-tutorial/blob/master/tutorials/02-intermediate/recurrent_neural_network/main-gpu.py
+# refer to pytorch doc: http://pytorch.org/docs/master/nn.html?highlight=lstm#torch.nn.LSTM
 
 # Hyper Parameters
 #sequence_length = 28

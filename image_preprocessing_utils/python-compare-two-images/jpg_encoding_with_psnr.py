@@ -182,25 +182,25 @@ if __name__ == '__main__':
     INPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/ava_image_image/'
     OUTPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/encoded_jpg_images_psnr_'
 
-    TARGET_PSNRs = [29,31,33,35,36,37,38,39,41,42]
+    TARGET_PSNRs = [31,33,35,36,37,38,39,41,42]
 
     input_jpg_files = glob.glob(INPUT_IMAGE_DIRECTORY_PATH + '*.jpg')
 
-    loop_idx = 0
-
     for target_psnr in TARGET_PSNRs:
 
-        OUTPUT_IMAGE_DIRECTORY_PATH = OUTPUT_IMAGE_DIRECTORY_PATH + str(target_psnr) + '/'
+        EACH_OUTPUT_IMAGE_DIRECTORY_PATH = OUTPUT_IMAGE_DIRECTORY_PATH + str(target_psnr) + '/'
 
-        if not os.path.exists(OUTPUT_IMAGE_DIRECTORY_PATH):
-            os.mkdir(OUTPUT_IMAGE_DIRECTORY_PATH)
+        if not os.path.exists(EACH_OUTPUT_IMAGE_DIRECTORY_PATH):
+            os.mkdir(EACH_OUTPUT_IMAGE_DIRECTORY_PATH)
+
+        loop_idx = 0
 
         for jpg_file in input_jpg_files:
 
             input_img = cv2.imread(jpg_file, cv2.IMREAD_COLOR)
 
             ret_code = encode_jpg_image_at_target_psnr(input_img, target_quality=target_psnr, \
-                                                       output_jpg_filename=OUTPUT_IMAGE_DIRECTORY_PATH + os.path.basename(jpg_file))
+                                                       output_jpg_filename=EACH_OUTPUT_IMAGE_DIRECTORY_PATH + os.path.basename(jpg_file))
             print '********************************'
             print 'ret_code =', ret_code
             loop_idx = loop_idx + 1

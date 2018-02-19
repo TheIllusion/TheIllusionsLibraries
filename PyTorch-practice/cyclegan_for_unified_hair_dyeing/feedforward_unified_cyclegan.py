@@ -20,7 +20,7 @@ INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/P
 
 RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/feed_forward_results/"
 
-MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/models/'
+MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/models_2/'
 
 CHECKPOINT_FILENAME = 'unified_cycle_gen_model_iter_40000.pt'
 
@@ -112,7 +112,9 @@ if __name__ == "__main__":
 
             start_time = time.time()
 
-            outputs = tiramisu_gen_model(torch.cat((inputs, condition_vectors), 1))
+            #print condition_vectors
+            
+            outputs = tiramisu_gen_model(torch.cat((condition_vectors, inputs), 1))
 
             elapsed_time = time.time() - start_time
 

@@ -11,7 +11,7 @@ class ConvolutionDown(nn.Module):
 
         # self.drop_out = nn.Dropout2d(p=0.2)
         self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels,
-                              kernel_size=3, padding=1, stride=2, bias=True)
+                              kernel_size=3, padding=1, stride=1, bias=True)
 
         # weight initialization
         torch.nn.init.xavier_uniform(self.conv.weight)
@@ -23,6 +23,9 @@ class ConvolutionDown(nn.Module):
         # x = self.drop_out(x)
         x = F.relu(self.conv(x))
         x = self.batch_norm(x)
+        
+        # added
+        x = F.max_pool2d(input=x, kernel_size=2)
 
         return x
 
@@ -40,9 +43,11 @@ class Discriminator(nn.Module):
         self.third_conv_layer = ConvolutionDown(in_channels=64, out_channels=128, kernel_size=3)
         self.fourth_conv_layer = ConvolutionDown(in_channels=128, out_channels=256, kernel_size=3)
         self.fifth_conv_layer = ConvolutionDown(in_channels=256, out_channels=512, kernel_size=3)
+        self.last_conv_layer = ConvolutionDown(in_channels=512, out_channels=1, kernel_size=3)
+        
 
-        self.fc1 = nn.Linear(8 * 8 * 512, 5)
-        self.fc2 = nn.Linear(5, 1)
+        #self.fc1 = nn.Linear(8 * 8 * 512, 5)
+        #self.fc2 = nn.Linear(5, 1)
 
     def forward(self, x):
         """
@@ -56,10 +61,11 @@ class Discriminator(nn.Module):
         x = self.third_conv_layer(x)
         x = self.fourth_conv_layer(x)
         x = self.fifth_conv_layer(x)
-
-        x = x.view(BATCH_SIZE, 8 * 8 * 512)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = self.last_conv_layer(x)
+        
+        #x = x.view(BATCH_SIZE, 8 * 8 * 512)
+        #x = F.relu(self.fc1(x))
+        #x = F.relu(self.fc2(x))
 
         sigmoid_out = nn.functional.sigmoid(x)
 

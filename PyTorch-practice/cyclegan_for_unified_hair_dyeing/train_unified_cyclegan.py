@@ -37,8 +37,8 @@ MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-pr
 RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/result_images/'
 '''
 
-MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/models_2/'
-RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/result_images_2/'
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/models_3/'
+RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/result_images_3/'
 
 # tensor-board logger
 '''
@@ -47,10 +47,10 @@ if not os.path.exists(MODEL_SAVING_DIRECTORY + 'tf_board_logger'):
 
 logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger')
 '''
-if not os.path.exists(MODEL_SAVING_DIRECTORY + 'tf_board_logger_2'):
-    os.mkdir(MODEL_SAVING_DIRECTORY + 'tf_board_logger_2')
+if not os.path.exists(MODEL_SAVING_DIRECTORY + 'tf_board_logger_3'):
+    os.mkdir(MODEL_SAVING_DIRECTORY + 'tf_board_logger_3')
 
-logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger_2')
+logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger_3')
 
 # i7-2600k
 # MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
@@ -219,7 +219,7 @@ if __name__ == "__main__":
             # lsgan loss for the generator_b
             loss_gen_lsgan_b = 0.5 * torch.mean((output_disc_fake_a - 1) ** 2)
 
-            loss_gen_total_lsgan = loss_gen_lsgan_a + loss_gen_lsgan_b + 0.01 * (l1_loss_rec_a + l1_loss_rec_b)
+            loss_gen_total_lsgan = loss_gen_lsgan_a + loss_gen_lsgan_b + 0.005 * (l1_loss_rec_a + l1_loss_rec_b)
 
             # discriminator_a
             # Before the backward pass, use the optimizer object to zero all of the
@@ -264,10 +264,10 @@ if __name__ == "__main__":
                 logger.scalar_summary(color + ':loss-rec_b-l1', l1_loss_rec_b, i)
                 logger.scalar_summary(color + ':loss(discriminator_a)', loss_disc_a_lsgan, i)
                 logger.scalar_summary(color + ':loss(discriminator_b)', loss_disc_b_lsgan, i)
-                logger.scalar_summary(color + ':disc_a-out-for-real', output_disc_real_a[0], i)
-                logger.scalar_summary(color + ':disc_a-out-for-fake', output_disc_fake_a[0], i)
-                logger.scalar_summary(color + ':disc_b-out-for-real', output_disc_real_b[0], i)
-                logger.scalar_summary(color + ':disc_b-out-for-fake', output_disc_fake_b[0], i)
+                #logger.scalar_summary(color + ':disc_a-out-for-real', output_disc_real_a[0], i)
+                #logger.scalar_summary(color + ':disc_a-out-for-fake', output_disc_fake_a[0], i)
+                #logger.scalar_summary(color + ':disc_b-out-for-real', output_disc_real_b[0], i)
+                #logger.scalar_summary(color + ':disc_b-out-for-fake', output_disc_fake_b[0], i)
 
                 # tf-board (images - first 1 batches)
                 inputs_imgs_temp = inputs.cpu().data.numpy()[0:BATCH_SIZE]

@@ -2,7 +2,7 @@ import numpy as np
 import os, glob, random, re, time, threading
 import cv2
 
-IS_TRAINING = False
+IS_TRAINING = True
 
 ##############################################################################################
 # directory settings 

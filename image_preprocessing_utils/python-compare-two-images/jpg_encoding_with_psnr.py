@@ -163,7 +163,7 @@ if __name__ == '__main__':
         parser.add_argument('--input', type=str, default='images/jp_gates_original.png', help='--input inpug.png')
         parser.add_argument('--criterion', type=str, default='SSIM', help='--criterion PSNR')
         #parser.add_argument('--quality', type=int, default=35, help='--target 35')
-        parser.add_argument('--quality', type=float, default=0.7, help='--target 35')
+        parser.add_argument('--quality', type=float, default=0.7, help='--target 0.7')
         parser.add_argument('--output', type=str, default='output_encode_trial.jpg',
                             help='--output output_encode_trial.jpg')
 
@@ -178,7 +178,9 @@ if __name__ == '__main__':
         encode_jpg_image_at_target_ssim(input_img, target_quality=args.quality, output_jpg_filename=args.output)
     '''
 
-    # directory based operation (for mass production)
+    ##########################################################################################
+    # directory based operation (for mass production using psnr)
+    '''
     INPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/ava_image_image/'
     OUTPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/encoded_jpg_images_psnr_'
 
@@ -201,6 +203,38 @@ if __name__ == '__main__':
 
             ret_code = encode_jpg_image_at_target_psnr(input_img, target_quality=target_psnr, \
                                                        output_jpg_filename=EACH_OUTPUT_IMAGE_DIRECTORY_PATH + os.path.basename(jpg_file))
+            print '********************************'
+            print 'ret_code =', ret_code
+            loop_idx = loop_idx + 1
+            print 'file idx =', loop_idx
+            print '********************************'
+    '''
+
+    ##########################################################################################
+    # directory based operation (for mass production using ssim)
+    INPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/ava_image_image/'
+    OUTPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/encoded_jpg_images_ssim_'
+
+    TARGET_SSIMs = [1.0, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65, 0.60, 0.55, 0.50, \
+                    0.40, 0.30, 0.20, 0.10]
+
+    input_jpg_files = glob.glob(INPUT_IMAGE_DIRECTORY_PATH + '*.jpg')
+
+    for target_ssim in TARGET_SSIMs:
+
+        EACH_OUTPUT_IMAGE_DIRECTORY_PATH = OUTPUT_IMAGE_DIRECTORY_PATH + str(TARGET_SSIMs) + '/'
+
+        if not os.path.exists(EACH_OUTPUT_IMAGE_DIRECTORY_PATH):
+            os.mkdir(EACH_OUTPUT_IMAGE_DIRECTORY_PATH)
+
+        loop_idx = 0
+
+        for jpg_file in input_jpg_files:
+            input_img = cv2.imread(jpg_file, cv2.IMREAD_COLOR)
+
+            ret_code = encode_jpg_image_at_target_psnr(input_img, target_quality=target_ssim, \
+                                                       output_jpg_filename=EACH_OUTPUT_IMAGE_DIRECTORY_PATH + os.path.basename(
+                                                           jpg_file))
             print '********************************'
             print 'ret_code =', ret_code
             loop_idx = loop_idx + 1

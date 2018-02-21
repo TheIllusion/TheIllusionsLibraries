@@ -181,10 +181,13 @@ if __name__ == '__main__':
     ##########################################################################################
     # directory based operation (for mass production using psnr)
     '''
-    INPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/ava_image_image/'
-    OUTPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/encoded_jpg_images_psnr_'
+    #INPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/ava_image_image/'
+    #OUTPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/encoded_jpg_images_psnr_'
 
-    TARGET_PSNRs = [31,33,35,36,37,38,39,41,42]
+    INPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/FW_shop_original_20180220/'
+    OUTPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/FW_shop_encoded_jpg_images_psnr_'
+
+    TARGET_PSNRs = [44,45,46,47,48]
 
     input_jpg_files = glob.glob(INPUT_IMAGE_DIRECTORY_PATH + '*.jpg')
 
@@ -209,11 +212,13 @@ if __name__ == '__main__':
             print 'file idx =', loop_idx
             print '********************************'
     '''
-
     ##########################################################################################
     # directory based operation (for mass production using ssim)
-    INPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/ava_image_image/'
-    OUTPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/encoded_jpg_images_ssim_'
+    #INPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/ava_image_image/'
+    #OUTPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/encoded_jpg_images_ssim_'
+
+    INPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/FW_shop_original_20180220/'
+    OUTPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/FW_shop_encoded_jpg_images_ssim_'
 
     TARGET_SSIMs = [1.0, 0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.65, 0.60, 0.55, 0.50, \
                     0.40, 0.30, 0.20, 0.10]
@@ -222,7 +227,7 @@ if __name__ == '__main__':
 
     for target_ssim in TARGET_SSIMs:
 
-        EACH_OUTPUT_IMAGE_DIRECTORY_PATH = OUTPUT_IMAGE_DIRECTORY_PATH + str(TARGET_SSIMs) + '/'
+        EACH_OUTPUT_IMAGE_DIRECTORY_PATH = OUTPUT_IMAGE_DIRECTORY_PATH + str(target_ssim) + '/'
 
         if not os.path.exists(EACH_OUTPUT_IMAGE_DIRECTORY_PATH):
             os.mkdir(EACH_OUTPUT_IMAGE_DIRECTORY_PATH)
@@ -232,7 +237,7 @@ if __name__ == '__main__':
         for jpg_file in input_jpg_files:
             input_img = cv2.imread(jpg_file, cv2.IMREAD_COLOR)
 
-            ret_code = encode_jpg_image_at_target_psnr(input_img, target_quality=target_ssim, \
+            ret_code = encode_jpg_image_at_target_ssim(input_img, target_quality=target_ssim, \
                                                        output_jpg_filename=EACH_OUTPUT_IMAGE_DIRECTORY_PATH + os.path.basename(
                                                            jpg_file))
             print '********************************'

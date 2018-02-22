@@ -1,9 +1,9 @@
 import os, glob, time
 
-QUALITY_FACTOR = 85
+QUALITY_FACTOR = 70
 
 INPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/data/shopping_mall_images/mini_testset/'
-OUTPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/data/shopping_mall_images/mini_testset_guetzli_q' + str(QUALITY_FACTOR) + '/'
+OUTPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/data/shopping_mall_images/mini_testset_mozjpeg_q' + str(QUALITY_FACTOR) + '/'
 LOG_FILE = OUTPUT_IMAGE_DIRECTORY + 'q' + str(QUALITY_FACTOR) + '_process_log.txt'
 
 if not os.path.exists(OUTPUT_IMAGE_DIRECTORY):
@@ -20,9 +20,9 @@ log_file.write("filename process_time\n")
 jpg_files = glob.glob('*.jpg')
 
 for jpg_file in jpg_files:
-    command_str = "guetzli --verbose --quality " + str(QUALITY_FACTOR) + " --nomemlimit " + \
-                   jpg_file + " " + \
-                   OUTPUT_IMAGE_DIRECTORY + "output_q" + str(QUALITY_FACTOR) + '_' + jpg_file
+    command_str = "cjpeg -quality " + str(QUALITY_FACTOR) + " -outfile " + \
+                   OUTPUT_IMAGE_DIRECTORY + "output_q" + str(QUALITY_FACTOR) + '_' + jpg_file + ' ' + \
+                   jpg_file
 
     print command_str
 

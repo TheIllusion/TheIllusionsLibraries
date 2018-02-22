@@ -180,14 +180,16 @@ if __name__ == '__main__':
 
     ##########################################################################################
     # directory based operation (for mass production using psnr)
-    '''
     #INPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/ava_image_image/'
     #OUTPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/encoded_jpg_images_psnr_'
 
-    INPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/FW_shop_original_20180220/'
-    OUTPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/FW_shop_encoded_jpg_images_psnr_'
+    #INPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/FW_shop_original_20180220/'
+    #OUTPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/FW_shop_encoded_jpg_images_psnr_'
 
-    TARGET_PSNRs = [44,45,46,47,48]
+    INPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Documents/data/shopping_mall_images/mini_testset/'
+    OUTPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Documents/data/shopping_mall_images/mini_testset_psnr_'
+
+    TARGET_PSNRs = [31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50]
 
     input_jpg_files = glob.glob(INPUT_IMAGE_DIRECTORY_PATH + '*.jpg')
 
@@ -211,9 +213,11 @@ if __name__ == '__main__':
             loop_idx = loop_idx + 1
             print 'file idx =', loop_idx
             print '********************************'
-    '''
+
     ##########################################################################################
     # directory based operation (for mass production using ssim)
+
+    '''
     #INPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/ava_image_image/'
     #OUTPUT_IMAGE_DIRECTORY_PATH = '/Users/Illusion/Downloads/encoded_jpg_images_ssim_'
 
@@ -245,3 +249,4 @@ if __name__ == '__main__':
             loop_idx = loop_idx + 1
             print 'file idx =', loop_idx
             print '********************************'
+    '''

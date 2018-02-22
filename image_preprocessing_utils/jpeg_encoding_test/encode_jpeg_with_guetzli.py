@@ -19,7 +19,7 @@ log_file.write("filename process_time\n")
 
 jpg_files = glob.glob('*.jpg')
 
-for jpg_file in jpg_files[0:1]:
+for jpg_file in jpg_files:
     command_str = "guetzli --verbose --quality " + str(QUALITY_FACTOR) + " --nomemlimit " + \
                    jpg_file + " " + \
                    OUTPUT_IMAGE_DIRECTORY + "output_q" + str(QUALITY_FACTOR) + '_' + jpg_file

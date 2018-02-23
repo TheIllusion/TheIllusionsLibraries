@@ -2,8 +2,13 @@ import os, glob, time
 
 QUALITY_FACTOR = 85
 
-INPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/data/shopping_mall_images/mini_testset/'
-OUTPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/data/shopping_mall_images/mini_testset_guetzli_q' + str(QUALITY_FACTOR) + '/'
+#INPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/data/shopping_mall_images/mini_testset/'
+#OUTPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/data/shopping_mall_images/mini_testset_guetzli_q' + str(QUALITY_FACTOR) + '/'
+
+# macbook pro
+INPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/shopping_mall/speed_test/'
+OUTPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/shopping_mall/speed_test_guetzli_q' + str(QUALITY_FACTOR) + '/'
+
 LOG_FILE = OUTPUT_IMAGE_DIRECTORY + 'q' + str(QUALITY_FACTOR) + '_process_log.txt'
 
 if not os.path.exists(OUTPUT_IMAGE_DIRECTORY):
@@ -20,9 +25,16 @@ log_file.write("filename process_time\n")
 jpg_files = glob.glob('*.jpg')
 
 for jpg_file in jpg_files:
+    '''
     command_str = "guetzli --verbose --quality " + str(QUALITY_FACTOR) + " --nomemlimit " + \
                    jpg_file + " " + \
                    OUTPUT_IMAGE_DIRECTORY + "output_q" + str(QUALITY_FACTOR) + '_' + jpg_file
+    '''
+
+    # without verbose
+    command_str = "guetzli --quality " + str(QUALITY_FACTOR) + " --nomemlimit " + \
+                  jpg_file + " " + \
+                  OUTPUT_IMAGE_DIRECTORY + "output_q" + str(QUALITY_FACTOR) + '_' + jpg_file
 
     print command_str
 

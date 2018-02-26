@@ -1,6 +1,6 @@
 import os, glob, time
 
-QUALITY_FACTOR = 60
+QUALITY_FACTOR = 100
 
 #INPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/data/shopping_mall_images/mini_testset/'
 #OUTPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/data/shopping_mall_images/mini_testset_mozjpeg_q' + str(QUALITY_FACTOR) + '/'

@@ -25,12 +25,14 @@ LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 MODEL_SAVING_FREQUENCY = 10000
 
 # tbt005 (10.161.31.83)
-# MODEL_SAVING_DIRECTORY = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/vanilla_gan_models/"
-# RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/gen_images/'
+MODEL_SAVING_DIRECTORY = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/lsgan_models/"
+RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/gen_images/'
 
 # i7-2600k
+'''
 MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
 RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_lsgan/'
+'''
 
 # tensor-board logger
 logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger_lsgan')

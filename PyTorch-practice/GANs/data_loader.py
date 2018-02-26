@@ -7,16 +7,16 @@ import cv2
 #ANSWER_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/seg_result_until_20170911"
 
 # i7-2600k
-INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all"
+#INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all"
 #ANSWER_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/seg_result_until_20170823_without_cloth/seg_result_until_20170823_without_cloth"
 
 # tbt005 (10.161.31.83)
-#INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/input_imgs/"
+INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/input_imgs/"
 #INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/temp/original_resized_face/"
 
 IS_TRAINING = True
 
-print 'data loader'
+print 'data loader for vanilla/lsgan'
 
 ##############################################################################################
 # Image Buffer Management
@@ -178,7 +178,12 @@ def main_alive_checker():
 ##############################################################################################
 
 # Launch image buffer loader
+
+print 'IS_TRAINING =', IS_TRAINING
+
 if IS_TRAINING:
+    
+    print 'launch threads'
     timer = threading.Timer(1, image_buffer_loader)
     timer.start()
 

@@ -1,7 +1,7 @@
 import glob
 import os
 
-TEST_ROOT_PATH = '/Users/Illusion/Documents/Data/shopping_mall/'
+TEST_ROOT_PATH = '/data/report-documents/20180226-jpeg-reduction/'
 
 ORIGINAL_IMAGE_PATH = os.path.join(TEST_ROOT_PATH, 'mini_testset')
 

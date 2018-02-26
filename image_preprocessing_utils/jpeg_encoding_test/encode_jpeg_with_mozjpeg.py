@@ -1,13 +1,13 @@
 import os, glob, time
 
-QUALITY_FACTOR = 85
+QUALITY_FACTOR = 60
 
 #INPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/data/shopping_mall_images/mini_testset/'
 #OUTPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/data/shopping_mall_images/mini_testset_mozjpeg_q' + str(QUALITY_FACTOR) + '/'
 
 # macbook pro
-INPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/shopping_mall/speed_test/'
-OUTPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/shopping_mall/speed_test_mozjpeg_q' + str(QUALITY_FACTOR) + '/'
+INPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/shopping_mall/psnr_ssim_test_previous/FW_shop_original_20180220/'
+OUTPUT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/shopping_mall/psnr_ssim_test_previous/FW_shop_mozjpeg_q' + str(QUALITY_FACTOR) + '/'
 
 LOG_FILE = OUTPUT_IMAGE_DIRECTORY + 'q' + str(QUALITY_FACTOR) + '_process_log.txt'
 

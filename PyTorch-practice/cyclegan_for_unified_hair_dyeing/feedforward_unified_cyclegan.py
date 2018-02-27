@@ -22,7 +22,7 @@ RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTor
 
 MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/models_3/'
 
-CHECKPOINT_FILENAME = 'unified_cycle_gen_model_iter_10000.pt'
+CHECKPOINT_FILENAME = 'unified_cycle_gen_model_iter_50000.pt'
 
 INPUT_TEST_IMAGE_WIDTH = 256
 INPUT_TEST_IMAGE_HEIGHT = 256
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     tiramisu_gen_model.load_state_dict(torch.load(MODEL_SAVING_DIRECTORY_PATH + CHECKPOINT_FILENAME))
 
     tiramisu_gen_model.cuda()
-    #tiramisu_gen_model.eval()
+    tiramisu_gen_model.eval()
 
     # pytorch style
     input_img = np.empty(shape=(BATCH_SIZE, 3, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))

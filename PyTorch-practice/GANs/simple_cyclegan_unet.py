@@ -7,9 +7,9 @@ import numpy as np
 import itertools
 import data_loader_for_cyclegan as data_loader
 from logger import Logger
-from tiramisu_model import Tiramisu
+from unet_model import Unet
 
-print 'simple_cyclegan.py'
+print 'simple_cyclegan_unet.py'
 
 # gpu mode
 is_gpu_mode = True
@@ -32,8 +32,8 @@ MODEL_SAVING_FREQUENCY = 10000
 ENABLE_TRANSFER_LEARNING = False
 
 # tbt005
-MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
-RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_simple_cyclegan/'
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/models_unet/'
+RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_simple_cyclegan_unet/'
 
 # i7-2600k
 #MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
@@ -126,8 +126,8 @@ else:
 if __name__ == "__main__":
     print 'main'
 
-    gen_model_a = Tiramisu()
-    gen_model_b = Tiramisu()
+    gen_model_a = Unet()
+    gen_model_b = Unet()
     disc_model_a = Discriminator()
     disc_model_b = Discriminator()
 
@@ -325,9 +325,9 @@ if __name__ == "__main__":
 
                 output_img_opencv = output_img_opencv[..., [2,1,0]]
                 cv2.imwrite(os.path.join(RESULT_IMAGE_DIRECTORY, \
-                                         'cycle_gan_generated_iter_' + str(i) + '_' + str(file_idx) + '.jpg'), output_img_opencv)
+                                         'cyclegan_unet_generated_iter_' + str(i) + '_' + str(file_idx) + '.jpg'), output_img_opencv)
 
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(gen_model_a.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'cycle_gen_model_iter_' + str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'cyclegan_unet_model_iter_' + str(i) + '.pt')

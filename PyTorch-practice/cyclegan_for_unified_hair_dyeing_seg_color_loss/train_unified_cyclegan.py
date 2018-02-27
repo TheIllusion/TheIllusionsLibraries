@@ -8,10 +8,11 @@ import itertools
 import data_loader_for_unified_cyclegan as data_loader
 from logger import Logger
 from generator_network_tiramisu import Tiramisu
+from tiramisu_for_hair_segmentation import TiramisuHairSegModel
 from discriminator_network import Discriminator, BATCH_SIZE
 from data_loader_for_unified_cyclegan import hair_color_list, answer_buff_dict
 
-print 'unified_cyclegan_for_hair_dyeing'
+print 'cyclegan_for_unified_hair_dyeing_seg_color_loss'
 
 # gpu mode
 is_gpu_mode = True
@@ -28,17 +29,9 @@ LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 10000
 
-# transfer learning option
-ENABLE_TRANSFER_LEARNING = False
-
 # tbt005
-'''
-MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/models/'
-RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/result_images/'
-'''
-
-MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/models_3/'
-RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/result_images_3/'
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_seg_color_loss/models_tiramisu/'
+RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_seg_color_loss/result_images_tiramisu/'
 
 # tensor-board logger
 '''
@@ -47,10 +40,10 @@ if not os.path.exists(MODEL_SAVING_DIRECTORY + 'tf_board_logger'):
 
 logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger')
 '''
-if not os.path.exists(MODEL_SAVING_DIRECTORY + 'tf_board_logger_3'):
-    os.mkdir(MODEL_SAVING_DIRECTORY + 'tf_board_logger_3')
+if not os.path.exists(MODEL_SAVING_DIRECTORY + 'tf_board_logger'):
+    os.mkdir(MODEL_SAVING_DIRECTORY + 'tf_board_logger')
 
-logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger_3')
+logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger')
 
 # i7-2600k
 # MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
@@ -73,25 +66,16 @@ if __name__ == "__main__":
     disc_model_a = Discriminator()
     disc_model_b = Discriminator()
 
+    # load the hair segmentation model (test purposes only)
+    hair_seg_model = TiramisuHairSegModel()
+    hair_seg_model.load_state_dict(torch.load('/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_seg_color_loss/hair_segmentation_model_tiramisu/tiramisu_lfw_added_zero_centr_lr_0_0002_iter_2760000.pt'))
+
     if is_gpu_mode:
         gen_model_a.cuda()
         gen_model_b.cuda()
         disc_model_a.cuda()
         disc_model_b.cuda()
-        '''
-        gen_model_a = torch.nn.DataParallel(gen_model_a).cuda()
-        gen_model_b = torch.nn.DataParallel(gen_model_b).cuda()
-        disc_model_a = torch.nn.DataParallel(disc_model_a).cuda()
-        disc_model_b = torch.nn.DataParallel(disc_model_b).cuda()
-        '''
         
-    if ENABLE_TRANSFER_LEARNING:
-        # load the saved checkpoints for hair semantic segmentation
-        gen_model_a.load_state_dict(torch.load(
-            '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/tiramisu_lfw_added_zero_centr_lr_0_0002_iter_1870000.pt'))
-        gen_model_b.load_state_dict(torch.load(
-            '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/tiramisu_lfw_added_zero_centr_lr_0_0002_iter_1870000.pt'))
-
     gen_params_total = itertools.chain(gen_model_a.parameters(), gen_model_b.parameters())
     optimizer_gen = torch.optim.Adam(gen_params_total, lr=LEARNING_RATE_GENERATOR)
 

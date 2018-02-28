@@ -8,7 +8,7 @@ import itertools
 import data_loader_for_unified_cyclegan as data_loader
 from logger import Logger
 from generator_network_tiramisu import Tiramisu
-from tiramisu_for_hair_segmentation import TiramisuHairSegModel
+from tiramisu_for_hair_segmentation import TiramisuHairSegModel, MEAN_VALUE_FOR_ZERO_CENTERED
 from discriminator_network import Discriminator, BATCH_SIZE
 from data_loader_for_unified_cyclegan import hair_color_list, answer_buff_dict
 
@@ -69,6 +69,7 @@ if __name__ == "__main__":
     # load the hair segmentation model (test purposes only)
     hair_seg_model = TiramisuHairSegModel()
     hair_seg_model.load_state_dict(torch.load('/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_seg_color_loss/hair_segmentation_model_tiramisu/tiramisu_lfw_added_zero_centr_lr_0_0002_iter_2760000.pt'))
+    hair_seg_model.cuda()
 
     if is_gpu_mode:
         gen_model_a.cuda()
@@ -91,6 +92,10 @@ if __name__ == "__main__":
 
     answer_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
     
+    input_img_for_hair_seg = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
+
+    answer_img_for_hair_seg = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
+    
     # conditional vectors
     condition_vectors = np.zeros(shape=(BATCH_SIZE, len(hair_color_list), data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
 
@@ -101,6 +106,12 @@ if __name__ == "__main__":
             
     # opencv style
     output_img_opencv = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT, 3))
+
+    temp_img_opencv = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT, 3))
+    
+    input_hair_seg_result = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT, 3))
+
+    answer_hair_seg_result = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT, 3))
 
     if not os.path.exists(RESULT_IMAGE_DIRECTORY):
         os.mkdir(RESULT_IMAGE_DIRECTORY)
@@ -137,7 +148,9 @@ if __name__ == "__main__":
                     break
 
                 np.copyto(input_img[j], data_loader.input_buff[image_buff_read_index])
+                np.copyto(input_img_for_hair_seg[j], data_loader.input_buff[image_buff_read_index])
                 np.copyto(answer_img[j], answer_buff[image_buff_read_index])
+                np.copyto(answer_img_for_hair_seg[j], answer_buff[image_buff_read_index])
 
                 # empty the buffer if the current color is the last color
                 if hair_color_list.index(color) == (len(hair_color_list) -1):
@@ -160,8 +173,6 @@ if __name__ == "__main__":
             condition_vectors[:,color_idx,:,:] = 100
             ####################################################################
 
-            ############################################################################
-
             if is_gpu_mode:
                 inputs = Variable(torch.from_numpy(input_img).float().cuda())
                 answers = Variable(torch.from_numpy(answer_img).float().cuda())
@@ -169,6 +180,8 @@ if __name__ == "__main__":
                 inputs = Variable(torch.from_numpy(input_img).float())
                 answers = Variable(torch.from_numpy(answer_img).float())
 
+            ####################################################################
+            
             # feedforward the inputs. generators.
             outputs_gen_a_to_b = gen_model_a(torch.cat((condition_vectors, inputs), 1))
             outputs_gen_b_to_a = gen_model_b(torch.cat((condition_vectors, answers), 1))
@@ -181,6 +194,58 @@ if __name__ == "__main__":
             output_disc_real_b = disc_model_b(torch.cat((condition_vectors, answers), 1))
             output_disc_fake_b = disc_model_b(torch.cat((condition_vectors, outputs_gen_a_to_b), 1))
 
+            ####################################################################    
+            # hair segmentation
+            input_img_for_hair_seg[0] = input_img_for_hair_seg[0] - MEAN_VALUE_FOR_ZERO_CENTERED
+            answer_img_for_hair_seg[0] = answer_img_for_hair_seg[0] - MEAN_VALUE_FOR_ZERO_CENTERED
+            input_img_for_hair_seg_ = Variable(torch.from_numpy(input_img_for_hair_seg).float().cuda())
+            answer_img_for_hair_seg_ = Variable(torch.from_numpy(answer_img_for_hair_seg).float().cuda())
+            seg_result_input = hair_seg_model(input_img_for_hair_seg_)
+            seg_result_input = seg_result_input.cpu().data.numpy()[0]
+            seg_result_input = seg_result_input * 255
+            
+            print 'shape of seg_result_input =', seg_result_input.shape
+
+            input_hair_seg_result[:, :, 0] = seg_result_input[0, :, :]
+            input_hair_seg_result[:, :, 1] = seg_result_input[1, :, :]
+            input_hair_seg_result[:, :, 2] = seg_result_input[2, :, :]
+
+            '''
+            cv2.imwrite("/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_seg_color_loss/seg_result.jpg", output_img_opencv)
+            '''
+            
+            seg_result_answer = hair_seg_model(answer_img_for_hair_seg_)
+            seg_result_answer = seg_result_answer.cpu().data.numpy()[0]
+            seg_result_answer = seg_result_answer * 255
+
+            answer_hair_seg_result[:, :, 0] = seg_result_answer[0, :, :]
+            answer_hair_seg_result[:, :, 1] = seg_result_answer[1, :, :]
+            answer_hair_seg_result[:, :, 2] = seg_result_answer[2, :, :]
+
+            '''
+            cv2.imwrite("/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_seg_color_loss/seg_result_answer.jpg", output_img_opencv)
+            '''
+            
+            ####################################################################
+            # get avg hair-color value using hair segmentation results
+            # support only batch-size 1 at this point
+            
+            hair_pixels_fake_b = input_hair_seg_result[..., 2] > 128
+            
+            # bgr to lab 
+            output_img_fake_b = outputs_gen_a_to_b.cpu().data.numpy()[0]
+            temp_img_opencv[:, :, 0] = output_img_fake_b[0, :, :]
+            temp_img_opencv[:, :, 1] = output_img_fake_b[1, :, :]
+            temp_img_opencv[:, :, 2] = output_img_fake_b[2, :, :]
+            
+            print 'shape of temp_img_opencv =', temp_img_opencv.shape
+            output_img_fake_b_lab = cv2.cvtColor(temp_img_opencv, cv2.COLOR_BGR2LAB)
+            
+            avg_lab = np.average(output_img_fake_b_lab[hair_pixels_fake_b])
+            
+            print 'avg_lab=', avg_lab
+            
+            ####################################################################
             # loss functions
 
             # lsgan loss for the discriminator_a

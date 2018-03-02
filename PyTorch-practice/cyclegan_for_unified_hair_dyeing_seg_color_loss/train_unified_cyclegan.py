@@ -198,22 +198,18 @@ if __name__ == "__main__":
             # hair segmentation
             input_img_for_hair_seg[0] = input_img_for_hair_seg[0] - MEAN_VALUE_FOR_ZERO_CENTERED
             answer_img_for_hair_seg[0] = answer_img_for_hair_seg[0] - MEAN_VALUE_FOR_ZERO_CENTERED
+
             input_img_for_hair_seg_ = Variable(torch.from_numpy(input_img_for_hair_seg).float().cuda())
             answer_img_for_hair_seg_ = Variable(torch.from_numpy(answer_img_for_hair_seg).float().cuda())
+            
             seg_result_input = hair_seg_model(input_img_for_hair_seg_)
             seg_result_input = seg_result_input.cpu().data.numpy()[0]
             seg_result_input = seg_result_input * 255
             
-            print 'shape of seg_result_input =', seg_result_input.shape
-
             input_hair_seg_result[:, :, 0] = seg_result_input[0, :, :]
             input_hair_seg_result[:, :, 1] = seg_result_input[1, :, :]
             input_hair_seg_result[:, :, 2] = seg_result_input[2, :, :]
 
-            '''
-            cv2.imwrite("/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_seg_color_loss/seg_result.jpg", output_img_opencv)
-            '''
-            
             seg_result_answer = hair_seg_model(answer_img_for_hair_seg_)
             seg_result_answer = seg_result_answer.cpu().data.numpy()[0]
             seg_result_answer = seg_result_answer * 255
@@ -222,15 +218,13 @@ if __name__ == "__main__":
             answer_hair_seg_result[:, :, 1] = seg_result_answer[1, :, :]
             answer_hair_seg_result[:, :, 2] = seg_result_answer[2, :, :]
 
-            '''
-            cv2.imwrite("/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_seg_color_loss/seg_result_answer.jpg", output_img_opencv)
-            '''
-            
             ####################################################################
             # get avg hair-color value using hair segmentation results
             # support only batch-size 1 at this point
             
+            # input ############################################################
             hair_pixels_fake_b = input_hair_seg_result[..., 2] > 128
+            not_hair_pixels_fake_b = np.invert(hair_pixels_fake_b)
             
             # bgr to lab 
             output_img_fake_b = outputs_gen_a_to_b.cpu().data.numpy()[0]
@@ -238,13 +232,68 @@ if __name__ == "__main__":
             temp_img_opencv[:, :, 1] = output_img_fake_b[1, :, :]
             temp_img_opencv[:, :, 2] = output_img_fake_b[2, :, :]
             
-            print 'shape of temp_img_opencv =', temp_img_opencv.shape
+            temp_img_opencv = temp_img_opencv.astype(np.uint8)
+            
             output_img_fake_b_lab = cv2.cvtColor(temp_img_opencv, cv2.COLOR_BGR2LAB)
+
+            output_img_fake_b_lab[not_hair_pixels_fake_b] = 0
             
-            avg_lab = np.average(output_img_fake_b_lab[hair_pixels_fake_b])
+            l, a, b = cv2.split(output_img_fake_b_lab) 
+            if np.sum(hair_pixels_fake_b) != 0:
+                #print 'fake_b. np.mean(l) = ', np.sum(l) / np.sum(hair_pixels_fake_b)
+                #print 'fake_b. np.mean(a) = ', np.sum(a) / np.sum(hair_pixels_fake_b)
+                #print 'fake_b. np.mean(b) = ', np.sum(b) / np.sum(hair_pixels_fake_b)
+                avg_a_gen = np.sum(a) / np.sum(hair_pixels_fake_b)
+                avg_b_gen = np.sum(b) / np.sum(hair_pixels_fake_b)
+            else:
+                avg_a_gen = -1 
+                avg_b_gen = -1
             
-            print 'avg_lab=', avg_lab
+            #print 'len(not_hair_pixels_fake_b) = ', np.sum(not_hair_pixels_fake_b)
+            #print 'len(hair_pixels_fake_b) = ', np.sum(hair_pixels_fake_b)
             
+            # answer ###########################################################
+            
+            hair_pixels_answer = answer_hair_seg_result[..., 2] > 128
+            not_hair_pixels_answer = np.invert(hair_pixels_answer)
+            
+            # bgr to lab 
+            answer_img[j]
+            temp_img_opencv[:, :, 0] = answer_img[j][0, :, :]
+            temp_img_opencv[:, :, 1] = answer_img[j][1, :, :]
+            temp_img_opencv[:, :, 2] = answer_img[j][2, :, :]
+            
+            temp_img_opencv = temp_img_opencv.astype(np.uint8)
+            
+            answer_lab = cv2.cvtColor(temp_img_opencv, cv2.COLOR_BGR2LAB)
+
+            answer_lab[not_hair_pixels_answer] = 0
+            
+            l, a, b = cv2.split(answer_lab) 
+            if np.sum(hair_pixels_answer) != 0:
+                #print 'answer. np.mean(l) = ', np.sum(l) / np.sum(hair_pixels_answer)
+                #print 'answer. np.mean(a) = ', np.sum(a) / np.sum(hair_pixels_answer)
+                #print 'answer. np.mean(b) = ', np.sum(b) / np.sum(hair_pixels_answer)
+                avg_a_answer = np.sum(a) / np.sum(hair_pixels_answer)
+                avg_b_answer = np.sum(b) / np.sum(hair_pixels_answer)
+            else:
+                avg_a_answer = -1
+                avg_b_answer = -1
+            
+            #print 'len(not_hair_pixels_answer) = ', np.sum(not_hair_pixels_answer)
+            #print 'len(hair_pixels_answer) = ', np.sum(hair_pixels_answer)
+            
+            ####################################################################
+            # hair color loss
+            if avg_a_answer != -1 and avg_b_answer != -1 and avg_a_gen != -1 and avg_b_gen != -1:
+                loss_lab_a = abs(avg_a_gen - avg_a_answer)
+                loss_lab_b = abs(avg_b_gen - avg_b_answer)
+            else:
+                loss_lab_a = 0
+                loss_lab_b = 0
+                
+            #print 'loss_lab_a =', loss_lab_a
+            #print 'loss_lab_b =', loss_lab_b
             ####################################################################
             # loss functions
 
@@ -263,7 +312,7 @@ if __name__ == "__main__":
             l1_loss_rec_b = F.l1_loss(reconstructed_b, answers)
 
             # lsgan loss for the generator_a
-            loss_gen_lsgan_a = 0.5 * torch.mean((output_disc_fake_b - 1) ** 2)
+            loss_gen_lsgan_a = 0.5 * torch.mean((output_disc_fake_b - 1) ** 2) + 0.2 * (loss_lab_a + loss_lab_b)
 
             # lsgan loss for the generator_b
             loss_gen_lsgan_b = 0.5 * torch.mean((output_disc_fake_a - 1) ** 2)
@@ -326,6 +375,31 @@ if __name__ == "__main__":
                 reconstructed_a_temp = reconstructed_a.cpu().data.numpy()[0:BATCH_SIZE]
                 reconstructed_b_temp = reconstructed_b.cpu().data.numpy()[0:BATCH_SIZE]
 
+                # color conversion
+                inputs_imgs_temp_ = inputs_imgs_temp[0].copy()
+                inputs_imgs_temp[0][0] = inputs_imgs_temp_[2]
+                inputs_imgs_temp[0][2] = inputs_imgs_temp_[0]
+                
+                output_imgs_temp_b_ = output_imgs_temp_b[0].copy()
+                output_imgs_temp_b[0][0] = output_imgs_temp_b_[2]
+                output_imgs_temp_b[0][2] = output_imgs_temp_b_[0]
+                
+                output_imgs_temp_a_ = output_imgs_temp_a[0].copy()
+                output_imgs_temp_a[0][0] = output_imgs_temp_a_[2]
+                output_imgs_temp_a[0][2] = output_imgs_temp_a_[0]
+                
+                reconstructed_a_temp_ = reconstructed_a_temp[0].copy()
+                reconstructed_a_temp[0][0] = reconstructed_a_temp_[2]
+                reconstructed_a_temp[0][2] = reconstructed_a_temp_[0]
+                
+                reconstructed_b_temp_ = reconstructed_b_temp[0].copy()
+                reconstructed_b_temp[0][0] = reconstructed_b_temp_[2]
+                reconstructed_b_temp[0][2] = reconstructed_b_temp_[0]
+                
+                answer_imgs_temp_ = answer_imgs_temp[0].copy()
+                answer_imgs_temp[0][0] = answer_imgs_temp_[2]
+                answer_imgs_temp[0][2] = answer_imgs_temp_[0]
+                
                 # logger.an_image_summary('generated', output_img, i)
                 logger.image_summary(color + ':input', inputs_imgs_temp, i)
                 logger.image_summary(color + ':generated_b', output_imgs_temp_b, i)

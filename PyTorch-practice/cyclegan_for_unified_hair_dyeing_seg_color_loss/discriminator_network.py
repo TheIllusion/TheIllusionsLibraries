@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from data_loader_for_unified_cyclegan import hair_color_list
 
-BATCH_SIZE = 2
+BATCH_SIZE = 1
 
 class ConvolutionDown(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):

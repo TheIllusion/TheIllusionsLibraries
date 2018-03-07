@@ -18,14 +18,14 @@ from data_loader_for_unified_cyclegan import hair_color_list
 # tbt005
 INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/korean_testA/"
 
-RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/feed_forward_results_models_3/"
+RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_seg_color_loss/feed_forward_results_models/"
 
-MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/models_3/'
+MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_seg_color_loss/models_tiramisu/'
 
-CHECKPOINT_FILENAME = 'unified_cycle_gen_model_iter_50000.pt'
+CHECKPOINT_FILENAME = 'unified_cycle_gen_model_iter_30000.pt'
 
-INPUT_TEST_IMAGE_WIDTH = 256
-INPUT_TEST_IMAGE_HEIGHT = 256
+INPUT_TEST_IMAGE_WIDTH = 512
+INPUT_TEST_IMAGE_HEIGHT = 512
 
 #TEST_SIZE = 53
 #TEST_SIZE = 406
@@ -40,16 +40,16 @@ if __name__ == "__main__":
     
     if not os.path.exists(RESULT_IMAGE_DIRECTORY_PATH):
         os.mkdir(RESULT_IMAGE_DIRECTORY_PATH)
-        
+
     # load the filelist
     #os.chdir(INPUT_TEST_IMAGE_DIRECTORY_PATH)
     jpg_files = glob.glob(INPUT_TEST_IMAGE_DIRECTORY_PATH + '*.jpg')
     #random.shuffle(jpg_files)
-    
+
     max_test_index = len(jpg_files)
-    
+
     tiramisu_gen_model = Tiramisu()
-   
+
     tiramisu_gen_model.load_state_dict(torch.load(MODEL_SAVING_DIRECTORY_PATH + CHECKPOINT_FILENAME))
 
     tiramisu_gen_model.cuda()
@@ -57,31 +57,31 @@ if __name__ == "__main__":
 
     # pytorch style
     input_img = np.empty(shape=(BATCH_SIZE, 3, INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))
-    
+
     # conditional vectors
     condition_vectors = np.zeros(shape=(BATCH_SIZE, len(hair_color_list), INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT))
-    
-    condition_vectors = Variable(torch.from_numpy(condition_vectors).float().cuda())
-        
+
+    condition_vectors = Variable(torch.from_numpy(condition_vectors).float().cuda(), volatile=True)
+
     # opencv style
     output_img_opencv = np.empty(shape=(INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT, 3))
-    
+
     for idx in range(TEST_SIZE):
         # load a single img
         img_opencv = cv2.imread(jpg_files[idx], cv2.IMREAD_COLOR)
-        
+
         print 'process file:', jpg_files[idx]
 
         img_opencv = cv2.resize(img_opencv, (INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT), interpolation=cv2.INTER_LINEAR)
 
         img_opencv_ori = img_opencv.copy()
-        
-        img_opencv = img_opencv[..., [2,1,0]]
-        
+
+        #img_opencv = img_opencv[..., [2,1,0]]
+
         input_img[0][0, :, :] = img_opencv[:, :, 0]
         input_img[0][1, :, :] = img_opencv[:, :, 1]
         input_img[0][2, :, :] = img_opencv[:, :, 2]    
-        
+
         ############################################################################
         # iterate through colors and manipulate the input data and condition vectors
         for color in hair_color_list:
@@ -108,12 +108,12 @@ if __name__ == "__main__":
             cv2.imwrite("input_check_" + str(idx) + ".jpg", output_img_opencv)
             '''
 
-            inputs = Variable(torch.from_numpy(input_img).float().cuda())
+            inputs = Variable(torch.from_numpy(input_img).float().cuda(), volatile=True)
 
             start_time = time.time()
 
             #print condition_vectors
-            
+
             outputs = tiramisu_gen_model(torch.cat((condition_vectors, inputs), 1))
 
             elapsed_time = time.time() - start_time
@@ -128,12 +128,12 @@ if __name__ == "__main__":
             output_img_opencv[:, :, 1] = output_img[1, :, :]
             output_img_opencv[:, :, 2] = output_img[2, :, :]
 
-            output_img_opencv = output_img_opencv[..., [2,1,0]]
-            
+            #output_img_opencv = output_img_opencv[..., [2,1,0]]
+
             #cv2.imwrite(RESULT_IMAGE_DIRECTORY_PATH + os.path.basename(jpg_files[idx]), output_img_opencv)
 
             # display purposes only. create concatenated imgs (original:feedforward)
             concated_img = np.hstack((img_opencv_ori, output_img_opencv))
             cv2.imwrite(RESULT_IMAGE_DIRECTORY_PATH + 'concat_' + color + '_' + str(idx) + '.jpg', concated_img)
-    
+
     print 'process done'

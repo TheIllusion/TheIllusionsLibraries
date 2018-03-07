@@ -30,8 +30,8 @@ LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 MODEL_SAVING_FREQUENCY = 10000
 
 # tbt005
-MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_seg_color_loss/models_tiramisu/'
-RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_seg_color_loss/result_images_tiramisu/'
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_seg_color_loss/models_tiramisu_without_color_loss/'
+RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_seg_color_loss/result_images_tiramisu_without_color_loss/'
 
 # tensor-board logger
 '''
@@ -312,7 +312,8 @@ if __name__ == "__main__":
             l1_loss_rec_b = F.l1_loss(reconstructed_b, answers)
 
             # lsgan loss for the generator_a
-            loss_gen_lsgan_a = 0.5 * torch.mean((output_disc_fake_b - 1) ** 2) + 0.2 * (loss_lab_a + loss_lab_b)
+            #loss_gen_lsgan_a = 0.5 * torch.mean((output_disc_fake_b - 1) ** 2) + 0.2 * (loss_lab_a + loss_lab_b)
+            loss_gen_lsgan_a = 0.5 * torch.mean((output_disc_fake_b - 1) ** 2)
 
             # lsgan loss for the generator_b
             loss_gen_lsgan_b = 0.5 * torch.mean((output_disc_fake_a - 1) ** 2)

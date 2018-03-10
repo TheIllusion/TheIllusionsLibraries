@@ -42,6 +42,8 @@ for i in range(image_buffer_size):
 current_buff_index = 0
 lineIdx = 0
 
+print 'Load the file list...'
+
 # load the filelist
 #os.chdir(ANSWER_IMAGE_DIRECTORY_PATH)
 os.chdir(INPUT_IMAGE_DIRECTORY_PATH)
@@ -51,6 +53,8 @@ random.shuffle(jpg_files)
 max_training_index = len(jpg_files)
 
 exit_notification = False
+
+print 'Buffer init'
 
 def image_buffer_loader():
     global current_buff_index

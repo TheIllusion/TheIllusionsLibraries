@@ -11,12 +11,12 @@ from logger import Logger
 is_gpu_mode = True
 
 # batch size
-BATCH_SIZE = 10
+BATCH_SIZE = 30
 TOTAL_ITERATION = 1000000
 
 # learning rate
 LEARNING_RATE_GENERATOR = 3 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 2 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 
 # zero centered
 #MEAN_VALUE_FOR_ZERO_CENTERED = 128
@@ -25,12 +25,12 @@ LEARNING_RATE_DISCRIMINATOR = 2 * 1e-4
 MODEL_SAVING_FREQUENCY = 10000
 
 # tbt005 (10.161.31.83)
-#MODEL_SAVING_DIRECTORY = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/vanilla_gan_models/"
-#RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/gen_images/'
+MODEL_SAVING_DIRECTORY = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/vanilla_gan_models/"
+RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/gen_images/'
 
 # i7-2600k
-MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
-RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_vanilla_gan/'
+#MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
+#RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_vanilla_gan/'
 
 # tensor-board logger
 logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger')
@@ -159,12 +159,12 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # input image will have the size of 64x64x3
-        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=32, kernel_size=3)
-        self.second_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=3)
-        self.third_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
+        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=16, kernel_size=3)
+        self.second_conv_layer = TransitionDown(in_channels=16, out_channels=32, kernel_size=3)
+        self.third_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=3)
 
-        self.fc1 = nn.Linear(7*7*128, 10)
-        self.fc2 = nn.Linear(10, 1)
+        self.fc1 = nn.Linear(7*7*64, 2)
+        self.fc2 = nn.Linear(2, 1)
 
         torch.nn.init.xavier_uniform(self.fc1.weight)
         torch.nn.init.xavier_uniform(self.fc2.weight)
@@ -180,7 +180,7 @@ class Discriminator(nn.Module):
         x = self.second_conv_layer(x)
         x = self.third_conv_layer(x)
         
-        x = x.view(-1, 7*7*128)
+        x = x.view(-1, 7*7*64)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
 

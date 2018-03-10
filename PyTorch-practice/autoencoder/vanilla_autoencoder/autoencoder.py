@@ -203,18 +203,16 @@ if __name__ == "__main__":
 
         if i % 50 == 0:
             print '-----------------------------------------------'
-            print '-----------------------------------------------'
             print 'iterations = ', str(i)
             print 'loss(l1)     = ', str(l1_loss)
-            print '-----------------------------------------------'
 
             # tf-board (scalar)
             #logger.scalar_summary('loss-l1', l1_loss, i)
 
             # tf-board (images - first 1 batches)
 
-            output_imgs_temp = outputs.cpu().data.numpy()[0:1]
-            input_imgs_temp = input_img[0:1]
+            output_imgs_temp = outputs.cpu().data.numpy()[0]
+            input_imgs_temp = input_img[0]
 
             input_imgs_temp = input_imgs_temp[..., [2,1,0]]
             output_imgs_temp = output_imgs_temp[..., [2,1,0]]

@@ -3,7 +3,10 @@ import os, glob, random, re, time, threading
 import cv2
 
 # Macbook 12
-INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/data/tiny_datasets_for_cpu/face_imgs"
+#INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/data/tiny_datasets_for_cpu/face_imgs"
+
+# t005
+INPUT_IMAGE_DIRECTORY_PATH = '/data/rklee/hair_segmentation/seg_result_until_20170911/original_all'
 
 IS_TRAINING = True
 

@@ -11,10 +11,10 @@ import numpy as np
 import time
 
 # gpu mode
-is_gpu_mode = False
+is_gpu_mode = True
 
 # batch size
-BATCH_SIZE = 1
+BATCH_SIZE = 20
 TOTAL_ITERATION = 1000000
 
 # learning rate
@@ -23,11 +23,22 @@ LEARNING_RATE = 3 * 1e-4
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 10000
 
-# Macbook 12'
-MODEL_SAVING_DIRECTORY = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/autoencoder/vanilla_autoencoder/models/'
-RESULT_IMAGE_DIRECTORY = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/autoencoder/vanilla_autoencoder/result_imgs/'
-TENSORBOARD_DIRECTORY = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/autoencoder/vanilla_autoencoder/tfboard/'
+TARGET_SYSTEM_LIST = ['MACBOOK_12', 't005']
+TARGET_SYSTEM = TARGET_SYSTEM_LIST[1]
 
+if TARGET_SYSTEM == 'MACBOOK_12':
+    # Macbook 12'
+    MODEL_SAVING_DIRECTORY = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/autoencoder/vanilla_autoencoder/models/'
+    RESULT_IMAGE_DIRECTORY = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/autoencoder/vanilla_autoencoder/result_imgs/'
+    TENSORBOARD_DIRECTORY = '/Users/Illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/autoencoder/vanilla_autoencoder/tfboard/'
+elif TARGET_SYSTEM == 't005':
+    # t005
+    MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/autoencoder/vanilla_autoencoder/models/'
+    RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/autoencoder/vanilla_autoencoder/result_imgs/'
+    TENSORBOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/autoencoder/vanilla_autoencoder/tfboard/'
+else:
+    exit(0)
+    
 # tensor-board logger
 if not os.path.exists(MODEL_SAVING_DIRECTORY):
     os.mkdir(MODEL_SAVING_DIRECTORY)
@@ -81,7 +92,7 @@ class TransitionUp(nn.Module):
         '''
 
         self.transpoed_conv = nn.ConvTranspose2d(in_channels=in_channels, out_channels=out_channels,
-                                                 kernel_size=2, stride=2, padding=0, output_padding=0, bias=True)
+                                                 kernel_size=4, stride=2, padding=1, output_padding=0, bias=True)
 
         # weight initialization
         torch.nn.init.xavier_uniform(self.transpoed_conv.weight)
@@ -188,7 +199,7 @@ if __name__ == "__main__":
         outputs = autoencoder_model(inputs)
 
         # l1-loss between real and fake
-        l1_loss = F.l1_loss(inputs, outputs)
+        l1_loss = F.l1_loss(outputs, inputs)
 
         # Before the backward pass, use the optimizer object to zero all of the
         # gradients for the variables it will update (which are the learnable weights
@@ -211,11 +222,11 @@ if __name__ == "__main__":
 
             # tf-board (images - first 1 batches)
 
-            output_imgs_temp = outputs.cpu().data.numpy()[0]
-            input_imgs_temp = input_img[0]
+            output_imgs_temp = outputs.cpu().data.numpy()[0:2]
+            input_imgs_temp = input_img[0:2]
 
-            input_imgs_temp = input_imgs_temp[..., [2,1,0]]
-            output_imgs_temp = output_imgs_temp[..., [2,1,0]]
+            #input_imgs_temp = input_imgs_temp[..., [2,1,0]]
+            #output_imgs_temp = output_imgs_temp[..., [2,1,0]]
 
             logger.image_summary('input', input_imgs_temp, i)
             logger.image_summary('generated', output_imgs_temp, i)

@@ -135,8 +135,8 @@ def main_alive_checker():
 
     while True:
         if is_main_alive == False:
-            # wait for the 7 secs for last chance
-            time.sleep(7)
+            # wait for the 3 secs for last chance
+            time.sleep(3)
             if is_main_alive == False:
                 exit_notification = True
                 print 'Exit(2)'

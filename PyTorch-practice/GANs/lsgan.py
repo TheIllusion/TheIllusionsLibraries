@@ -11,11 +11,11 @@ from logger import Logger
 is_gpu_mode = True
 
 # batch size
-BATCH_SIZE = 30
+BATCH_SIZE = 20
 TOTAL_ITERATION = 1000000
 
 # learning rate
-LEARNING_RATE_GENERATOR = 5 * 1e-4
+LEARNING_RATE_GENERATOR = 3 * 1e-4
 LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 
 # zero centered
@@ -37,7 +37,6 @@ RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/P
 # tensor-board logger
 logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger_lsgan')
 
-
 class TransitionDown(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):
         super(TransitionDown, self).__init__()
@@ -46,7 +45,7 @@ class TransitionDown(nn.Module):
 
         # GAN's doesn't work well with stride=2
         self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels,
-                              kernel_size=3, padding=1, stride=1, bias=True)
+                              kernel_size=3, padding=1, stride=1, bias=False)
 
         # weight initialization
         torch.nn.init.xavier_uniform(self.conv.weight)
@@ -64,7 +63,6 @@ class TransitionDown(nn.Module):
         x = F.max_pool2d(input=x, kernel_size=2)
 
         return x
-
 
 # Transition Up (TU) module from the paper of Tiramisu - Table 1.
 class TransitionUp(nn.Module):
@@ -86,8 +84,7 @@ class TransitionUp(nn.Module):
         '''
 
         self.transpoed_conv = nn.ConvTranspose2d(in_channels=in_channels, out_channels=out_channels,
-                                                 kernel_size=kernel_size, stride=stride, padding=0, output_padding=0,
-                                                 bias=True)
+                                                 kernel_size=kernel_size, stride=stride, padding=1, output_padding=0, bias=False)
 
         # weight initialization
         torch.nn.init.xavier_uniform(self.transpoed_conv.weight)
@@ -95,7 +92,6 @@ class TransitionUp(nn.Module):
     def forward(self, x):
         x = self.transpoed_conv(x)
         return x
-
 
 # generator model (input random vector z will have the size of 4x4x3)
 class Generator(nn.Module):
@@ -107,23 +103,23 @@ class Generator(nn.Module):
         super(Generator, self).__init__()
 
         # output feature map will have the size of 8x8x3
-        self.first_deconv = TransitionUp(in_channels=1, out_channels=1024, stride=2, kernel_size=3)
-        self.first_batch_norm = nn.BatchNorm2d(1024)
+        self.first_deconv = TransitionUp(in_channels=3, out_channels=256, stride=2, kernel_size=4)
+        self.first_batch_norm = nn.BatchNorm2d(256)
 
         # output feature map will have the size of 16x16x3
-        self.second_deconv = TransitionUp(in_channels=1024, out_channels=512, stride=2, kernel_size=5)
-        self.second_batch_norm = nn.BatchNorm2d(512)
-
+        self.second_deconv = TransitionUp(in_channels=256, out_channels=128, stride=2, kernel_size=4)
+        self.second_batch_norm = nn.BatchNorm2d(128)
+        
         # output feature map will have the size of 32x32x3
-        self.third_deconv = TransitionUp(in_channels=512, out_channels=256, stride=2, kernel_size=7)
-        self.third_batch_norm = nn.BatchNorm2d(256)
-
-        # output feature map will have the size of 32x32x3
-        self.fourth_deconv = TransitionUp(in_channels=256, out_channels=256, stride=1, kernel_size=7)
-        self.fourth_batch_norm = nn.BatchNorm2d(256)
+        self.third_deconv = TransitionUp(in_channels=128, out_channels=64, stride=2, kernel_size=4)
+        self.third_batch_norm = nn.BatchNorm2d(64)
 
         # output feature map will have the size of 64x64x3
-        self.fifth_deconv = TransitionUp(in_channels=256, out_channels=3, stride=1, kernel_size=7)
+        self.fourth_deconv = TransitionUp(in_channels=64, out_channels=32, stride=2, kernel_size=4)
+        self.fourth_batch_norm = nn.BatchNorm2d(32)
+
+        # output feature map will have the size of 64x64x3
+        self.fifth_deconv = TransitionUp(in_channels=32, out_channels=3, stride=1, kernel_size=4)
 
     def forward(self, x):
         """
@@ -134,29 +130,28 @@ class Generator(nn.Module):
         x = self.first_deconv(x)
         x = self.first_batch_norm(x)
         x = F.leaky_relu(x)
-
+        
         x = self.second_deconv(x)
         x = self.second_batch_norm(x)
         x = F.leaky_relu(x)
-
+        
         x = self.third_deconv(x)
         x = self.third_batch_norm(x)
         x = F.leaky_relu(x)
-
+        
         x = self.fourth_deconv(x)
         x = self.fourth_batch_norm(x)
 
         x = self.fifth_deconv(x)
-        # sigmoid_out = nn.functional.sigmoid(x)
+        #sigmoid_out = nn.functional.sigmoid(x)
         tanh_out = nn.functional.tanh(x)
 
-        out = (tanh_out + 1) * 255 / 2
-
-        # print 'out.shape =', out.shape
-
+        out = (tanh_out + 1) * 255 /2
+        
+        #print 'out.shape =', out.shape
+        
         return out
-
-
+    
 class Discriminator(nn.Module):
     def __init__(self):
         """
@@ -166,10 +161,10 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # input image will have the size of 64x64x3
-        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=128, kernel_size=3)
-        self.second_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
-        self.third_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
-        self.fourth_conv_layer = TransitionDown(in_channels=512, out_channels=1, kernel_size=3)
+        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=16, kernel_size=5)
+        self.second_conv_layer = TransitionDown(in_channels=16, out_channels=32, kernel_size=5)
+        self.third_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=5)
+        self.fourth_conv_layer = TransitionDown(in_channels=64, out_channels=1, kernel_size=5)
 
         '''
         self.fc1 = nn.Linear(4 * 4 * 512, 10)
@@ -266,7 +261,7 @@ if __name__ == "__main__":
                 image_buff_read_index = 0
 
         # random noise z
-        noise_z = torch.randn(BATCH_SIZE, 1, 4, 4)
+        noise_z = torch.randn(BATCH_SIZE, 3, 4, 4)
 
         if is_gpu_mode:
             inputs = Variable(torch.from_numpy(input_img).float().cuda())
@@ -304,7 +299,6 @@ if __name__ == "__main__":
         # gradients for the variables it will update (which are the learnable weights
         # of the model)
         optimizer_disc.zero_grad()
-        optimizer_gen.zero_grad()
 
         # Backward pass: compute gradient of the loss with respect to model parameters
         loss_disc_total.backward(retain_graph=True)
@@ -313,7 +307,6 @@ if __name__ == "__main__":
         optimizer_disc.step()
 
         # generator
-        optimizer_disc.zero_grad()
         optimizer_gen.zero_grad()
         loss_gen.backward()
         optimizer_gen.step()
@@ -338,6 +331,11 @@ if __name__ == "__main__":
             output_imgs_temp = outputs_gen.cpu().data.numpy()[0:6]
             input_imgs_temp = inputs.cpu().data.numpy()[0:4]
             # logger.an_image_summary('generated', output_img, i)
+            
+            # rgb to bgr
+            output_imgs_temp = output_imgs_temp[:,[2,1,0],...]
+            input_imgs_temp = input_imgs_temp[:,[2,1,0],...]
+            
             logger.image_summary('generated', output_imgs_temp, i)
             logger.image_summary('real', input_imgs_temp, i)
 
@@ -347,7 +345,7 @@ if __name__ == "__main__":
 
             for file_idx in range(10):
                 # random noise z
-                noise_z = torch.randn(BATCH_SIZE, 1, 4, 4)
+                noise_z = torch.randn(BATCH_SIZE, 3, 4, 4)
 
                 if is_gpu_mode:
                     noise_z = Variable(noise_z.cuda())

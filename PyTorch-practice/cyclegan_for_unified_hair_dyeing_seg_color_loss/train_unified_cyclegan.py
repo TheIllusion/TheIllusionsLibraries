@@ -312,8 +312,8 @@ if __name__ == "__main__":
             l1_loss_rec_b = F.l1_loss(reconstructed_b, answers)
 
             # lsgan loss for the generator_a
-            #loss_gen_lsgan_a = 0.5 * torch.mean((output_disc_fake_b - 1) ** 2) + 0.2 * (loss_lab_a + loss_lab_b)
-            loss_gen_lsgan_a = 0.5 * torch.mean((output_disc_fake_b - 1) ** 2)
+            loss_gen_lsgan_a = 0.5 * torch.mean((output_disc_fake_b - 1) ** 2) + 0.2 * (loss_lab_a + loss_lab_b)
+            #loss_gen_lsgan_a = 0.5 * torch.mean((output_disc_fake_b - 1) ** 2)
 
             # lsgan loss for the generator_b
             loss_gen_lsgan_b = 0.5 * torch.mean((output_disc_fake_a - 1) ** 2)

@@ -110,15 +110,17 @@ class AutoEncoder(nn.Module):
 
         super(AutoEncoder, self).__init__()
 
-        # input image will have the size of 64x64x3
+        # input image will have the size of 128x128x3
         self.first_conv_layer = TransitionDown(in_channels=3, out_channels=32, kernel_size=3)
         self.second_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=3)
         self.third_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
         self.fourth_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
-        self.fifth_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
-
+        self.fifth_conv_layer = TransitionDown(in_channels=256, out_channels=3, kernel_size=3)
+        
+        # 4x4 size
+        
         # transition ups
-        self.sixth_t_up_layer = TransitionUp(in_channels=512, out_channels=256)
+        self.sixth_t_up_layer = TransitionUp(in_channels=3, out_channels=256)
         self.seventh_t_up_layer = TransitionUp(in_channels=256, out_channels=128)
         self.eighth_t_up_layer = TransitionUp(in_channels=128, out_channels=64)
         self.ninth_t_up_layer = TransitionUp(in_channels=64, out_channels=32)
@@ -218,15 +220,16 @@ if __name__ == "__main__":
             print 'loss(l1)     = ', str(l1_loss)
 
             # tf-board (scalar)
-            #logger.scalar_summary('loss-l1', l1_loss, i)
+            logger.scalar_summary('loss-l1', l1_loss, i)
 
-            # tf-board (images - first 1 batches)
-
+            # tf-board (images - first 2 batches)
             output_imgs_temp = outputs.cpu().data.numpy()[0:2]
             input_imgs_temp = input_img[0:2]
 
-            #input_imgs_temp = input_imgs_temp[..., [2,1,0]]
-            #output_imgs_temp = output_imgs_temp[..., [2,1,0]]
+            # rgb to bgr
+            input_imgs_temp = input_imgs_temp[:,[2,1,0],...]
+            output_imgs_temp = output_imgs_temp[:,[2,1,0],...]
 
             logger.image_summary('input', input_imgs_temp, i)
             logger.image_summary('generated', output_imgs_temp, i)
+            logger.image_summary('input(duplicated)', input_imgs_temp, i)

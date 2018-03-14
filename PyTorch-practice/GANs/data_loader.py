@@ -11,7 +11,7 @@ import cv2
 #ANSWER_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/seg_result_until_20170823_without_cloth/seg_result_until_20170823_without_cloth"
 
 # tbt005 (10.161.31.83)
-INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/input_imgs/"
+INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/tiny_dataset/faces/"
 #INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/temp/original_resized_face/"
 
 IS_TRAINING = True
@@ -21,8 +21,8 @@ print 'data loader for vanilla/lsgan'
 ##############################################################################################
 # Image Buffer Management
 
-INPUT_IMAGE_WIDTH = 59
-INPUT_IMAGE_HEIGHT = 59
+INPUT_IMAGE_WIDTH = 65
+INPUT_IMAGE_HEIGHT = 65
 
 # image buffers
 image_buffer_size = 3000

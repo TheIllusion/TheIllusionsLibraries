@@ -161,18 +161,15 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # input image will have the size of 64x64x3
-        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=16, kernel_size=5)
-        self.second_conv_layer = TransitionDown(in_channels=16, out_channels=32, kernel_size=5)
-        self.third_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=5)
-        self.fourth_conv_layer = TransitionDown(in_channels=64, out_channels=1, kernel_size=5)
+        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=16, kernel_size=3)
+        self.second_conv_layer = TransitionDown(in_channels=16, out_channels=32, kernel_size=3)
+        self.third_conv_layer = TransitionDown(in_channels=32, out_channels=32, kernel_size=3)
 
-        '''
-        self.fc1 = nn.Linear(4 * 4 * 512, 10)
-        self.fc2 = nn.Linear(10, 1)
+        self.fc1 = nn.Linear(8*8*32, 3)
+        self.fc2 = nn.Linear(3, 1)
 
         torch.nn.init.xavier_uniform(self.fc1.weight)
         torch.nn.init.xavier_uniform(self.fc2.weight)
-        '''
 
     def forward(self, x):
         """
@@ -180,17 +177,14 @@ class Discriminator(nn.Module):
         a Variable of output data. We can use Modules defined in the constructor as
         well as arbitrary operators on Variables.
         """
-
+                
         x = self.first_conv_layer(x)
         x = self.second_conv_layer(x)
         x = self.third_conv_layer(x)
-        x = self.fourth_conv_layer(x)
-
-        '''
-        x = x.view(-1, 4 * 4 * 512)
+        
+        x = x.view(-1, 8*8*32)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        '''
 
         sigmoid_out = nn.functional.sigmoid(x)
 

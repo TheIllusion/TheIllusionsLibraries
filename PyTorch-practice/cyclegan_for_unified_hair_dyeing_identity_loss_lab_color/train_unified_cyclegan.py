@@ -11,7 +11,7 @@ from generator_network_tiramisu import Tiramisu
 from discriminator_network import Discriminator, BATCH_SIZE
 from data_loader_for_unified_cyclegan import hair_color_list, answer_buff_dict
 
-print 'cyclegan_for_unified_hair_dyeing_identity_loss'
+print 'cyclegan_for_unified_hair_dyeing_identity_loss_lab_color'
 
 # gpu mode
 is_gpu_mode = True
@@ -26,9 +26,9 @@ LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 MODEL_SAVING_FREQUENCY = 10000
 
 # T005
-MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_identity_loss/generator_checkpoints/'
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_identity_loss_lab_color/generator_checkpoints/'
 
-TF_BOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_identity_loss/tfboard/'
+TF_BOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_identity_loss_lab_color/tfboard/'
 
 if not os.path.exists(MODEL_SAVING_DIRECTORY):
     os.mkdir(MODEL_SAVING_DIRECTORY)
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         condition_vectors = Variable(torch.from_numpy(condition_vectors).float())
             
     # opencv style
-    output_img_opencv = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT, 3))
+    output_img_opencv = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT, 3), dtype = np.uint8)
 
     # each iteration
     for i in range(TOTAL_ITERATION):
@@ -151,7 +151,6 @@ if __name__ == "__main__":
 
             # feedforward the inputs. generators. identity loss.
             outputs_gen_b_to_b = gen_model_a(torch.cat((condition_vectors, answers), 1))
-            outputs_gen_a_to_a = gen_model_b(torch.cat((condition_vectors, inputs), 1))
             
             # feedforward the data to the discriminator_a
             output_disc_real_a = disc_model_a(torch.cat((condition_vectors, inputs), 1))
@@ -172,16 +171,19 @@ if __name__ == "__main__":
             # cycle-consistency loss(a)
             reconstructed_a = gen_model_b(torch.cat((condition_vectors, outputs_gen_a_to_b), 1))
             l1_loss_rec_a = F.l1_loss(reconstructed_a, inputs)
+            l1_loss_rec_a = l1_loss_rec_a * 0.005
 
             # cycle-consistency loss(b)
             reconstructed_b = gen_model_a(torch.cat((condition_vectors, outputs_gen_b_to_a), 1))
             l1_loss_rec_b = F.l1_loss(reconstructed_b, answers)
+            l1_loss_rec_b = l1_loss_rec_b * 0.005
 
             # identity loss(a)
-            l1_loss_identity_a = F.l1_loss(outputs_gen_a_to_a, inputs)
+            l1_loss_identity_a = F.l1_loss(outputs_gen_b_to_b[:,1,:,:], answers[:,1,:,:])
+            l1_loss_identity_a = 0.1 * l1_loss_identity_a
             
-            # identity loss(b)
-            l1_loss_identity_b = F.l1_loss(outputs_gen_b_to_b, answers)
+            l1_loss_identity_b = F.l1_loss(outputs_gen_b_to_b[:,1,:,:], answers[:,1,:,:])
+            l1_loss_identity_b = 0.1 * l1_loss_identity_b
             
             # lsgan loss for the generator_a
             loss_gen_lsgan_a = 0.5 * torch.mean((output_disc_fake_b - 1) ** 2)
@@ -189,7 +191,7 @@ if __name__ == "__main__":
             # lsgan loss for the generator_b
             loss_gen_lsgan_b = 0.5 * torch.mean((output_disc_fake_a - 1) ** 2)
 
-            loss_gen_total_lsgan = loss_gen_lsgan_a + loss_gen_lsgan_b + 0.005 * (l1_loss_rec_a + l1_loss_rec_b) + 0.005 * (l1_loss_identity_a + l1_loss_identity_b)
+            loss_gen_total_lsgan = loss_gen_lsgan_a + loss_gen_lsgan_b + l1_loss_rec_a + l1_loss_rec_b + l1_loss_identity_a + l1_loss_identity_b
 
             # discriminator_a
             # Before the backward pass, use the optimizer object to zero all of the
@@ -240,19 +242,48 @@ if __name__ == "__main__":
                 logger.scalar_summary(color + ':loss(discriminator_b)', loss_disc_b_lsgan, i)
 
                 # tf-board (images - first 1 batches)
-                inputs_imgs_temp = inputs.cpu().data.numpy()[0:BATCH_SIZE]
-                output_imgs_temp_b = outputs_gen_a_to_b.cpu().data.numpy()[0:BATCH_SIZE]
-                output_imgs_temp_a = outputs_gen_b_to_a.cpu().data.numpy()[0:BATCH_SIZE]
-                answer_imgs_temp = answers.cpu().data.numpy()[0:BATCH_SIZE]
-                reconstructed_a_temp = reconstructed_a.cpu().data.numpy()[0:BATCH_SIZE]
-                reconstructed_b_temp = reconstructed_b.cpu().data.numpy()[0:BATCH_SIZE]
-
+                DISPLAY_SIZE = 1
+                inputs_imgs_temp = inputs.cpu().data.numpy()[0:DISPLAY_SIZE]
+                output_imgs_temp_b = outputs_gen_a_to_b.cpu().data.numpy()[0:DISPLAY_SIZE]
+                output_imgs_temp_a = outputs_gen_b_to_a.cpu().data.numpy()[0:DISPLAY_SIZE]
+                answer_imgs_temp = answers.cpu().data.numpy()[0:DISPLAY_SIZE]
+                reconstructed_a_temp = reconstructed_a.cpu().data.numpy()[0:DISPLAY_SIZE]
+                reconstructed_b_temp = reconstructed_b.cpu().data.numpy()[0:DISPLAY_SIZE]
+        
+                # lab to bgr
+                output_img_opencv[:, :, 0] = inputs_imgs_temp[0][0, :, :]
+                output_img_opencv[:, :, 1] = inputs_imgs_temp[0][1, :, :]
+                output_img_opencv[:, :, 2] = inputs_imgs_temp[0][2, :, :]
+                output_img_opencv = cv2.cvtColor(output_img_opencv, cv2.COLOR_LAB2BGR)
+                output_img_opencv = output_img_opencv[..., [2,1,0]]
+                inputs_imgs_temp[0][0, :, :] = output_img_opencv[:, :, 0]
+                inputs_imgs_temp[0][1, :, :] = output_img_opencv[:, :, 1]
+                inputs_imgs_temp[0][2, :, :] = output_img_opencv[:, :, 2]
+ 
+                output_img_opencv[:, :, 0] = output_imgs_temp_b[0][0, :, :]
+                output_img_opencv[:, :, 1] = output_imgs_temp_b[0][1, :, :]
+                output_img_opencv[:, :, 2] = output_imgs_temp_b[0][2, :, :]
+                output_img_opencv = cv2.cvtColor(output_img_opencv, cv2.COLOR_LAB2BGR)
+                output_img_opencv = output_img_opencv[..., [2,1,0]]
+                output_imgs_temp_b[0][0, :, :] = output_img_opencv[:, :, 0]
+                output_imgs_temp_b[0][1, :, :] = output_img_opencv[:, :, 1]
+                output_imgs_temp_b[0][2, :, :] = output_img_opencv[:, :, 2]
+                
+                output_img_opencv[:, :, 0] = answer_imgs_temp[0][0, :, :]
+                output_img_opencv[:, :, 1] = answer_imgs_temp[0][1, :, :]
+                output_img_opencv[:, :, 2] = answer_imgs_temp[0][2, :, :]
+                output_img_opencv = cv2.cvtColor(output_img_opencv, cv2.COLOR_LAB2BGR)
+                output_img_opencv = output_img_opencv[..., [2,1,0]]
+                answer_imgs_temp[0][0, :, :] = output_img_opencv[:, :, 0]
+                answer_imgs_temp[0][1, :, :] = output_img_opencv[:, :, 1]
+                answer_imgs_temp[0][2, :, :] = output_img_opencv[:, :, 2]
+                
                 # logger.an_image_summary('generated', output_img, i)
                 logger.image_summary(color + ':input', inputs_imgs_temp, i)
                 logger.image_summary(color + ':generated_b', output_imgs_temp_b, i)
-                logger.image_summary(color + ':generated_a', output_imgs_temp_a, i)
-                logger.image_summary(color + ':reconstructed_a', reconstructed_a_temp, i)
-                logger.image_summary(color + ':reconstructed_b', reconstructed_b_temp, i)
+                #logger.image_summary(color + ':generated_a', output_imgs_temp_a, i)
+                #logger.image_summary(color + ':reconstructed_a', reconstructed_a_temp, i)
+                #logger.image_summary(color + ':reconstructed_b', reconstructed_b_temp, i)
                 logger.image_summary(color + ':real', answer_imgs_temp, i)
             
         # prepare for the next iter
@@ -264,4 +295,4 @@ if __name__ == "__main__":
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(gen_model_a.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'unified_cyclegan_with_identity_loss_iter_' + str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'unified_cyclegan_with_identity_loss_lab_color_iter_' + str(i) + '.pt')

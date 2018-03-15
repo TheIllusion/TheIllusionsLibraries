@@ -1,3 +1,5 @@
+# LAB color space is used here
+
 import numpy as np
 import os, glob, random, re, time, threading
 import cv2
@@ -292,7 +294,11 @@ def image_buffer_loader():
         input_img_tmp = cv2.resize(input_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
                                    interpolation=cv2.INTER_LINEAR)
 
-        input_img_tmp = input_img_tmp[..., [2,1,0]]
+        # convert the bgr color to lab
+        input_img_tmp = cv2.cvtColor(input_img_tmp, cv2.COLOR_BGR2LAB)
+        
+        #input_img_tmp = input_img_tmp[..., [2,1,0]]
+        
         input_buff[current_buff_index][0, :, :] = input_img_tmp[:, :, 0]
         input_buff[current_buff_index][1, :, :] = input_img_tmp[:, :, 1]
         input_buff[current_buff_index][2, :, :] = input_img_tmp[:, :, 2]
@@ -315,7 +321,10 @@ def image_buffer_loader():
             answer_img_tmp = cv2.resize(answer_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
                                        interpolation=cv2.INTER_LINEAR)
 
-            answer_img_tmp = answer_img_tmp[..., [2, 1, 0]]
+            # convert the bgr color to lab
+            answer_img_tmp = cv2.cvtColor(answer_img_tmp, cv2.COLOR_BGR2LAB)
+        
+            #answer_img_tmp = answer_img_tmp[..., [2, 1, 0]]
             
             answer_buff = answer_buff_dict[color]
             answer_buff[current_buff_index][0, :, :] = answer_img_tmp[:, :, 0]
@@ -360,8 +369,8 @@ def main_alive_checker():
 
     while True:
         if is_main_alive == False:
-            # wait for the 7 secs for last chance
-            time.sleep(7)
+            # wait for the 5 secs for last chance
+            time.sleep(5)
             if is_main_alive == False:
                 exit_notification = True
                 print 'Exit(2)'

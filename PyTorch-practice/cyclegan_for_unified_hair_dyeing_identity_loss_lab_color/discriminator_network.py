@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from data_loader_for_unified_cyclegan import hair_color_list
 
-BATCH_SIZE = 2
+BATCH_SIZE = 4
 
 class ConvolutionDown(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):
@@ -11,7 +11,7 @@ class ConvolutionDown(nn.Module):
 
         # self.drop_out = nn.Dropout2d(p=0.2)
         self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels,
-                              kernel_size=3, padding=1, stride=1, bias=True)
+                              kernel_size=3, padding=1, stride=1, bias=False)
 
         # weight initialization
         torch.nn.init.xavier_uniform(self.conv.weight)

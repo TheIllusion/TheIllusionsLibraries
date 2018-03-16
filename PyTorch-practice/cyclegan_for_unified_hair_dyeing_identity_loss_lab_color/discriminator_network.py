@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from data_loader_for_unified_cyclegan import hair_color_list
 
-BATCH_SIZE = 4
+BATCH_SIZE = 2
 
 class ConvolutionDown(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):
@@ -37,18 +37,20 @@ class Discriminator(nn.Module):
         """
         super(Discriminator, self).__init__()
 
-        # input image will have the size of 64x64x3
+        # input image will have the size of 256x256x3
         self.first_conv_layer = ConvolutionDown(in_channels=3+len(hair_color_list), out_channels=32, kernel_size=3)
         self.second_conv_layer = ConvolutionDown(in_channels=32, out_channels=64, kernel_size=3)
         self.third_conv_layer = ConvolutionDown(in_channels=64, out_channels=128, kernel_size=3)
         self.fourth_conv_layer = ConvolutionDown(in_channels=128, out_channels=256, kernel_size=3)
-        self.fifth_conv_layer = ConvolutionDown(in_channels=256, out_channels=512, kernel_size=3)
-        self.last_conv_layer = ConvolutionDown(in_channels=512, out_channels=1, kernel_size=3)
+        #self.fifth_conv_layer = ConvolutionDown(in_channels=256, out_channels=512, kernel_size=3)
+        #self.last_conv_layer = ConvolutionDown(in_channels=512, out_channels=1, kernel_size=3)
         
+        self.fc1 = nn.Linear(16 * 16 * 256, 5)
+        self.fc2 = nn.Linear(5, 1)
 
-        #self.fc1 = nn.Linear(8 * 8 * 512, 5)
-        #self.fc2 = nn.Linear(5, 1)
-
+        torch.nn.init.xavier_uniform(self.fc1.weight)
+        torch.nn.init.xavier_uniform(self.fc2.weight)
+        
     def forward(self, x):
         """
         In the forward function we accept a Variable of input data and we must return
@@ -60,12 +62,13 @@ class Discriminator(nn.Module):
         x = self.second_conv_layer(x)
         x = self.third_conv_layer(x)
         x = self.fourth_conv_layer(x)
-        x = self.fifth_conv_layer(x)
-        x = self.last_conv_layer(x)
+        #x = self.fifth_conv_layer(x)
+        #x = self.last_conv_layer(x)
         
         #x = x.view(BATCH_SIZE, 8 * 8 * 512)
-        #x = F.relu(self.fc1(x))
-        #x = F.relu(self.fc2(x))
+        x = x.view(-1, 16 * 16 * 256)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
 
         sigmoid_out = nn.functional.sigmoid(x)
 

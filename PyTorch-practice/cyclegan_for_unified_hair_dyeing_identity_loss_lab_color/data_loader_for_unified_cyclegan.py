@@ -24,8 +24,8 @@ ANSWER_IMAGE_DIRECTORY_PATH_GRAY = '/home1/irteamsu/data/rklee/hair_dyeing/black
 ##############################################################################################
 # Image Buffer Management
 
-INPUT_IMAGE_WIDTH = 128
-INPUT_IMAGE_HEIGHT = 128
+INPUT_IMAGE_WIDTH = 256
+INPUT_IMAGE_HEIGHT = 256
 
 # image buffers
 image_buffer_size = 100

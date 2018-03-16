@@ -58,8 +58,10 @@ if __name__ == "__main__":
     gen_params_total = itertools.chain(gen_model_a.parameters(), gen_model_b.parameters())
     optimizer_gen = torch.optim.Adam(gen_params_total, lr=LEARNING_RATE_GENERATOR)
 
-    optimizer_disc_a = torch.optim.Adam(disc_model_a.parameters(), lr=LEARNING_RATE_DISCRIMINATOR)
-    optimizer_disc_b = torch.optim.Adam(disc_model_b.parameters(), lr=LEARNING_RATE_DISCRIMINATOR)
+    disc_params_total = itertools.chain(disc_model_a.parameters(), disc_model_b.parameters())
+    optimizer_disc = torch.optim.Adam(disc_params_total, lr=LEARNING_RATE_DISCRIMINATOR)
+    #optimizer_disc_a = torch.optim.Adam(disc_model_a.parameters(), lr=LEARNING_RATE_DISCRIMINATOR)
+    #optimizer_disc_b = torch.optim.Adam(disc_model_b.parameters(), lr=LEARNING_RATE_DISCRIMINATOR)
 
     # read imgs
     image_buff_read_index = 0
@@ -168,6 +170,8 @@ if __name__ == "__main__":
             # lsgan loss for the discriminator_b
             loss_disc_b_lsgan = 0.5 * (torch.mean((output_disc_real_b - 1) ** 2) + torch.mean(output_disc_fake_b ** 2))
 
+            loss_disc_total = loss_disc_a_lsgan + loss_disc_b_lsgan
+            
             # cycle-consistency loss(a)
             reconstructed_a = gen_model_b(torch.cat((condition_vectors, outputs_gen_a_to_b), 1))
             l1_loss_rec_a = F.l1_loss(reconstructed_a, inputs)
@@ -182,7 +186,7 @@ if __name__ == "__main__":
             l1_loss_identity_a = F.l1_loss(outputs_gen_b_to_b[:,1,:,:], answers[:,1,:,:])
             l1_loss_identity_a = 0.1 * l1_loss_identity_a
             
-            l1_loss_identity_b = F.l1_loss(outputs_gen_b_to_b[:,1,:,:], answers[:,1,:,:])
+            l1_loss_identity_b = F.l1_loss(outputs_gen_b_to_b[:,2,:,:], answers[:,2,:,:])
             l1_loss_identity_b = 0.1 * l1_loss_identity_b
             
             # lsgan loss for the generator_a
@@ -193,6 +197,7 @@ if __name__ == "__main__":
 
             loss_gen_total_lsgan = loss_gen_lsgan_a + loss_gen_lsgan_b + l1_loss_rec_a + l1_loss_rec_b + l1_loss_identity_a + l1_loss_identity_b
 
+            '''
             # discriminator_a
             # Before the backward pass, use the optimizer object to zero all of the
             # gradients for the variables it will update (which are the learnable weights
@@ -207,13 +212,18 @@ if __name__ == "__main__":
             optimizer_disc_b.zero_grad()
             loss_disc_b_lsgan.backward(retain_graph=True)
             optimizer_disc_b.step()
-
+            '''
+            
+            optimizer_disc.zero_grad()
+            loss_disc_total.backward(retain_graph=True)
+            optimizer_disc.step()
+            
             # generators
             optimizer_gen.zero_grad()
             loss_gen_total_lsgan.backward()
             optimizer_gen.step()
 
-            if i % 30 == 0:
+            if i % 20 == 0:
                 print '-----------------------------------------------'
                 print '-----------------------------------------------'
                 print 'iterations = ', str(i)

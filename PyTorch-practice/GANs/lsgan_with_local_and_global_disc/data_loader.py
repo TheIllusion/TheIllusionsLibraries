@@ -3,10 +3,10 @@ import os, glob, random, re, time, threading
 import cv2
 
 # Macbook 12
-INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/data/tiny_datasets_for_cpu/face_imgs"
+#INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/data/tiny_datasets_for_cpu/face_imgs"
 
 # t005
-#INPUT_IMAGE_DIRECTORY_PATH = '/data/rklee/hair_segmentation/seg_result_until_20170911/original_all'
+INPUT_IMAGE_DIRECTORY_PATH = '/data/rklee/hair_segmentation/seg_result_until_20170911/original_all'
 
 IS_TRAINING = True
 
@@ -15,11 +15,11 @@ print 'data loader for lsgan with local and global disc'
 ##############################################################################################
 # Image Buffer Management
 
-INPUT_IMAGE_WIDTH = 130
-INPUT_IMAGE_HEIGHT = 130
+INPUT_IMAGE_WIDTH = 67
+INPUT_IMAGE_HEIGHT = 67
 
 # image buffers
-image_buffer_size = 100
+image_buffer_size = 300
 
 # OpenCV format
 # input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
@@ -138,8 +138,8 @@ def main_alive_checker():
 
     while True:
         if is_main_alive == False:
-            # wait for the 3 secs for last chance
-            time.sleep(3)
+            # wait for the 5 secs for last chance
+            time.sleep(5)
             if is_main_alive == False:
                 exit_notification = True
                 print 'Exit(2)'

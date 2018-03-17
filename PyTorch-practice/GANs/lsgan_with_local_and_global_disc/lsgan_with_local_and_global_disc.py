@@ -12,10 +12,10 @@ import time
 import itertools
 
 # gpu mode
-is_gpu_mode = False
+is_gpu_mode = True
 
 # batch size
-BATCH_SIZE = 20
+BATCH_SIZE = 50
 TOTAL_ITERATION = 1000000
 
 # learning rate
@@ -26,7 +26,7 @@ LEARNING_RATE_DISC = 1 * 1e-4
 MODEL_SAVING_FREQUENCY = 10000
 
 TARGET_SYSTEM_LIST = ['MACBOOK_12', 't005']
-TARGET_SYSTEM = TARGET_SYSTEM_LIST[0]
+TARGET_SYSTEM = TARGET_SYSTEM_LIST[1]
 
 if TARGET_SYSTEM == 'MACBOOK_12':
     # Macbook 12'
@@ -115,13 +115,13 @@ class GlobalDiscriminator(nn.Module):
 
         super(GlobalDiscriminator, self).__init__()
 
-        # input image will have the size of 128x128x3
+        # input image will have the size of 64x64x3
         self.first_conv_layer = TransitionDown(in_channels=3, out_channels=32, kernel_size=5)
-        self.second_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=5)
-        self.third_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=5)
-        self.fourth_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=5)
+        self.second_conv_layer = TransitionDown(in_channels=32, out_channels=32, kernel_size=5)
+        self.third_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=5)
+        self.fourth_conv_layer = TransitionDown(in_channels=64, out_channels=64, kernel_size=5)
 
-        self.fc1 = nn.Linear(9 * 9 * 256, 1)
+        self.fc1 = nn.Linear(5 * 5 * 64, 1)
 
         torch.nn.init.xavier_uniform(self.fc1.weight)
 
@@ -137,7 +137,8 @@ class GlobalDiscriminator(nn.Module):
         x = self.third_conv_layer(x)
         x = self.fourth_conv_layer(x)
 
-        x = x.view(-1, 9 * 9 * 256)
+        #print 'x.shape=', x.shape
+        x = x.view(-1, 5 * 5 * 64)
         x = F.relu(self.fc1(x))
 
         sigmoid_out = nn.functional.sigmoid(x)
@@ -158,8 +159,9 @@ class LocalDiscriminator(nn.Module):
         self.first_conv_layer = TransitionDown(in_channels=3, out_channels=32, kernel_size=5)
         self.second_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=5)
         self.third_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=5)
-        self.fourth_conv_layer = TransitionDown(in_channels=128, out_channels=1, kernel_size=5)
-
+        self.fourth_conv_layer = TransitionDown(in_channels=128, out_channels=32, kernel_size=5)
+        self.fifth_conv_layer = TransitionDown(in_channels=32, out_channels=1, kernel_size=5)
+        
         '''
         self.fc1 = nn.Linear(4 * 4 * 512, 10)
         self.fc2 = nn.Linear(10, 1)
@@ -179,6 +181,7 @@ class LocalDiscriminator(nn.Module):
         x = self.second_conv_layer(x)
         x = self.third_conv_layer(x)
         x = self.fourth_conv_layer(x)
+        x = self.fifth_conv_layer(x)
 
         '''
         x = x.view(-1, 4 * 4 * 512)
@@ -200,27 +203,27 @@ class Generator(nn.Module):
         super(Generator, self).__init__()
 
         # output feature map will have the size of 8x8
-        self.first_deconv = TransitionUp(in_channels=3, out_channels=128, stride=2, padding=1, kernel_size=4)
-        self.first_batch_norm = nn.BatchNorm2d(128)
+        self.first_deconv = TransitionUp(in_channels=3, out_channels=256, stride=2, padding=1, kernel_size=4)
+        self.first_batch_norm = nn.BatchNorm2d(256)
 
         # output feature map will have the size of 16x16
-        self.second_deconv = TransitionUp(in_channels=128, out_channels=128, stride=2, padding=1, kernel_size=4)
+        self.second_deconv = TransitionUp(in_channels=256, out_channels=128, stride=2, padding=1, kernel_size=4)
         self.second_batch_norm = nn.BatchNorm2d(128)
 
         # output feature map will have the size of 32x32
-        self.third_deconv = TransitionUp(in_channels=128, out_channels=128, stride=2, padding=1, kernel_size=4)
-        self.third_batch_norm = nn.BatchNorm2d(128)
+        self.third_deconv = TransitionUp(in_channels=128, out_channels=32, stride=2, padding=1, kernel_size=4)
+        self.third_batch_norm = nn.BatchNorm2d(32)
 
         # output feature map will have the size of 64x64
-        self.fourth_deconv = TransitionUp(in_channels=128, out_channels=64, stride=2, padding=1, kernel_size=4)
-        self.fourth_batch_norm = nn.BatchNorm2d(64)
+        self.fourth_deconv = TransitionUp(in_channels=32, out_channels=16, stride=2, padding=1, kernel_size=4)
+        self.fourth_batch_norm = nn.BatchNorm2d(16)
 
         # output feature map will have the size of 128x128
-        self.fifth_deconv = TransitionUp(in_channels=64, out_channels=32, stride=2, padding=1, kernel_size=4)
-        self.fifth_batch_norm = nn.BatchNorm2d(32)
+        self.fifth_deconv = TransitionUp(in_channels=16, out_channels=16, stride=1, padding=1, kernel_size=4)
+        self.fifth_batch_norm = nn.BatchNorm2d(16)
 
         # output feature map will have the size of 128x128
-        self.sixth_deconv = TransitionUp(in_channels=32, out_channels=16, stride=1, padding=1, kernel_size=4)
+        self.sixth_deconv = TransitionUp(in_channels=16, out_channels=16, stride=1, padding=1, kernel_size=4)
         self.sixth_batch_norm = nn.BatchNorm2d(16)
 
         # output feature map will have the size of 128x128
@@ -275,6 +278,7 @@ if __name__ == "__main__":
     if is_gpu_mode:
         global_disc.cuda()
         local_disc.cuda()
+        generator.cuda()
 
     optimizer_gen = torch.optim.Adam(generator.parameters(), lr=LEARNING_RATE_GEN)
 
@@ -318,7 +322,8 @@ if __name__ == "__main__":
 
         # random noise z
         noise_z = torch.randn(BATCH_SIZE, 3, 4, 4)
-
+        #print 'noise_z=', noise_z
+        
         if is_gpu_mode:
             inputs = Variable(torch.from_numpy(input_img).float().cuda())
             noise_z = Variable(noise_z.cuda())
@@ -337,13 +342,14 @@ if __name__ == "__main__":
         output_local_disc_fake = local_disc(outputs_gen)
 
         # lsgan loss for the discriminator
-        loss_global_disc = 0.5 * (torch.mean((output_global_disc_real - 1) ** 2) + torch.mean(output_global_disc_fake ** 2))
-        loss_local_disc = 0.5 * (torch.mean((output_local_disc_real - 1) ** 2) + torch.mean(output_local_disc_fake ** 2))
+        loss_global_disc = 0.4 * (torch.mean((output_global_disc_real - 1) ** 2) + torch.mean(output_global_disc_fake ** 2))
+        loss_local_disc = 0.6 * (torch.mean((torch.mean(output_local_disc_real) - 1) ** 2) + torch.mean(torch.mean(output_local_disc_fake) ** 2))
 
         loss_disc_total = loss_global_disc + loss_local_disc
 
         # lsgan loss for the generator
-        loss_gen = 0.5 * torch.mean(((output_global_disc_fake + torch.mean(output_local_disc_fake)) - 1) ** 2)
+        loss_gen = 0.5 * torch.mean((output_global_disc_fake - 1) ** 2) + \
+                   0.5 * torch.mean((torch.mean(output_local_disc_fake) - 1) ** 2)
 
         # Before the backward pass, use the optimizer object to zero all of the
         # gradients for the variables it will update (which are the learnable weights
@@ -361,15 +367,16 @@ if __name__ == "__main__":
         loss_gen.backward()
         optimizer_gen.step()
 
-        if i % 50 == 0:
+        if i % 20 == 0:
             print '-----------------------------------------------'
             print 'iterations = ', str(i)
-            print 'output_global_disc_real=', output_global_disc_real
-            print 'output_global_disc_fake=', output_global_disc_fake
-            print 'output_local_disc_real=', output_local_disc_real
-            print 'output_local_disc_fake=', output_local_disc_fake
+            print 'output_global_disc_real=', output_global_disc_real[0]
+            print 'output_global_disc_fake=', output_global_disc_fake[0]
+            print 'output_local_disc_real=', output_local_disc_real[0]
+            print 'output_local_disc_fake=', output_local_disc_fake[0]
             print 'loss_global_disc=', loss_global_disc
             print 'loss_local_disc=', loss_local_disc
+            print 'torch.mean((output_local_disc_fake - 1) ** 2)=', torch.mean((output_local_disc_fake - 1) ** 2)
             print 'loss_gen=', loss_gen
 
             # tf-board (scalar)

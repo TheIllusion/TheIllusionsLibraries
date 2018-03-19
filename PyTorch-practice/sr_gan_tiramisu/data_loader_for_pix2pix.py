@@ -2,17 +2,11 @@ import numpy as np
 import os, glob, random, re, time, threading
 import cv2
 
-# Macbook Pro
-# INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/original_all"
-# ANSWER_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/seg_result_until_20170911"
+# t005 
+# tiny dataset for SR (div2k,4X.)
+ANSWER_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/tiny_dataset/sr/div2k_custom_tr_set_for_x4/DIV2K_train_HR_modified/"
 
-# i7-2600k
-INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/original_all/cany_edge_original_all/"
-ANSWER_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all"
-
-# tbt005 (10.161.31.83)
-# INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_segmentation/seg_result_until_20170911/total_augmented_training_data/input_imgs/"
-# INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/temp/original_resized_face/"
+INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/tiny_dataset/sr/div2k_custom_tr_set_for_x4/X4_modified/"
 
 IS_TRAINING = True
 
@@ -23,7 +17,7 @@ INPUT_IMAGE_WIDTH = 256
 INPUT_IMAGE_HEIGHT = 256
 
 # image buffers
-image_buffer_size = 300
+image_buffer_size = 30
 
 # OpenCV format
 # input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
@@ -43,7 +37,7 @@ lineIdx = 0
 # load the filelist
 # os.chdir(ANSWER_IMAGE_DIRECTORY_PATH)
 os.chdir(INPUT_IMAGE_DIRECTORY_PATH)
-jpg_files = glob.glob('*.jpg')
+jpg_files = glob.glob('*.png')
 random.shuffle(jpg_files)
 
 max_training_index = len(jpg_files)
@@ -64,7 +58,7 @@ def image_buffer_loader():
 
         end_index = 0
 
-        match = re.search(".jpg", filename_)
+        match = re.search(".png", filename_)
         if match:
             end_index = match.end()
             filename = filename_[0:end_index]
@@ -103,7 +97,7 @@ def image_buffer_loader():
             if lineIdx >= max_training_index:
                 lineIdx = 0
 
-            print 'skip this jpg file. continue.'
+            print 'skip this jpg file. continue. filename=', filename
             continue
 
         '''
@@ -127,7 +121,7 @@ def image_buffer_loader():
             if lineIdx >= max_training_index:
                 lineIdx = 0
 
-            print 'skip this jpg file. continue.'
+            print 'skip this answer jpg file. continue. filename=', filename
             continue
 
         answer_img_tmp = cv2.resize(answer_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),

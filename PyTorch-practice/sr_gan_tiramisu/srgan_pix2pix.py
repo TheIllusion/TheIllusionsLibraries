@@ -6,9 +6,9 @@ import cv2, time, os
 import numpy as np
 import data_loader_for_pix2pix as data_loader
 from logger import Logger
-from tiramisu_model import Tiramisu
+from generator_modified_tiramisu import Tiramisu
 
-print 'simple_pix2pix.py'
+print 'srgan_pix2pix.py'
 
 # gpu mode
 is_gpu_mode = True
@@ -27,19 +27,19 @@ LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 10000
 
-# tbt003
-#MODEL_SAVING_DIRECTORY = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/vanilla_gan_models/"
-#RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/gen_images/'
+# T005
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/sr_gan_tiramisu/generator_checkpoints/'
 
-# i7-2600k
-MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
-RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_simple_pix2pix/'
+TF_BOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/sr_gan_tiramisu/tfboard/'
+
+if not os.path.exists(MODEL_SAVING_DIRECTORY):
+    os.mkdir(MODEL_SAVING_DIRECTORY)
+
+if not os.path.exists(TF_BOARD_DIRECTORY):
+    os.mkdir(TF_BOARD_DIRECTORY)
 
 # tensor-board logger
-if not os.path.exists(MODEL_SAVING_DIRECTORY + 'tf_board_logger'):
-    os.mkdir(MODEL_SAVING_DIRECTORY + 'tf_board_logger')
-
-logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger')
+logger = Logger(TF_BOARD_DIRECTORY)
 
 class TransitionDown(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):
@@ -104,13 +104,6 @@ class Discriminator(nn.Module):
 
 ###################################################################################
 
-if is_gpu_mode:
-    ones_label = Variable(torch.ones(BATCH_SIZE).cuda())
-    zeros_label = Variable(torch.zeros(BATCH_SIZE).cuda())
-else:
-    ones_label = Variable(torch.ones(BATCH_SIZE))
-    zeros_label = Variable(torch.zeros(BATCH_SIZE))
-
 if __name__ == "__main__":
     print 'main'
 
@@ -120,8 +113,6 @@ if __name__ == "__main__":
     if is_gpu_mode:
         gen_model.cuda()
         disc_model.cuda()
-        # gen_model = torch.nn.DataParallel(gen_model).cuda()
-        # disc_model = torch.nn.DataParallel(disc_model).cuda()
 
     optimizer_gen = torch.optim.Adam(gen_model.parameters(), lr=LEARNING_RATE_GENERATOR)
     optimizer_disc = torch.optim.Adam(disc_model.parameters(), lr=LEARNING_RATE_DISCRIMINATOR)
@@ -135,9 +126,6 @@ if __name__ == "__main__":
 
     # opencv style
     output_img_opencv = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT, 3))
-
-    if not os.path.exists(RESULT_IMAGE_DIRECTORY):
-        os.mkdir(RESULT_IMAGE_DIRECTORY)
 
     for i in range(TOTAL_ITERATION):
 
@@ -166,18 +154,12 @@ if __name__ == "__main__":
             if image_buff_read_index >= data_loader.image_buffer_size:
                 image_buff_read_index = 0
 
-        # random noise z
-        # noise_z is no longer necessary for pix2pix
-        #noise_z = torch.randn(BATCH_SIZE, 1, 4, 4)
-
         if is_gpu_mode:
             inputs = Variable(torch.from_numpy(input_img).float().cuda())
             answers = Variable(torch.from_numpy(answer_img).float().cuda())
-            #noise_z = Variable(noise_z.cuda())
         else:
             inputs = Variable(torch.from_numpy(input_img).float())
             answers = Variable(torch.from_numpy(answer_img).float())
-            #noise_z = Variable(noise_z)
 
         # feedforward the inputs. generator
         #outputs_gen = gen_model(noise_z)
@@ -186,14 +168,6 @@ if __name__ == "__main__":
         # feedforward the (input, answer) pairs. discriminator
         output_disc_real = disc_model(torch.cat((inputs, answers), 1))
         output_disc_fake = disc_model(torch.cat((inputs, outputs_gen), 1))
-
-        # loss functions
-        # vanilla gan loss for the discriminator
-        '''
-        loss_real_d = F.binary_cross_entropy(output_disc_real, ones_label)
-        loss_fake_d = F.binary_cross_entropy(output_disc_fake, zeros_label)
-        loss_disc_total = loss_real_d + loss_fake_d
-        '''
 
         # lsgan loss for the discriminator
         loss_disc_total_lsgan = 0.5 * (torch.mean((output_disc_real - 1)**2) + torch.mean(output_disc_fake**2))
@@ -216,7 +190,6 @@ if __name__ == "__main__":
         # gradients for the variables it will update (which are the learnable weights
         # of the model)
         optimizer_disc.zero_grad()
-        optimizer_gen.zero_grad()
 
         # Backward pass: compute gradient of the loss with respect to model parameters
         loss_disc_total_lsgan.backward(retain_graph=True)
@@ -225,7 +198,6 @@ if __name__ == "__main__":
         optimizer_disc.step()
 
         # generator
-        optimizer_disc.zero_grad()
         optimizer_gen.zero_grad()
         loss_gen_total_lsgan.backward()
         optimizer_gen.step()
@@ -251,36 +223,14 @@ if __name__ == "__main__":
             # tf-board (images - first 1 batches)
             output_imgs_temp = outputs_gen.cpu().data.numpy()[0:1]
             answer_imgs_temp = answers.cpu().data.numpy()[0:1]
+            inputs_temp = inputs.cpu().data.numpy()[0:1]
             # logger.an_image_summary('generated', output_img, i)
             logger.image_summary('generated', output_imgs_temp, i)
             logger.image_summary('real', answer_imgs_temp, i)
-
-        if i % 500 == 0:
-            # save the output images
-            # feedforward the inputs. generator
-
-            for file_idx in range(1):
-                # random noise z
-                '''
-                noise_z = torch.randn(BATCH_SIZE, 1, 4, 4)
-
-                if is_gpu_mode:
-                    noise_z = Variable(noise_z.cuda())
-                else:
-                    noise_z = Variable(noise_z)
-                '''
-
-                outputs_gen = gen_model(inputs)
-                output_img = outputs_gen.cpu().data.numpy()[0]
-
-                output_img_opencv[:, :, 0] = output_img[0, :, :]
-                output_img_opencv[:, :, 1] = output_img[1, :, :]
-                output_img_opencv[:, :, 2] = output_img[2, :, :]
-
-                cv2.imwrite(os.path.join(RESULT_IMAGE_DIRECTORY, \
-                                         'pix2pix_generated_iter_' + str(i) + '_' + str(file_idx) + '.jpg'), output_img_opencv)
+            logger.image_summary('input', inputs_temp, i)
+            logger.image_summary('input(dup)', inputs_temp, i)
 
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(gen_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'pix2pix_gen_model_iter_' + str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'sr_gan_tiramisu_iter_' + str(i) + '.pt')

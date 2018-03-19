@@ -76,7 +76,9 @@ if __name__ == "__main__":
 
         img_opencv_ori = img_opencv.copy()
         
-        img_opencv = img_opencv[..., [2,1,0]]
+
+        img_opencv = cv2.cvtColor(img_opencv, cv2.COLOR_BGR2LAB)
+        #img_opencv = img_opencv[..., [2,1,0]]
         
         input_img[0][0, :, :] = img_opencv[:, :, 0]
         input_img[0][1, :, :] = img_opencv[:, :, 1]

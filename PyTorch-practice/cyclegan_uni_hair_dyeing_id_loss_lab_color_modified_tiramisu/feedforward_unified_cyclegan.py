@@ -130,7 +130,8 @@ if __name__ == "__main__":
             output_img_opencv[:, :, 1] = output_img[1, :, :]
             output_img_opencv[:, :, 2] = output_img[2, :, :]
 
-            output_img_opencv = output_img_opencv[..., [2,1,0]]
+            #output_img_opencv = output_img_opencv[..., [2,1,0]]
+            output_img_opencv = cv2.cvtColor(output_img_opencv, cv2.COLOR_LAB2BGR)
             
             #cv2.imwrite(RESULT_IMAGE_DIRECTORY_PATH + os.path.basename(jpg_files[idx]), output_img_opencv)
 

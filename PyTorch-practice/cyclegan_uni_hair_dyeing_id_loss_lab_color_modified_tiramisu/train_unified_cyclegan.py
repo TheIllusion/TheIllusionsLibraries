@@ -19,11 +19,11 @@ is_gpu_mode = True
 TOTAL_ITERATION = 1000000
 
 # learning rate
-LEARNING_RATE_GENERATOR = 0.1 * 1e-4
+LEARNING_RATE_GENERATOR = 2 * 1e-4
 LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
 
 # model saving (iterations)
-MODEL_SAVING_FREQUENCY = 1000
+MODEL_SAVING_FREQUENCY = 3000
 
 # T005
 MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_uni_hair_dyeing_id_loss_lab_color_modified_tiramisu/generator_checkpoints/'
@@ -184,10 +184,10 @@ if __name__ == "__main__":
 
             # identity loss(a)
             l1_loss_identity_a = F.l1_loss(outputs_gen_b_to_b[:,1,:,:], answers[:,1,:,:])
-            l1_loss_identity_a = 0.01 * l1_loss_identity_a
+            l1_loss_identity_a = 0.05 * l1_loss_identity_a
             
             l1_loss_identity_b = F.l1_loss(outputs_gen_b_to_b[:,2,:,:], answers[:,2,:,:])
-            l1_loss_identity_b = 0.01 * l1_loss_identity_b
+            l1_loss_identity_b = 0.05 * l1_loss_identity_b
             
             # lsgan loss for the generator_a
             loss_gen_lsgan_a = 0.5 * torch.mean((output_disc_fake_b - 1) ** 2)

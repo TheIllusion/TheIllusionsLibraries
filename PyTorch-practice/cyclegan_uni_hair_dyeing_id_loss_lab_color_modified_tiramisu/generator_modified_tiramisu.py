@@ -17,12 +17,12 @@ class Layer(nn.Module):
         #torch.nn.init.xavier_uniform(self.conv.weight)
         torch.nn.init.kaiming_uniform(self.conv.weight)
         
-        #self.batch_norm = nn.BatchNorm2d(out_channels)
+        self.batch_norm = nn.BatchNorm2d(out_channels)
 
     def forward(self, x):
         #x = self.drop_out(x)
         x = F.relu(self.conv(x))
-        #x = self.batch_norm(x)
+        x = self.batch_norm(x)
         
         # substitution for the batch_norm (by rklee)
         #x = F.relu(x)
@@ -43,13 +43,13 @@ class TransitionDown(nn.Module):
         torch.nn.init.kaiming_uniform(self.conv.weight)
 
         out_channels = in_channels
-        #self.batch_norm = nn.BatchNorm2d(out_channels)
+        self.batch_norm = nn.BatchNorm2d(out_channels)
 
     def forward(self, x):
         x = F.max_pool2d(input=x, kernel_size=2)
         #x = self.drop_out(x)
         x = F.relu(self.conv(x))
-        #x = self.batch_norm(x)
+        x = self.batch_norm(x)
 
         return x
 

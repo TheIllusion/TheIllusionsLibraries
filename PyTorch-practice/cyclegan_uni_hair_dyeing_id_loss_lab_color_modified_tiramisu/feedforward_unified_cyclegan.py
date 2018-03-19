@@ -6,7 +6,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 #import torchvision.transforms as transforms
-from generator_network_tiramisu import Tiramisu
+from generator_modified_tiramisu import Tiramisu
 import time, cv2
 import os, glob
 import numpy as np
@@ -18,11 +18,11 @@ from data_loader_for_unified_cyclegan import hair_color_list
 # tbt005
 INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/korean_testA/"
 
-RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/feed_forward_results_models_3/"
+RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_uni_hair_dyeing_id_loss_lab_color_modified_tiramisu/feed_forward_results/"
 
-MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/models_3/'
+MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_uni_hair_dyeing_id_loss_lab_color_modified_tiramisu/generator_checkpoints/'
 
-CHECKPOINT_FILENAME = 'unified_cycle_gen_model_iter_50000.pt'
+CHECKPOINT_FILENAME = 'cyclegan_uni_hair_modified_tiramisu_iter_1000.pt'
 
 INPUT_TEST_IMAGE_WIDTH = 256
 INPUT_TEST_IMAGE_HEIGHT = 256

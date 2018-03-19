@@ -14,7 +14,8 @@ class ConvolutionDown(nn.Module):
                               kernel_size=3, padding=1, stride=1, bias=False)
 
         # weight initialization
-        torch.nn.init.xavier_uniform(self.conv.weight)
+        #torch.nn.init.xavier_uniform(self.conv.weight)
+        torch.nn.init.kaiming_uniform(self.conv.weight)
 
         self.batch_norm = nn.BatchNorm2d(out_channels)
 

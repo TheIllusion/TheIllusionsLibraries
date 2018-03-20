@@ -22,7 +22,7 @@ RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTor
 
 MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_uni_hair_dyeing_id_loss_lab_color_modified_tiramisu/generator_checkpoints/'
 
-CHECKPOINT_FILENAME = 'cyclegan_uni_hair_modified_tiramisu_iter_1000.pt'
+CHECKPOINT_FILENAME = 'cyclegan_uni_hair_modified_tiramisu_iter_9000.pt'
 
 INPUT_TEST_IMAGE_WIDTH = 256
 INPUT_TEST_IMAGE_HEIGHT = 256
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     condition_vectors = Variable(torch.from_numpy(condition_vectors).float().cuda())
         
     # opencv style
-    output_img_opencv = np.empty(shape=(INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT, 3))
+    output_img_opencv = np.empty(shape=(INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT, 3), dtype = np.uint8)
     
     for idx in range(TEST_SIZE):
         # load a single img

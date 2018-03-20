@@ -25,7 +25,7 @@ LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 # MEAN_VALUE_FOR_ZERO_CENTERED = 128
 
 # model saving (iterations)
-MODEL_SAVING_FREQUENCY = 10000
+MODEL_SAVING_FREQUENCY = 2000
 
 # T005
 MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/sr_gan_tiramisu/generator_checkpoints/'
@@ -47,7 +47,7 @@ class TransitionDown(nn.Module):
 
         # self.drop_out = nn.Dropout2d(p=0.2)
         self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels,
-                              kernel_size=3, padding=1, stride=2, bias=True)
+                              kernel_size=3, padding=1, stride=2, bias=False)
 
         # weight initialization
         torch.nn.init.xavier_uniform(self.conv.weight)
@@ -70,16 +70,25 @@ class Discriminator(nn.Module):
         """
         super(Discriminator, self).__init__()
 
-        # input image will have the size of 64x64x3
-        self.first_conv_layer = TransitionDown(in_channels=6, out_channels=32, kernel_size=3)
-        self.second_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=3)
-        self.third_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
-        self.fourth_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
-        self.fifth_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
+        # input image will have the size of 1024x1024x3
+        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=16, kernel_size=3)
+        # 512x512
+        self.second_conv_layer = TransitionDown(in_channels=16, out_channels=32, kernel_size=3)
+        # 256x256
+        self.third_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=3)
+        # 128x128
+        self.fourth_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
+        # 64x64
+        self.fifth_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
+        # 32x32
+        self.last_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
+        
+        self.fc1 = nn.Linear(16 * 16 * 512, 2)
+        self.fc2 = nn.Linear(2, 1)
 
-        self.fc1 = nn.Linear(8 * 8 * 512, 10)
-        self.fc2 = nn.Linear(10, 1)
-
+        torch.nn.init.xavier_uniform(self.fc1.weight)
+        torch.nn.init.xavier_uniform(self.fc2.weight)
+        
     def forward(self, x):
         """
         In the forward function we accept a Variable of input data and we must return
@@ -92,8 +101,10 @@ class Discriminator(nn.Module):
         x = self.third_conv_layer(x)
         x = self.fourth_conv_layer(x)
         x = self.fifth_conv_layer(x)
-
-        x = x.view(BATCH_SIZE, 8 * 8 * 512)
+        x = self.last_conv_layer(x)
+        
+        #x = x.view(BATCH_SIZE, 8 * 8 * 512)
+        x = x.view(-1, 16 * 16 * 512)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
 
@@ -122,10 +133,10 @@ if __name__ == "__main__":
 
     # pytorch style
     input_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
-    answer_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
+    answer_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH_ANSWER, data_loader.INPUT_IMAGE_HEIGHT_ANSWER))
 
     # opencv style
-    output_img_opencv = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT, 3))
+    output_img_opencv = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH_ANSWER, data_loader.INPUT_IMAGE_HEIGHT_ANSWER, 3))
 
     for i in range(TOTAL_ITERATION):
 
@@ -166,8 +177,8 @@ if __name__ == "__main__":
         outputs_gen = gen_model(inputs)
 
         # feedforward the (input, answer) pairs. discriminator
-        output_disc_real = disc_model(torch.cat((inputs, answers), 1))
-        output_disc_fake = disc_model(torch.cat((inputs, outputs_gen), 1))
+        output_disc_real = disc_model(answers)
+        output_disc_fake = disc_model(outputs_gen)
 
         # lsgan loss for the discriminator
         loss_disc_total_lsgan = 0.5 * (torch.mean((output_disc_real - 1)**2) + torch.mean(output_disc_fake**2))

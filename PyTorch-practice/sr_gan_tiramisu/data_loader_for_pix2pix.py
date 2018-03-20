@@ -16,6 +16,9 @@ IS_TRAINING = True
 INPUT_IMAGE_WIDTH = 256
 INPUT_IMAGE_HEIGHT = 256
 
+INPUT_IMAGE_WIDTH_ANSWER = 1024
+INPUT_IMAGE_HEIGHT_ANSWER = 1024
+
 # image buffers
 image_buffer_size = 30
 
@@ -25,7 +28,7 @@ image_buffer_size = 30
 
 # PyTorch format
 input_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
-answer_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT))
+answer_buff = np.empty(shape=(image_buffer_size, 3, INPUT_IMAGE_WIDTH_ANSWER, INPUT_IMAGE_HEIGHT_ANSWER))
 
 buff_status = []
 for i in range(image_buffer_size):
@@ -105,7 +108,7 @@ def image_buffer_loader():
                                                         interpolation=cv2.INTER_LINEAR)
         '''
         input_img_tmp = cv2.resize(input_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
-                                   interpolation=cv2.INTER_LINEAR)
+                                   interpolation=cv2.INTER_CUBIC)
 
         input_img_tmp = input_img_tmp[..., [2, 1, 0]]
         input_buff[current_buff_index][0, :, :] = input_img_tmp[:, :, 0]
@@ -124,7 +127,7 @@ def image_buffer_loader():
             print 'skip this answer jpg file. continue. filename=', filename
             continue
 
-        answer_img_tmp = cv2.resize(answer_img, (INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT),
+        answer_img_tmp = cv2.resize(answer_img, (INPUT_IMAGE_WIDTH_ANSWER, INPUT_IMAGE_HEIGHT_ANSWER),
                                    interpolation=cv2.INTER_LINEAR)
 
         answer_img_tmp = answer_img_tmp[..., [2, 1, 0]]

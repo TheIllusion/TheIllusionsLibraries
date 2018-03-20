@@ -25,7 +25,7 @@ LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 # MEAN_VALUE_FOR_ZERO_CENTERED = 128
 
 # model saving (iterations)
-MODEL_SAVING_FREQUENCY = 2000
+MODEL_SAVING_FREQUENCY = 5000
 
 # T005
 MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/sr_gan_tiramisu/generator_checkpoints/'
@@ -216,7 +216,7 @@ if __name__ == "__main__":
         loss_gen_total_lsgan.backward()
         optimizer_gen.step()
 
-        if i % 50 == 0:
+        if i % 500 == 0:
             print '-----------------------------------------------'
             print '-----------------------------------------------'
             print 'iterations = ', str(i)

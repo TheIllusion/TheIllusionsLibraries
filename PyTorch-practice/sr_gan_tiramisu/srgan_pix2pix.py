@@ -133,11 +133,14 @@ if __name__ == "__main__":
 
     # pytorch style
     input_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
+    
     answer_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH_ANSWER, data_loader.INPUT_IMAGE_HEIGHT_ANSWER))
 
+    bicubic_out_4x = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH_ANSWER, data_loader.INPUT_IMAGE_HEIGHT_ANSWER))
+    
     # opencv style
-    output_img_opencv = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH_ANSWER, data_loader.INPUT_IMAGE_HEIGHT_ANSWER, 3))
-
+    temp_img_opencv = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT, 3))
+    
     for i in range(TOTAL_ITERATION):
 
         exit_notification = False
@@ -236,9 +239,21 @@ if __name__ == "__main__":
             answer_imgs_temp = answers.cpu().data.numpy()[0:1]
             inputs_temp = inputs.cpu().data.numpy()[0:1]
             # logger.an_image_summary('generated', output_img, i)
+            
+            temp_img_opencv[:, :, 0] = inputs_temp[0][0, :, :]
+            temp_img_opencv[:, :, 1] = inputs_temp[0][1, :, :]
+            temp_img_opencv[:, :, 2] = inputs_temp[0][2, :, :]
+            
+            bicubic_opencv_4x = cv2.resize(temp_img_opencv, (data_loader.INPUT_IMAGE_WIDTH_ANSWER, data_loader.INPUT_IMAGE_HEIGHT_ANSWER), interpolation=cv2.INTER_CUBIC)
+            
+            bicubic_out_4x[0][0, :, :] = bicubic_opencv_4x[:, :, 0]
+            bicubic_out_4x[0][1, :, :] = bicubic_opencv_4x[:, :, 1]
+            bicubic_out_4x[0][2, :, :] = bicubic_opencv_4x[:, :, 2]
+            
             logger.image_summary('generated', output_imgs_temp, i)
             logger.image_summary('real', answer_imgs_temp, i)
             logger.image_summary('input', inputs_temp, i)
+            logger.image_summary('bicubic(opencv)', bicubic_out_4x, i)
             logger.image_summary('input(dup)', inputs_temp, i)
 
         # save the model

@@ -1,12 +1,12 @@
 import torch
 #import tiramisu
 #from torch.utils.data import DataLoader
-from torchvision import datasets
+#from torchvision import datasets
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 #import torchvision.transforms as transforms
-from generator_modified_tiramisu import Tiramisu
+from tiramisu_model import Tiramisu
 import time, cv2
 import os, glob
 import numpy as np
@@ -16,17 +16,17 @@ import numpy as np
 
 INPUT_TEST_IMAGE_DIRECTORY_PATH = "/data/rklee/sr/Flickr2K/Flickr2K_LR_bicubic/X4/"
 
-RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/sr_gan_tiramisu/feed_forward_results/"
+RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/forward_imgs_simple_cyclegan/"
 
-MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/sr_gan_tiramisu/generator_checkpoints/'
+MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
 
-CHECKPOINT_FILENAME = 'sr_gan_tiramisu_iter_140000.pt'
+CHECKPOINT_FILENAME = 'cycle_gen_model_iter_80000.pt'
 
 INPUT_TEST_IMAGE_WIDTH = 256
 INPUT_TEST_IMAGE_HEIGHT = 256
 
-ANSWER_IMAGE_WIDTH = INPUT_TEST_IMAGE_WIDTH * 4
-ANSWER_IMAGE_HEIGHT = INPUT_TEST_IMAGE_HEIGHT * 4
+ANSWER_IMAGE_WIDTH = INPUT_TEST_IMAGE_WIDTH * 1
+ANSWER_IMAGE_HEIGHT = INPUT_TEST_IMAGE_HEIGHT * 1
 
 #TEST_SIZE = 53
 #TEST_SIZE = 406
@@ -110,12 +110,9 @@ if __name__ == "__main__":
         output_img_opencv = output_img_opencv[..., [2,1,0]]
 
         #cv2.imwrite(RESULT_IMAGE_DIRECTORY_PATH + os.path.basename(jpg_files[idx]), output_img_opencv)
-
-        # create an output image with bicubic interpolation
-        bicubic_opencv_4x = cv2.resize(img_opencv_ori, (ANSWER_IMAGE_WIDTH, ANSWER_IMAGE_HEIGHT), interpolation=cv2.INTER_CUBIC)
-        
+       
         # display purposes only. create concatenated imgs (original:feedforward)
-        concated_img = np.hstack((bicubic_opencv_4x, output_img_opencv))
+        concated_img = np.hstack((img_opencv_ori, output_img_opencv))
         cv2.imwrite(RESULT_IMAGE_DIRECTORY_PATH + 'concat_' + str(idx) + '.jpg', concated_img)
     
     print 'process done'

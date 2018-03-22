@@ -16,7 +16,10 @@ from data_loader_for_unified_cyclegan import hair_color_list
 #ENABLE_MODEL_ENSEMBLES = True
 
 # tbt005
-INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/korean_testA/"
+#INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/korean_testA/"
+
+# overfitting test
+INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/data/rklee/hair_dyeing/black_to_blonde/trainA/"
 
 RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_uni_hair_dyeing_id_loss_lab_color_modified_tiramisu/feed_forward_results/"
 

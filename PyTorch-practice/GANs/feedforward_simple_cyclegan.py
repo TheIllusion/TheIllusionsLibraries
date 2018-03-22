@@ -12,13 +12,13 @@ import os, glob
 import numpy as np
 
 # tbt005
-#INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/korean_testA/"
+INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/korean_testA/"
 
-INPUT_TEST_IMAGE_DIRECTORY_PATH = "/data/rklee/sr/Flickr2K/Flickr2K_LR_bicubic/X4/"
+#INPUT_TEST_IMAGE_DIRECTORY_PATH = "/data/rklee/sr/Flickr2K/Flickr2K_LR_bicubic/X4/"
 
 RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/forward_imgs_simple_cyclegan/"
 
-MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
+MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/checkpoints_simplecyclegan_tiramisu/'
 
 CHECKPOINT_FILENAME = 'cycle_gen_model_iter_80000.pt'
 
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         
     # load the filelist
     #os.chdir(INPUT_TEST_IMAGE_DIRECTORY_PATH)
-    jpg_files = glob.glob(INPUT_TEST_IMAGE_DIRECTORY_PATH + '*.png')
+    jpg_files = glob.glob(INPUT_TEST_IMAGE_DIRECTORY_PATH + '*.jpg')
     #random.shuffle(jpg_files)
     
     max_test_index = len(jpg_files)

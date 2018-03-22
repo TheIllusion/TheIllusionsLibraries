@@ -35,15 +35,17 @@ ENABLE_TRANSFER_LEARNING = False
 MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
 RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_simple_cyclegan/'
 
+TF_BOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/tfboard_simple_cyclegan/'
+
 # i7-2600k
 #MODEL_SAVING_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
 #RESULT_IMAGE_DIRECTORY = '/home/illusion/PycharmProjects/TheIllusionsLibraries/PyTorch-practice/GANs/generate_imgs_simple_cyclegan/'
 
 # tensor-board logger
-if not os.path.exists(MODEL_SAVING_DIRECTORY + 'tf_board_logger'):
-    os.mkdir(MODEL_SAVING_DIRECTORY + 'tf_board_logger')
+if not os.path.exists(TF_BOARD_DIRECTORY):
+    os.mkdir(TF_BOARD_DIRECTORY)
 
-logger = Logger(MODEL_SAVING_DIRECTORY + 'tf_board_logger')
+logger = Logger(TF_BOARD_DIRECTORY)
 
 ###############################################################################
 # Discriminator Network
@@ -301,33 +303,7 @@ if __name__ == "__main__":
             logger.image_summary('reconstructed_b', reconstructed_b_temp, i)
             logger.image_summary('real', answer_imgs_temp, i)
 
-        if i % 500 == 0:
-            # save the output images
-            # feedforward the inputs. generator
-
-            for file_idx in range(1):
-                # random noise z
-                '''
-                noise_z = torch.randn(BATCH_SIZE, 1, 4, 4)
-
-                if is_gpu_mode:
-                    noise_z = Variable(noise_z.cuda())
-                else:
-                    noise_z = Variable(noise_z)
-                '''
-
-                outputs_gen = gen_model_a(inputs)
-                output_img = outputs_gen.cpu().data.numpy()[0]
-
-                output_img_opencv[:, :, 0] = output_img[0, :, :]
-                output_img_opencv[:, :, 1] = output_img[1, :, :]
-                output_img_opencv[:, :, 2] = output_img[2, :, :]
-
-                output_img_opencv = output_img_opencv[..., [2,1,0]]
-                cv2.imwrite(os.path.join(RESULT_IMAGE_DIRECTORY, \
-                                         'cycle_gan_generated_iter_' + str(i) + '_' + str(file_idx) + '.jpg'), output_img_opencv)
-
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(gen_model_a.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'cycle_gen_model_iter_' + str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'cycle_gen_model_cyan_iter_' + str(i) + '.pt')

@@ -12,8 +12,8 @@ import cv2
 #ANSWER_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_DATA_SSD_M550/hair_dyeing/black_to_blonde/trainB/"
 
 # tbt005 (10.161.31.83)
-INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_dyeing/black_to_blonde/trainA/"
-ANSWER_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_dyeing/black_to_blonde/trainB/"
+INPUT_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_dyeing/black_to_cyan_female/trainA/"
+ANSWER_IMAGE_DIRECTORY_PATH = "/data/rklee/hair_dyeing/black_to_cyan_female/trainB/"
 
 IS_TRAINING = True
 

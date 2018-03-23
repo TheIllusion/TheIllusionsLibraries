@@ -25,7 +25,7 @@ RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTor
 
 MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_uni_hair_dyeing_id_loss_lab_color_modified_tiramisu/generator_checkpoints/'
 
-CHECKPOINT_FILENAME = 'cyclegan_uni_hair_modified_tiramisu_iter_9000.pt'
+CHECKPOINT_FILENAME = 'cyclegan_uni_hair_modified_tiramisu_iter_0.pt'
 
 INPUT_TEST_IMAGE_WIDTH = 256
 INPUT_TEST_IMAGE_HEIGHT = 256
@@ -78,7 +78,6 @@ if __name__ == "__main__":
         img_opencv = cv2.resize(img_opencv, (INPUT_TEST_IMAGE_WIDTH, INPUT_TEST_IMAGE_HEIGHT), interpolation=cv2.INTER_LINEAR)
 
         img_opencv_ori = img_opencv.copy()
-        
 
         img_opencv = cv2.cvtColor(img_opencv, cv2.COLOR_BGR2LAB)
         #img_opencv = img_opencv[..., [2,1,0]]
@@ -118,6 +117,11 @@ if __name__ == "__main__":
             start_time = time.time()
 
             #print condition_vectors
+            
+            # debug
+            temp_input = torch.cat((condition_vectors, inputs), 1)
+            print 'temp_input =', temp_input
+            print 'color =', color
             
             outputs = tiramisu_gen_model(torch.cat((condition_vectors, inputs), 1))
 

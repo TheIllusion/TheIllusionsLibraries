@@ -147,6 +147,11 @@ if __name__ == "__main__":
                 inputs = Variable(torch.from_numpy(input_img).float())
                 answers = Variable(torch.from_numpy(answer_img).float())
 
+            # debug
+            temp_input = torch.cat((condition_vectors, inputs), 1)
+            print 'temp_input =', temp_input
+            print 'color =', color
+                      
             # feedforward the inputs. generators.
             outputs_gen_a_to_b = gen_model_a(torch.cat((condition_vectors, inputs), 1))
             outputs_gen_b_to_a = gen_model_b(torch.cat((condition_vectors, answers), 1))
@@ -224,6 +229,7 @@ if __name__ == "__main__":
             optimizer_gen.step()
 
             if i % 20 == 0:
+                '''
                 print '-----------------------------------------------'
                 print '-----------------------------------------------'
                 print 'iterations = ', str(i)
@@ -240,7 +246,8 @@ if __name__ == "__main__":
                 print '(discriminator_a out-fake) = ', output_disc_fake_a[0]
                 print '(discriminator_b out-real) = ', output_disc_real_b[0]
                 print '(discriminator_b out-fake) = ', output_disc_fake_b[0]
-
+                '''
+                
                 # tf-board (scalar)
                 logger.scalar_summary(color + ':loss(generator_a)', loss_gen_lsgan_a, i)
                 logger.scalar_summary(color + ':loss(generator_b)', loss_gen_lsgan_b, i)

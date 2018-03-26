@@ -304,4 +304,6 @@ class Tiramisu(nn.Module):
         output = sigmoid_out * 255
         #output = softmax_out
 
+        #print 'generator output.shape=', output.shape
+            
         return output

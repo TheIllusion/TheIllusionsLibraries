@@ -22,9 +22,6 @@ TOTAL_ITERATION = 1000000
 LEARNING_RATE_GENERATOR = 3 * 1e-4
 LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 
-# zero centered
-# MEAN_VALUE_FOR_ZERO_CENTERED = 128
-
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 10000
 
@@ -82,17 +79,20 @@ class Discriminator(nn.Module):
         """
         super(Discriminator, self).__init__()
 
-        # input image will have the size of 64x64x3
-        self.first_conv_layer = ConvolutionDown(in_channels=3, out_channels=32, kernel_size=3)
-        self.second_conv_layer = ConvolutionDown(in_channels=32, out_channels=64, kernel_size=3)
-        self.third_conv_layer = ConvolutionDown(in_channels=64, out_channels=128, kernel_size=3)
-        self.fourth_conv_layer = ConvolutionDown(in_channels=128, out_channels=256, kernel_size=3)
-        self.fifth_conv_layer = ConvolutionDown(in_channels=256, out_channels=512, kernel_size=3)
-        self.last_conv_layer = ConvolutionDown(in_channels=512, out_channels=1, kernel_size=3)
+        # input image will have the size of 256x256x3
+        self.first_conv_layer = ConvolutionDown(in_channels=3, out_channels=64, kernel_size=3)
+        self.second_conv_layer = ConvolutionDown(in_channels=64, out_channels=128, kernel_size=3)
+        self.third_conv_layer = ConvolutionDown(in_channels=128, out_channels=256, kernel_size=3)
+        self.fourth_conv_layer = ConvolutionDown(in_channels=256, out_channels=512, kernel_size=3)
+        self.fifth_conv_layer = ConvolutionDown(in_channels=512, out_channels=1024, kernel_size=3)
+        #self.last_conv_layer = ConvolutionDown(in_channels=512, out_channels=1, kernel_size=3)
         
-
-        #self.fc1 = nn.Linear(8 * 8 * 512, 5)
-        #self.fc2 = nn.Linear(5, 1)
+        self.fc1 = nn.Linear(8 * 8 * 1024, 5)
+        self.fc2 = nn.Linear(5, 1)
+        
+        # weight initialization
+        torch.nn.init.xavier_uniform(self.fc1.weight)
+        torch.nn.init.xavier_uniform(self.fc2.weight)
 
     def forward(self, x):
         """
@@ -106,24 +106,17 @@ class Discriminator(nn.Module):
         x = self.third_conv_layer(x)
         x = self.fourth_conv_layer(x)
         x = self.fifth_conv_layer(x)
-        x = self.last_conv_layer(x)
+        #x = self.last_conv_layer(x)
         
-        #x = x.view(BATCH_SIZE, 8 * 8 * 512)
-        #x = F.relu(self.fc1(x))
-        #x = F.relu(self.fc2(x))
+        x = x.view(BATCH_SIZE, 8 * 8 * 1024)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
 
         sigmoid_out = nn.functional.sigmoid(x)
 
         return sigmoid_out
 
 ###############################################################################
-
-if is_gpu_mode:
-    ones_label = Variable(torch.ones(BATCH_SIZE).cuda())
-    zeros_label = Variable(torch.zeros(BATCH_SIZE).cuda())
-else:
-    ones_label = Variable(torch.ones(BATCH_SIZE))
-    zeros_label = Variable(torch.zeros(BATCH_SIZE))
 
 if __name__ == "__main__":
     print 'main'
@@ -138,14 +131,7 @@ if __name__ == "__main__":
         gen_model_b.cuda()
         disc_model_a.cuda()
         disc_model_b.cuda()
-        # gen_model = torch.nn.DataParallel(gen_model).cuda()
-        # disc_model = torch.nn.DataParallel(disc_model).cuda()
-
-    if ENABLE_TRANSFER_LEARNING:
-        # load the saved checkpoints for hair semantic segmentation
-        gen_model_a.load_state_dict(torch.load('/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/tiramisu_lfw_added_zero_centr_lr_0_0002_iter_1870000.pt'))
-        gen_model_b.load_state_dict(torch.load('/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103/models/tiramisu_lfw_added_zero_centr_lr_0_0002_iter_1870000.pt'))
-        
+     
     gen_params_total = itertools.chain(gen_model_a.parameters(), gen_model_b.parameters())
     optimizer_gen = torch.optim.Adam(gen_params_total, lr=LEARNING_RATE_GENERATOR)
 
@@ -192,18 +178,12 @@ if __name__ == "__main__":
             if image_buff_read_index >= data_loader.image_buffer_size:
                 image_buff_read_index = 0
 
-        # random noise z
-        # noise_z is no longer necessary for pix2pix
-        #noise_z = torch.randn(BATCH_SIZE, 1, 4, 4)
-
         if is_gpu_mode:
             inputs = Variable(torch.from_numpy(input_img).float().cuda())
             answers = Variable(torch.from_numpy(answer_img).float().cuda())
-            #noise_z = Variable(noise_z.cuda())
         else:
             inputs = Variable(torch.from_numpy(input_img).float())
             answers = Variable(torch.from_numpy(answer_img).float())
-            #noise_z = Variable(noise_z)
 
         # feedforward the inputs. generators.
         outputs_gen_a_to_b = gen_model_a(inputs)
@@ -239,7 +219,11 @@ if __name__ == "__main__":
         # lsgan loss for the generator_b
         loss_gen_lsgan_b = 0.5 * torch.mean((output_disc_fake_a - 1) ** 2)
 
-        loss_gen_total_lsgan = loss_gen_lsgan_a + loss_gen_lsgan_b + 0.01 * (l1_loss_rec_a + l1_loss_rec_b)
+        # scaling losses
+        l1_loss_rec_a = 0.01 * l1_loss_rec_a
+        l1_loss_rec_b = 0.01 * l1_loss_rec_b
+        
+        loss_gen_total_lsgan = loss_gen_lsgan_a + loss_gen_lsgan_b + (l1_loss_rec_a + l1_loss_rec_b)
 
         # discriminator_a
         # Before the backward pass, use the optimizer object to zero all of the
@@ -272,10 +256,10 @@ if __name__ == "__main__":
             print 'loss(discriminator_a) = ', str(loss_disc_a_lsgan)
             print 'loss(discriminator_b) = ', str(loss_disc_b_lsgan)
             print '-----------------------------------------------'
-            print '(discriminator_a out-real) = ', output_disc_real_a[0]
-            print '(discriminator_a out-fake) = ', output_disc_fake_a[0]
-            print '(discriminator_b out-real) = ', output_disc_real_b[0]
-            print '(discriminator_b out-fake) = ', output_disc_fake_b[0]
+            print '(discriminator_a out-real) = ', output_disc_real_a
+            print '(discriminator_a out-fake) = ', output_disc_fake_a
+            print '(discriminator_b out-real) = ', output_disc_real_b
+            print '(discriminator_b out-fake) = ', output_disc_fake_b
 
             # tf-board (scalar)
             logger.scalar_summary('loss(generator_a)', loss_gen_lsgan_a, i)

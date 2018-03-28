@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import cv2, time, os
 import numpy as np
-from torchvision import models
+from torchvision import models, transforms
 import data_loader_for_pix2pix_with_pil as data_loader
 from logger import Logger
 from generator_modified_tiramisu import Tiramisu
@@ -72,21 +72,21 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # input image will have the size of 1024x1024x3
-        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=16, kernel_size=3)
+        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=64, kernel_size=3)
         # 512x512
-        self.second_conv_layer = TransitionDown(in_channels=16, out_channels=32, kernel_size=3)
+        self.second_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
         # 256x256
-        self.third_conv_layer = TransitionDown(in_channels=32, out_channels=64, kernel_size=3)
+        self.third_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
         # 128x128
-        self.fourth_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
+        self.fourth_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
         # 64x64
-        self.fifth_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
+        self.fifth_conv_layer = TransitionDown(in_channels=512, out_channels=512, kernel_size=3)
         # 32x32
-        self.last_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
+        self.last_conv_layer = TransitionDown(in_channels=512, out_channels=512, kernel_size=3)
         
         #self.fc1 = nn.Linear(16 * 16 * 512, 2)
-        self.fc1 = nn.Linear(8 * 8 * 512, 2)
-        self.fc2 = nn.Linear(2, 1)
+        self.fc1 = nn.Linear(8 * 8 * 512, 5)
+        self.fc2 = nn.Linear(5, 1)
 
         torch.nn.init.xavier_uniform(self.fc1.weight)
         torch.nn.init.xavier_uniform(self.fc2.weight)
@@ -120,6 +120,11 @@ class Discriminator(nn.Module):
 
 # refer to 'https://github.com/yunjey/pytorch-tutorial/blob/master/tutorials/03-advanced/neural_style_transfer/main.py' for vgg feature extraction
 
+transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.485, 0.456, 0.406), 
+                             (0.229, 0.224, 0.225))])
+
 dtype = torch.cuda.FloatTensor if is_gpu_mode else torch.FloatTensor
 
 # Load image file and convert it into variable (preparing for vgg model)
@@ -145,9 +150,11 @@ def load_image(image_path, transform=None, max_size=None, shape=None):
 # Pretrained VGGNet 
 class VGGNet(nn.Module):
     def __init__(self):
-        """Select conv1_1 ~ conv5_1 activation maps."""
         super(VGGNet, self).__init__()
-        self.select = ['0', '5', '10', '19', '28'] 
+        
+        """Select conv1_1 ~ conv5_1 activation maps."""
+        #self.select = ['0', '5', '10', '19', '28'] 
+        self.select = ['0','1','2','3','4','5','6','7','8','9','10','12','14','16','19','22','25','28'] 
         self.vgg = models.vgg19(pretrained=True).features
         
     def forward(self, x):
@@ -193,6 +200,8 @@ if __name__ == "__main__":
 
     bicubic_out_4x = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH_ANSWER, data_loader.INPUT_IMAGE_HEIGHT_ANSWER))
     
+    gen_out = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH_ANSWER, data_loader.INPUT_IMAGE_HEIGHT_ANSWER))
+    
     # opencv style
     temp_img_opencv = np.empty(shape=(data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT, 3))
     
@@ -214,6 +223,10 @@ if __name__ == "__main__":
             if exit_notification == True:
                 break
 
+            # debug
+            #print 'input img=', input_img[j]
+            #print 'answer_img=', answer_img[j]
+            
             np.copyto(input_img[j], data_loader.input_buff[image_buff_read_index])
             np.copyto(answer_img[j], data_loader.answer_buff[image_buff_read_index])
 
@@ -246,26 +259,23 @@ if __name__ == "__main__":
 
         ###############################################################
         # vgg feature extraction
-        vgg_answer_out = vgg(answers)
-        vgg_gen_out = vgg(outputs_gen)
+      
+        answers_norm = answers * 0.0157 - 2
+        outputs_gen_norm = outputs_gen * 0.0157 - 2
         
-        for f1, f2, f3 in zip(target_features, content_features, style_features):
-            # Compute content loss (target and content image)
-            content_loss += torch.mean((f1 - f2)**2)
-
-            # Reshape conv features
-            _, c, h, w = f1.size()
-            f1 = f1.view(c, h * w)
-            f3 = f3.view(c, h * w)
-
-            # Compute gram matrix  
-            f1 = torch.mm(f1, f1.t())
-            f3 = torch.mm(f3, f3.t())
-
-            # Compute style loss (target and style image)
-            style_loss += torch.mean((f1 - f3)**2) / (c * h * w) 
+        vgg_answer_out = vgg(answers_norm)
+        vgg_gen_out = vgg(outputs_gen_norm)
+        
+        # debug
+        #print 'answers_norm=', answers_norm
+        #print 'answers=', answers
+        
+        content_loss = 0
+        for f_gen_out, f_answer_out in zip(vgg_gen_out, vgg_answer_out):
+            # Compute content loss 
+            content_loss += torch.mean((f_gen_out - f_answer_out)**2)
             
-        l1_loss_vgg_feature = 0.01 * torch.mean((vgg_gen_out - vgg_answer_out)**2)
+        l1_loss_vgg_feature = 0.05 * content_loss
         ###############################################################
         
         # vanilla gan loss for the generator
@@ -296,7 +306,8 @@ if __name__ == "__main__":
         loss_gen_total_lsgan.backward()
         optimizer_gen.step()
 
-        if i % 500 == 0:
+        #if i % 500 == 0:
+        if i % 50 == 0:
             print '-----------------------------------------------'
             print '-----------------------------------------------'
             print 'iterations = ', str(i)
@@ -318,7 +329,17 @@ if __name__ == "__main__":
 
             # tf-board (images - first 1 batches)
             output_imgs_temp = outputs_gen.cpu().data.numpy()[0:1]
+
+            '''
+            output_imgs_temp = outputs_gen.cpu().data[0:1]
+            output_imgs_temp = output_imgs_temp.squeeze()
+            denorm = transforms.Normalize((-2.12, -2.04, -1.80), (4.37, 4.46, 4.44))
+            output_imgs_temp = denorm(output_imgs_temp).clamp_(0, 1)
+            gen_out[0] = output_imgs_temp * 255
+            '''
+            
             answer_imgs_temp = answers.cpu().data.numpy()[0:1]
+                       
             inputs_temp = inputs.cpu().data.numpy()[0:1]
             # logger.an_image_summary('generated', output_img, i)
             

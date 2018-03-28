@@ -111,13 +111,14 @@ def image_buffer_loader():
         # Input Image
         filename = os.path.join(INPUT_IMAGE_DIRECTORY_PATH, training_file_name)
         
+        '''
         input_img = Image.open(filename)
         input_img = input_img.resize((INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT), Image.LANCZOS)
         
         input_img = transform(input_img).unsqueeze(0)
         input_buff[current_buff_index] = input_img
-        
         '''
+
         input_img = cv2.imread(filename, cv2.IMREAD_COLOR)
 
         if (type(input_img) is not np.ndarray):
@@ -136,17 +137,17 @@ def image_buffer_loader():
         input_buff[current_buff_index][0, :, :] = input_img_tmp[:, :, 0]
         input_buff[current_buff_index][1, :, :] = input_img_tmp[:, :, 1]
         input_buff[current_buff_index][2, :, :] = input_img_tmp[:, :, 2]
-        '''
         
         # Answer Image
         filename = os.path.join(ANSWER_IMAGE_DIRECTORY_PATH, training_file_name)
         
+        '''
         answer_img = Image.open(filename)
         answer_img = answer_img.resize((INPUT_IMAGE_WIDTH_ANSWER, INPUT_IMAGE_HEIGHT_ANSWER), Image.LANCZOS)
         answer_img = transform(answer_img).unsqueeze(0)
         answer_buff[current_buff_index] = answer_img
-        
         '''
+
         answer_img = cv2.imread(filename, cv2.IMREAD_COLOR)
 
         if (type(answer_img) is not np.ndarray):
@@ -165,7 +166,6 @@ def image_buffer_loader():
         answer_buff[current_buff_index][0, :, :] = answer_img_tmp[:, :, 0]
         answer_buff[current_buff_index][1, :, :] = answer_img_tmp[:, :, 1]
         answer_buff[current_buff_index][2, :, :] = answer_img_tmp[:, :, 2]
-        '''
         
         buff_status[current_buff_index] = 'filled'
 

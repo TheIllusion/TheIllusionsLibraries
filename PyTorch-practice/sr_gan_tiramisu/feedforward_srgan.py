@@ -18,9 +18,13 @@ INPUT_TEST_IMAGE_DIRECTORY_PATH = "/data/rklee/sr/Flickr2K/Flickr2K_LR_bicubic/X
 
 RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/sr_gan_tiramisu/feed_forward_results/"
 
-MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/sr_gan_tiramisu/generator_checkpoints/'
+#MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/sr_gan_tiramisu/generator_checkpoints/'
 
-CHECKPOINT_FILENAME = 'sr_gan_tiramisu_iter_140000.pt'
+#MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/sr_gan_tiramisu/generator_checkpoints_only_l1/'
+
+MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/sr_gan_tiramisu/generator_checkpoints_with_vgg_loss/'
+
+CHECKPOINT_FILENAME = 'sr_gan_tiramisu_with_vgg_loss_iter_995000.pt'
 
 INPUT_TEST_IMAGE_WIDTH = 256
 INPUT_TEST_IMAGE_HEIGHT = 256

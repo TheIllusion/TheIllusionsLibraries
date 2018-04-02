@@ -147,6 +147,51 @@ def load_image(image_path, transform=None, max_size=None, shape=None):
     return image.type(dtype)
 '''
 
+'''
+# vgg19 structure
+self.vgg._modules.items() = 
+[
+('0', Conv2d (3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))), 
+('1', ReLU(inplace)), 
+('2', Conv2d (64, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))), 
+('3', ReLU(inplace)), 
+('4', MaxPool2d(kernel_size=(2, 2), stride=(2, 2), dilation=(1, 1))), 
+('5', Conv2d (64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))), 
+('6', ReLU(inplace)), 
+('7', Conv2d (128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))), 
+('8', ReLU(inplace)), 
+('9', MaxPool2d(kernel_size=(2, 2), stride=(2, 2), dilation=(1, 1))), 
+('10', Conv2d (128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))), 
+('11', ReLU(inplace)), 
+('12', Conv2d (256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))), 
+('13', ReLU(inplace)), 
+('14', Conv2d (256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))), 
+('15', ReLU(inplace)), 
+('16', Conv2d (256, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))), 
+('17', ReLU(inplace)), 
+('18', MaxPool2d(kernel_size=(2, 2), stride=(2, 2), dilation=(1, 1))), 
+('19', Conv2d (256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))), 
+('20', ReLU(inplace)), 
+('21', Conv2d (512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))),
+('22', ReLU(inplace)), 
+('23', Conv2d (512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))), ('24', ReLU(inplace)), 
+('25', Conv2d (512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))), 
+('26', ReLU(inplace)), 
+('27', MaxPool2d(kernel_size=(2, 2), stride=(2, 2), dilation=(1, 1))), 
+('28', Conv2d (512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))), 
+('29', ReLU(inplace)), 
+('30', Conv2d (512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))), 
+('31', ReLU(inplace)), 
+('32', Conv2d (512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))), 
+('33', ReLU(inplace)), 
+('34', Conv2d (512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))), 
+('35', ReLU(inplace)), 
+('36', MaxPool2d(kernel_size=(2, 2), stride=(2, 2), dilation=(1, 1)))
+]
+
+conv_layers = [0,2,5,7,10,12,14,16,19,21,23,25,28,30,32,34]
+'''
+
 # Pretrained VGGNet 
 class VGGNet(nn.Module):
     def __init__(self):
@@ -154,7 +199,7 @@ class VGGNet(nn.Module):
         
         """Select conv1_1 ~ conv5_1 activation maps."""
         #self.select = ['0', '5', '10', '19', '28'] 
-        self.select = ['0','1','2','3','4','5','6','7','8','9','10','12','14','16','19','22','25','28'] 
+        self.select = ['0','2','5','7','10','12','14','16','19','21','23','25','28','30','32','34'] 
         self.vgg = models.vgg19(pretrained=True).features
         
     def forward(self, x):

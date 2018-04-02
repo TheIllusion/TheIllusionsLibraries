@@ -18,9 +18,9 @@ INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/P
 
 RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/forward_imgs_simple_cyclegan/"
 
-MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/checkpoints_simplecyclegan_tiramisu/'
+MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/models/'
 
-CHECKPOINT_FILENAME = 'cycle_gen_model_iter_80000.pt'
+CHECKPOINT_FILENAME = 'cycle_gen_model_cyan_iter_90000.pt'
 
 INPUT_TEST_IMAGE_WIDTH = 256
 INPUT_TEST_IMAGE_HEIGHT = 256
@@ -29,8 +29,8 @@ ANSWER_IMAGE_WIDTH = INPUT_TEST_IMAGE_WIDTH * 1
 ANSWER_IMAGE_HEIGHT = INPUT_TEST_IMAGE_HEIGHT * 1
 
 #TEST_SIZE = 53
-#TEST_SIZE = 406
-TEST_SIZE = 30
+TEST_SIZE = 406
+#TEST_SIZE = 30
 
 # support batch_size == 1 only
 BATCH_SIZE = 1

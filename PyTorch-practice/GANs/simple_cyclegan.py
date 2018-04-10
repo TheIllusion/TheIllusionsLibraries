@@ -126,6 +126,12 @@ if __name__ == "__main__":
     disc_model_a = Discriminator()
     disc_model_b = Discriminator()
 
+    # transfer learning (hair-seg without zero-centr)
+    SEG_MODEL_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/tiramisu-fcdensenet103-rgb-without-zero-centr/models/tiramisu_rgb_lr_0_0002_iter_90000.pt"
+    
+    gen_model_a.load_state_dict(torch.load(SEG_MODEL_PATH))
+    gen_model_b.load_state_dict(torch.load(SEG_MODEL_PATH))
+    
     if is_gpu_mode:
         gen_model_a.cuda()
         gen_model_b.cuda()

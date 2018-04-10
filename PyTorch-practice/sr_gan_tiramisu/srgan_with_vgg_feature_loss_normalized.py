@@ -29,9 +29,9 @@ LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 MODEL_SAVING_FREQUENCY = 5000
 
 # T005
-MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/sr_gan_tiramisu/generator_checkpoints_with_vgg_loss_normalized/'
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/sr_gan_tiramisu/generator_checkpoints_with_vgg54_loss_normalized/'
 
-TF_BOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/sr_gan_tiramisu/tfboard_vgg_loss_normalized/'
+TF_BOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/sr_gan_tiramisu/tfboard_vgg54_loss_normalized/'
 
 if not os.path.exists(MODEL_SAVING_DIRECTORY):
     os.mkdir(MODEL_SAVING_DIRECTORY)
@@ -204,7 +204,10 @@ class VGGNet(nn.Module):
         
         """Select conv1_1 ~ conv5_1 activation maps."""
         #self.select = ['0', '5', '10', '19', '28'] 
-        self.select = ['0','2','5','7','10','12','14','16','19','21','23','25','28','30','32','34'] 
+        #self.select = ['0','2','5','7','10','12','14','16','19','21','23','25','28','30','32','34'] 
+        
+        # vgg5_4 after activation
+        self.select = ['35'] 
         self.vgg = models.vgg19(pretrained=True).features
         
     def forward(self, x):
@@ -324,12 +327,14 @@ if __name__ == "__main__":
         answers_norm[:, 1, :, :] = (answers_norm[:, 1, :, :] - 0.456) / 0.224
         answers_norm[:, 2, :, :] = (answers_norm[:, 2, :, :] - 0.406) / 0.225
         #print answers_norm
-                
+        #print answers
+        
         outputs_gen_norm = outputs_gen / 255.0
         outputs_gen_norm[:, 0, :, :] = (outputs_gen_norm[:, 0, :, :] - 0.485) / 0.229
         outputs_gen_norm[:, 1, :, :] = (outputs_gen_norm[:, 1, :, :] - 0.456) / 0.224
         outputs_gen_norm[:, 2, :, :] = (outputs_gen_norm[:, 2, :, :] - 0.406) / 0.225
         #print outputs_gen_norm
+        #print outputs_gen
         
         vgg_answer_out = vgg(answers_norm)
         vgg_gen_out = vgg(outputs_gen_norm)
@@ -343,7 +348,7 @@ if __name__ == "__main__":
             # Compute content loss 
             content_loss += torch.mean((f_gen_out - f_answer_out)**2)
             
-        l1_loss_vgg_feature = 0.01 * content_loss
+        l1_loss_vgg_feature = 1.0 * content_loss
         ###############################################################
         
         # vanilla gan loss for the generator
@@ -405,7 +410,7 @@ if __name__ == "__main__":
             output_imgs_temp = denorm(output_imgs_temp).clamp_(0, 1)
             gen_out[0] = output_imgs_temp * 255
             '''
-            
+                                   
             answer_imgs_temp = answers.cpu().data.numpy()[0:1]
                        
             inputs_temp = inputs.cpu().data.numpy()[0:1]
@@ -430,4 +435,4 @@ if __name__ == "__main__":
         # save the model
         if i % MODEL_SAVING_FREQUENCY == 0:
             torch.save(gen_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'sr_gan_tiramisu_with_vgg_loss_normalized_iter_' + str(i) + '.pt')
+                       MODEL_SAVING_DIRECTORY + 'sr_gan_tiramisu_with_vgg54_loss_normalized_iter_' + str(i) + '.pt')

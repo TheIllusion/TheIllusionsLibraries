@@ -1,1 +1,1 @@
-tensorboard --logdir=/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/vanilla_gan_models/tf_board_logger --reload_interval 5
+tensorboard --logdir=/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wasserstein_gan/tfboard --port 8637

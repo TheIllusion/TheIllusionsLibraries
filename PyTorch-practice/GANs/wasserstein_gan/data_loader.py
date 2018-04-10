@@ -2,15 +2,7 @@ import numpy as np
 import os, glob, random, re, time, threading
 import cv2
 
-# Macbook Pro
-# INPUT_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/original_all"
-# ANSWER_IMAGE_DIRECTORY_PATH = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/seg_result_until_20170911"
-
-# i7-2600k
-# INPUT_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/original_all/original_all"
-# ANSWER_IMAGE_DIRECTORY_PATH = "/media/illusion/ML_Linux/Data/hair_segmentation/seg_result_until_20170823_without_cloth/seg_result_until_20170823_without_cloth"
-
-# tbt005 (10.161.31.83)
+# t005 
 INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/tiny_dataset/faces/"
 # INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/temp/original_resized_face/"
 
@@ -25,7 +17,7 @@ INPUT_IMAGE_WIDTH = 65
 INPUT_IMAGE_HEIGHT = 65
 
 # image buffers
-image_buffer_size = 3000
+image_buffer_size = 600
 
 # OpenCV format
 # input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))

@@ -21,7 +21,9 @@ GT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_aug/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/custom_unet_and_tiramisu/tiramisu_zero_centr_lr_0003_iter_690000/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/custom_unet_and_tiramisu/tiramisu_lfw_added_zero_centr_lr_0_0003/'
-FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Downloads/tiramisu_lfw_added_zero_centr_lr_0_0002_iter2760000_ensembels_with_eval/'
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Downloads/tiramisu_lfw_added_zero_centr_lr_0_0002_iter2760000_ensembels_with_eval/'
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/result_deeplab_v3/'
+FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/result_deeplab_v3_ensemble_6_models/'
 
 # pink to blue by photoshop
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_background_and_geometry_aug_pink_to_blue/'

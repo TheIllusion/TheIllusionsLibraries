@@ -70,8 +70,12 @@ class TransitionUp(nn.Module):
         dilation (int or tuple, optional): Spacing between kernel elements
         '''
 
-        self.transpoed_conv = nn.ConvTranspose2d(in_channels=in_channels, out_channels=in_channels,
-                                                 kernel_size=2, stride=2, padding=0, output_padding=0, bias=True)
+        self.transpoed_conv = nn.ConvTranspose2d(in_channels=in_channels,
+                                                 out_channels=in_channels,
+                                                 kernel_size=2, stride=2,
+                                                 padding=0,
+                                                 output_padding=0,
+                                                 bias=True)
         
         # weight initialization
         torch.nn.init.xavier_uniform(self.transpoed_conv.weight)

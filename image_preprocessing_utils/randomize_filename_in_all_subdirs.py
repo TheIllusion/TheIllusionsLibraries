@@ -1,7 +1,7 @@
 import os
 import random
 
-TARGET_DIR = '/Users/Illusion/Downloads/face_crop/_crawl'
+TARGET_DIR = '/Users/Illusion/Downloads/_crawl'
 
 for (path, dir, files) in os.walk(TARGET_DIR):
     for filename in files:
@@ -13,4 +13,4 @@ for (path, dir, files) in os.walk(TARGET_DIR):
             #print("dir: %s" % dir)
             #print("filename: %s" % filename)
 
-            os.rename(os.path.join(path,filename), os.path.join(path,rand_filename))
+            os.rename(os.path.join(path,filename), os.path.join(path, os.path.basename(path) + rand_filename))

@@ -49,6 +49,9 @@ if __name__ == "__main__":
     disc_model_a = Discriminator()
     disc_model_b = Discriminator()
 
+    # cross entropy loss
+    criterion_cross_ent = torch.nn.BCELoss()
+    
     if is_gpu_mode:
         gen_model_a.cuda()
         gen_model_b.cuda()
@@ -144,33 +147,75 @@ if __name__ == "__main__":
 
             ############################################################################
 
+            # ground truth color info
+            print 'color =', color
+            print 'color idx =', hair_color_list.index(color)
+            ground_truth_class = np.zeros((BATCH_SIZE, 9), dtype=float)
+            ground_truth_class[:, hair_color_list.index(color)] = 1
+            #print 'ground_truth_class =', ground_truth_class
+            
+            zero_labels = np.zeros((BATCH_SIZE, 9), dtype=float)
+            
             if is_gpu_mode:
                 inputs = Variable(torch.from_numpy(input_img).float().cuda())
                 answers = Variable(torch.from_numpy(answer_img).float().cuda())
+                ground_truth_class = Variable(torch.from_numpy(ground_truth_class).float().cuda())
+                zero_labels = Variable(torch.from_numpy(zero_labels).float().cuda())
             else:
                 inputs = Variable(torch.from_numpy(input_img).float())
                 answers = Variable(torch.from_numpy(answer_img).float())
+                ground_truth_class = Variable(torch.from_numpy(ground_truth_class).float())
+                zero_labels = Variable(torch.from_numpy(zero_labels).float())
 
             # feedforward the inputs. generators.
             outputs_gen_a_to_b = gen_model_a(torch.cat((condition_vectors, inputs), 1))
             outputs_gen_b_to_a = gen_model_b(torch.cat((condition_vectors, answers), 1))
 
             # feedforward the data to the discriminator_a
-            output_disc_real_a = disc_model_a(torch.cat((condition_vectors, inputs), 1))
-            output_disc_fake_a = disc_model_a(torch.cat((condition_vectors, outputs_gen_b_to_a), 1))
+            #output_disc_real_a, class_real_a = disc_model_a(torch.cat((condition_vectors, inputs), 1))
+            output_disc_real_a, class_real_a = disc_model_a(inputs)
+            print 'output_disc_real_a =', output_disc_real_a
+            print 'output_class_real_a =', class_real_a
+            
+            #output_disc_fake_a, class_fake_a = disc_model_a(torch.cat((condition_vectors, outputs_gen_b_to_a), 1))
+            output_disc_fake_a, class_fake_a = disc_model_a(outputs_gen_b_to_a)
+            print 'output_disc_fake_a =', output_disc_fake_a
+            print 'output_class_fake_a =', class_fake_a
 
             # feedforward the data to the discriminator_b
-            output_disc_real_b = disc_model_b(torch.cat((condition_vectors, answers), 1))
-            output_disc_fake_b = disc_model_b(torch.cat((condition_vectors, outputs_gen_a_to_b), 1))
+            #output_disc_real_b, class_real_b = disc_model_b(torch.cat((condition_vectors, answers), 1))
+            output_disc_real_b, class_real_b = disc_model_b(answers)
+            #output_disc_fake_b, class_fake_b = disc_model_b(torch.cat((condition_vectors, outputs_gen_a_to_b), 1))
+            output_disc_fake_b, class_fake_b = disc_model_b(outputs_gen_a_to_b)
 
             # loss functions
-
             # lsgan loss for the discriminator_a
             loss_disc_a_lsgan = 0.5 * (torch.mean((output_disc_real_a - 1) ** 2) + torch.mean(output_disc_fake_a ** 2))
 
             # lsgan loss for the discriminator_b
             loss_disc_b_lsgan = 0.5 * (torch.mean((output_disc_real_b - 1) ** 2) + torch.mean(output_disc_fake_b ** 2))
 
+            # class loss for the discriminator_a
+            ground_truth_class_view = ground_truth_class.view(BATCH_SIZE * 9)
+            class_real_a_view = class_real_a.view(BATCH_SIZE * 9)
+            class_fake_a_view = class_fake_a.view(BATCH_SIZE * 9)
+            loss_disc_a_class = criterion_cross_ent(class_real_a_view, ground_truth_class_view) +\
+                                criterion_cross_ent(class_fake_a_view, ground_truth_class_view)
+            
+            # class loss for the discriminator_b 
+            ground_truth_class_view = ground_truth_class.view(BATCH_SIZE * 9)
+            class_real_b_view = class_real_b.view(BATCH_SIZE * 9)
+            class_fake_b_view = class_fake_b.view(BATCH_SIZE * 9)
+            loss_disc_b_class = criterion_cross_ent(class_real_b_view, zero_labels) +\
+                                criterion_cross_ent(class_fake_b_view, zero_labels)
+                
+            # total loss (disc)
+            total_disc_loss_a = loss_disc_a_lsgan + loss_disc_a_class
+            print 'loss comparison'
+            print 'loss_disc_a_class =', loss_disc_a_class
+            print 'loss_disc_a_lsgan =', loss_disc_a_lsgan
+            total_disc_loss_b = loss_disc_b_lsgan + loss_disc_b_class
+            
             # cycle-consistency loss(a)
             reconstructed_a = gen_model_b(torch.cat((condition_vectors, outputs_gen_a_to_b), 1))
             l1_loss_rec_a = F.l1_loss(reconstructed_a, inputs)
@@ -193,13 +238,13 @@ if __name__ == "__main__":
             # of the model)
             optimizer_disc_a.zero_grad()
             # Backward pass: compute gradient of the loss with respect to model parameters
-            loss_disc_a_lsgan.backward(retain_graph=True)
+            total_disc_loss_a.backward(retain_graph=True)
             # Calling the step function on an Optimizer makes an update to its parameters
             optimizer_disc_a.step()
 
             # discriminator_b
             optimizer_disc_b.zero_grad()
-            loss_disc_b_lsgan.backward(retain_graph=True)
+            total_disc_loss_b.backward(retain_graph=True)
             optimizer_disc_b.step()
 
             # generators

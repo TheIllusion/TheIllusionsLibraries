@@ -38,15 +38,19 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # input image will have the size of 64x64x3
-        self.first_conv_layer = ConvolutionDown(in_channels=3+len(hair_color_list), out_channels=32, kernel_size=3)
+        #self.first_conv_layer = ConvolutionDown(in_channels=3+len(hair_color_list), out_channels=32, kernel_size=3)
+        self.first_conv_layer = ConvolutionDown(in_channels=3, out_channels=32, kernel_size=3)
         self.second_conv_layer = ConvolutionDown(in_channels=32, out_channels=64, kernel_size=3)
         self.third_conv_layer = ConvolutionDown(in_channels=64, out_channels=128, kernel_size=3)
         self.fourth_conv_layer = ConvolutionDown(in_channels=128, out_channels=256, kernel_size=3)
         self.fifth_conv_layer = ConvolutionDown(in_channels=256, out_channels=512, kernel_size=3)
         self.last_conv_layer = ConvolutionDown(in_channels=512, out_channels=1, kernel_size=3)
         
-        # real/fake + auxiliary classifier (for 9 colors)
-        self.fc1 = nn.Linear(4 * 4 * 1, 10)
+        # auxiliary classifier (for 9 colors)
+        self.fc_aux = nn.Linear(4 * 4 * 1, 9)
+        
+        # real/fake
+        self.fc_disc = nn.Linear(4 * 4 * 1, 1)
 
     def forward(self, x):
         """
@@ -61,16 +65,17 @@ class Discriminator(nn.Module):
         x = self.fourth_conv_layer(x)
         x = self.fifth_conv_layer(x)
         x = self.last_conv_layer(x)
-        
-        #x = x.view(BATCH_SIZE, 8 * 8 * 512)
-        #x = F.relu(self.fc1(x))
-        #x = F.relu(self.fc2(x))
-
-        sigmoid_out = nn.functional.sigmoid(x)
-        
-        print 'x.shape =', x.shape
+               
         # auxiliary classifier branch (for 9 colors)
         x = x.view(BATCH_SIZE, 4 * 4 * 1)
-        class_out = F.relu(self.fc1(x))
+        x_aux = F.relu(self.fc_aux(x))
+        class_out = nn.functional.softmax(x_aux)
+        
+        #print 'class_out =', class_out
+        
+        x_disc = F.relu(self.fc_disc(x))
+        disc_out = nn.functional.sigmoid(x_disc)
+        
+        #print 'disc_out =', disc_out
 
-        return sigmoid_out, class_out
+        return disc_out, class_out

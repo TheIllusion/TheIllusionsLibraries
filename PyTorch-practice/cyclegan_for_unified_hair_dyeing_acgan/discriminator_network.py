@@ -39,18 +39,18 @@ class Discriminator(nn.Module):
 
         # input image will have the size of 64x64x3
         #self.first_conv_layer = ConvolutionDown(in_channels=3+len(hair_color_list), out_channels=32, kernel_size=3)
-        self.first_conv_layer = ConvolutionDown(in_channels=3, out_channels=32, kernel_size=3)
-        self.second_conv_layer = ConvolutionDown(in_channels=32, out_channels=64, kernel_size=3)
-        self.third_conv_layer = ConvolutionDown(in_channels=64, out_channels=128, kernel_size=3)
-        self.fourth_conv_layer = ConvolutionDown(in_channels=128, out_channels=256, kernel_size=3)
-        self.fifth_conv_layer = ConvolutionDown(in_channels=256, out_channels=512, kernel_size=3)
-        self.last_conv_layer = ConvolutionDown(in_channels=512, out_channels=1, kernel_size=3)
+        self.first_conv_layer = ConvolutionDown(in_channels=3, out_channels=128, kernel_size=3)
+        self.second_conv_layer = ConvolutionDown(in_channels=128, out_channels=256, kernel_size=3)
+        self.third_conv_layer = ConvolutionDown(in_channels=256, out_channels=512, kernel_size=3)
+        self.fourth_conv_layer = ConvolutionDown(in_channels=512, out_channels=1024, kernel_size=3)
+        self.fifth_conv_layer = ConvolutionDown(in_channels=1024, out_channels=1024, kernel_size=3)
+        self.last_conv_layer = ConvolutionDown(in_channels=1024, out_channels=10, kernel_size=3)
         
         # auxiliary classifier (for 9 colors)
-        self.fc_aux = nn.Linear(4 * 4 * 1, 9)
+        self.fc_aux = nn.Linear(4 * 4 * 10, 9)
         
         # real/fake
-        self.fc_disc = nn.Linear(4 * 4 * 1, 1)
+        self.fc_disc = nn.Linear(4 * 4 * 10, 1)
 
     def forward(self, x):
         """
@@ -67,7 +67,7 @@ class Discriminator(nn.Module):
         x = self.last_conv_layer(x)
                
         # auxiliary classifier branch (for 9 colors)
-        x = x.view(BATCH_SIZE, 4 * 4 * 1)
+        x = x.view(BATCH_SIZE, 4 * 4 * 10)
         x_aux = F.relu(self.fc_aux(x))
         class_out = nn.functional.softmax(x_aux)
         

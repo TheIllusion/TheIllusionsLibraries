@@ -29,9 +29,9 @@ LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 MODEL_SAVING_FREQUENCY = 5000
 
 # tbt005
-MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_acgan/checkpoints/'
+MODEL_SAVING_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_acgan/checkpoints_batch_size_1/'
 
-TF_BOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_acgan/tfboard/'
+TF_BOARD_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_acgan/tfboard_batch_size_1/'
 
 # tensor-board logger
 if not os.path.exists(TF_BOARD_DIRECTORY):
@@ -170,19 +170,20 @@ if __name__ == "__main__":
             # feedforward the data to the discriminator_a
             #output_disc_real_a, class_real_a = disc_model_a(torch.cat((condition_vectors, inputs), 1))
             output_disc_real_a, class_real_a = disc_model_a(inputs)
-            print 'output_disc_real_a =', output_disc_real_a
-            print 'output_class_real_a =', class_real_a
             
             #output_disc_fake_a, class_fake_a = disc_model_a(torch.cat((condition_vectors, outputs_gen_b_to_a), 1))
             output_disc_fake_a, class_fake_a = disc_model_a(outputs_gen_b_to_a)
-            print 'output_disc_fake_a =', output_disc_fake_a
-            print 'output_class_fake_a =', class_fake_a
 
             # feedforward the data to the discriminator_b
             #output_disc_real_b, class_real_b = disc_model_b(torch.cat((condition_vectors, answers), 1))
             output_disc_real_b, class_real_b = disc_model_b(answers)
+            print 'output_disc_real_b =', output_disc_real_b
+            print 'output_class_real_b =', class_real_b
+            
             #output_disc_fake_b, class_fake_b = disc_model_b(torch.cat((condition_vectors, outputs_gen_a_to_b), 1))
             output_disc_fake_b, class_fake_b = disc_model_b(outputs_gen_a_to_b)
+            print 'output_disc_fake_b =', output_disc_fake_b
+            print 'output_class_fake_b =', class_fake_b
 
             # loss functions
             # lsgan loss for the discriminator_a
@@ -190,29 +191,23 @@ if __name__ == "__main__":
 
             # lsgan loss for the discriminator_b
             loss_disc_b_lsgan = 0.5 * (torch.mean((output_disc_real_b - 1) ** 2) + torch.mean(output_disc_fake_b ** 2))
-
-            # class loss for the discriminator_a
-            ground_truth_class_view = ground_truth_class.view(BATCH_SIZE * 9)
-            class_real_a_view = class_real_a.view(BATCH_SIZE * 9)
-            class_fake_a_view = class_fake_a.view(BATCH_SIZE * 9)
-            loss_disc_a_class = criterion_cross_ent(class_real_a_view, ground_truth_class_view) +\
-                                criterion_cross_ent(class_fake_a_view, ground_truth_class_view)
             
-            # class loss for the discriminator_b (not necessary. since only black color exists)
-            '''
+            # class loss for the discriminator_a (not necessary. since only black color exists)
+            
+            # class loss for the discriminator_b
             ground_truth_class_view = ground_truth_class.view(BATCH_SIZE * 9)
             class_real_b_view = class_real_b.view(BATCH_SIZE * 9)
             class_fake_b_view = class_fake_b.view(BATCH_SIZE * 9)
-            loss_disc_b_class = criterion_cross_ent(class_real_b_view, zero_labels) +\
-                                criterion_cross_ent(class_fake_b_view, zero_labels)
-            '''
+            loss_disc_b_class = criterion_cross_ent(class_real_b_view, ground_truth_class_view) +\
+                                criterion_cross_ent(class_fake_b_view, ground_truth_class_view)
             
             # total loss (disc)
-            total_disc_loss_a = loss_disc_a_lsgan + loss_disc_a_class
+            #total_disc_loss_a = loss_disc_a_lsgan + loss_disc_a_class
+            
+            total_disc_loss_b = loss_disc_b_lsgan + loss_disc_b_class
             print 'loss comparison'
-            print 'loss_disc_a_class =', loss_disc_a_class
-            print 'loss_disc_a_lsgan =', loss_disc_a_lsgan
-            #total_disc_loss_b = loss_disc_b_lsgan + loss_disc_b_class
+            print 'loss_disc_b_class =', loss_disc_b_class
+            print 'loss_disc_b_lsgan =', loss_disc_b_lsgan
             
             # cycle-consistency loss(a)
             reconstructed_a = gen_model_b(torch.cat((condition_vectors, outputs_gen_a_to_b), 1))
@@ -236,13 +231,13 @@ if __name__ == "__main__":
             # of the model)
             optimizer_disc_a.zero_grad()
             # Backward pass: compute gradient of the loss with respect to model parameters
-            total_disc_loss_a.backward(retain_graph=True)
+            loss_disc_a_lsgan.backward(retain_graph=True)
             # Calling the step function on an Optimizer makes an update to its parameters
             optimizer_disc_a.step()
 
             # discriminator_b
             optimizer_disc_b.zero_grad()
-            loss_disc_b_lsgan.backward(retain_graph=True)
+            total_disc_loss_b.backward(retain_graph=True)
             optimizer_disc_b.step()
 
             # generators

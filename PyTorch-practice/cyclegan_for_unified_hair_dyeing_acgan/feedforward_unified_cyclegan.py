@@ -18,11 +18,11 @@ from data_loader_for_unified_cyclegan import hair_color_list
 # tbt005
 INPUT_TEST_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/korean_testA/"
 
-RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/feed_forward_results_models_3/"
+RESULT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_acgan/result_imgs/"
 
-MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing/models_3/'
+MODEL_SAVING_DIRECTORY_PATH = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/cyclegan_for_unified_hair_dyeing_acgan/checkpoints/'
 
-CHECKPOINT_FILENAME = 'unified_cycle_gen_model_iter_50000.pt'
+CHECKPOINT_FILENAME = 'acgan_unified_cycle_gen_model_iter_95000.pt'
 
 INPUT_TEST_IMAGE_WIDTH = 256
 INPUT_TEST_IMAGE_HEIGHT = 256

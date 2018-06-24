@@ -1,9 +1,11 @@
+# - *- coding: utf- 8 - *-
+
 import dlib
 import os, glob
 import cv2
 
-INPUT_DIR = '/Users/Illusion/Downloads/trainB_blonde/'
-OUTPUT_DIR = '/Users/Illusion/Downloads/trainB_blonde_face_cropped/'
+INPUT_DIR = '/Users/Illusion/Movies/손석희_인터뷰/'
+OUTPUT_DIR = '/Users/Illusion/Movies/손석희_인터뷰_face_cropped/'
 
 detector = dlib.get_frontal_face_detector()
 

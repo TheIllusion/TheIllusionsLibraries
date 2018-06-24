@@ -5,8 +5,8 @@ import argparse
 import os
 
 # test purposes only
-video_file = '/Users/Illusion/Movies/손석희_인터뷰.mp4'
-output_directory = '/Users/Illusion/Movies/손석희_인터뷰/'
+video_file = '/Users/Illusion/Movies/유재석_연예대상.mp4'
+output_directory = '/Users/Illusion/Movies/유재석_연예대상/'
 
 # get args
 def get_args():
@@ -41,14 +41,17 @@ if __name__ == '__main__':
             break
         '''
 
-        output_filename = os.path.join(output_directory, str(frame_cnt) + '.jpg')
-
-        cv2.imwrite(output_filename, frame)
+        if ret == True:
+            output_filename = os.path.join(output_directory, str(frame_cnt) + '.jpg')
+            cv2.imwrite(output_filename, frame)
+        else:
+            break
 
         frame_cnt += 1
 
         if frame_cnt % 100 == 0:
             print 'frame_cnt:', frame_cnt
+            print 'approx_time:', float(frame_cnt)/30
 
     cap.release()
     #cv2.destroyAllWindows()

@@ -32,7 +32,7 @@ def noisy(noise_typ, image):
     elif noise_typ == "s&p":
       row,col,ch = image.shape
       s_vs_p = 0.5
-      amount = 0.004
+      amount = 0.4
       out = np.copy(image)
       # Salt mode
       num_salt = np.ceil(amount * image.size * s_vs_p)
@@ -79,11 +79,16 @@ if __name__ == '__main__':
         print 'result_poisson.shape=', result_poisson.shape
         print 'result_speckle.shape=', result_speckle.shape
 
-        cv2.imshow('original', img.copy())
-        cv2.imshow('result_gaussian', result_gaussian)
+        #cv2.imshow('original', img.copy())
+        #cv2.imshow('result_gaussian', result_gaussian)
         cv2.imshow('result_salt_pepper', result_salt_pepper)
-        cv2.imshow('result_poisson', result_poisson)
-        cv2.imshow('result_speckle', result_speckle)
+        cv2.imshow('result_salt_pepper2', noisy('s&p', img.copy()))
+        cv2.imshow('result_salt_pepper3', noisy('s&p', img.copy()))
+        cv2.imshow('result_salt_pepper4', noisy('s&p', img.copy()))
+        cv2.imshow('result_salt_pepper5', noisy('s&p', img.copy()))
+
+        #cv2.imshow('result_poisson', result_poisson)
+        #cv2.imshow('result_speckle', result_speckle)
 
         cv2.waitKey()
 

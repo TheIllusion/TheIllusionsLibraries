@@ -92,7 +92,8 @@ for xml_file in xml_files_list:
 
     print main_title_name
 
-#tree = ET.parse('/Users/Illusion/PycharmProjects/TheIllusionsLibraries/xml_parsing/country_data.xml')
+# tutorial
+'''
 tree = ET.parse('country_data.xml')
 
 root = tree.getroot()
@@ -102,5 +103,6 @@ for country in root.findall('country'):
 
     for neighbor in country.findall('neighbor'):
         print neighbor.attrib
+'''
 
 print 'process end'

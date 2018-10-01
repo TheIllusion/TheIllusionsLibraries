@@ -11,9 +11,9 @@ TRAIN_ANNOTATION_PATH = '/Users/Illusion/Documents/Data_public_set/LIP/TrainVal_
 VAL_IMAGE_PATH = '/Users/Illusion/Documents/Data_public_set/LIP/TrainVal_images/val_images/'
 VAL_ANNOTATION_PATH = '/Users/Illusion/Documents/Data_public_set/LIP/TrainVal_parsing_annotations/TrainVal_parsing_annotations/val_segmentations/'
 
-RESULT_IMG_PATH = '/Users/Illusion/Documents/Data_public_set/LIP/background_erased/val'
+RESULT_IMG_PATH = '/Users/Illusion/Documents/Data_public_set/LIP/background_erased/train'
 
-img_list = glob.glob(os.path.join(VAL_IMAGE_PATH, '*.jpg'))
+img_list = glob.glob(os.path.join(TRAIN_IMAGE_PATH, '*.jpg'))
 
 if not os.path.exists(RESULT_IMG_PATH):
     os.mkdir(RESULT_IMG_PATH)
@@ -27,7 +27,7 @@ for img_filename in img_list:
         continue
 
     annotation_filename = os.path.basename(img_filename)[:-4] + '.png'
-    annotation_filepath = os.path.join(VAL_ANNOTATION_PATH, annotation_filename)
+    annotation_filepath = os.path.join(TRAIN_ANNOTATION_PATH, annotation_filename)
 
     annotation_img = cv2.imread(annotation_filepath, cv2.IMREAD_UNCHANGED)
 
@@ -40,7 +40,7 @@ for img_filename in img_list:
     zero_idx = (annotation_img[...] == 0)
 
     # make background pixels to zero
-    input_img[zero_idx] = 0
+    input_img[zero_idx] = 255
 
     # save the result image
     result_filepath = os.path.join(RESULT_IMG_PATH, os.path.basename(img_filename))

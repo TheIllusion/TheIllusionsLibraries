@@ -37,7 +37,11 @@ if __name__ == "__main__":
         answer_img[lower_valued_color_elements] = 0
         answer_img[higher_valued_color_elements] = 255
 
+        # background
         blue_pixels_idx = (answer_img[..., 0] == 255) & (answer_img[..., 1] == 0) & (answer_img[..., 2] == 0)
+
+        # cloth
+        pink_pixels_idx = (answer_img[..., 0] == 255) & (answer_img[..., 1] == 0) & (answer_img[..., 2] == 255)
 
         #print 'blue_pixels_idx =', blue_pixels_idx
 
@@ -45,6 +49,9 @@ if __name__ == "__main__":
 
         # make background pixels to white
         result_img[blue_pixels_idx] = 255
+
+        # make cloth pixels to white
+        result_img[pink_pixels_idx] = 255
 
         '''        
         concated_img = np.hstack((input_img, result_img))

@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 if __name__ == '__main__':
-    img = cv2.imread('./mask_rect.png', cv2.IMREAD_UNCHANGED)
+    img = cv2.imread('./jpgs/person_mask_png.png', cv2.IMREAD_UNCHANGED)
 
     if type(img) is np.ndarray:
 

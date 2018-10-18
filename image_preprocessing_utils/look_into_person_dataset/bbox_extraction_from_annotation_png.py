@@ -36,16 +36,50 @@ color_list = [black, red, maroon, yellow, olive, lime, green, \
               indianred, lightcoral, salmon, darksalmon, lightsalmon, \
               silver, lightblue]
 
+annotation_class_dict = {"Background": 0, "Hat": 1, "Hair": 2, "Glove": 3, "Sunglasses": 4, \
+                         "Upper-clothes": 5, "Dress": 6, "Coat": 7, "Socks": 8, "Pants": 9, \
+                         "Jumpsuits": 10, "Scarf": 11, "Skirt": 12, "Face": 13, "Left-arm": 14, \
+                         "Right-arm": 15, "Left-leg": 16, "Right-leg": 17, "Left-shoe": 18, "Right-shoe": 19}
+
+
+# for key in annotation_class_dict:
+#     print 'key =', key, ' :  value =', annotation_class_dict[key]
+
 def visualize_annotation_labels(annotation_img):
 
     display_img = np.zeros((annotation_img.shape[0], annotation_img.shape[1], 3), np.uint8)
     print 'display_img.shape =', display_img.shape
 
+    # visualize all categories
     for label_idx in range(0, 20):
         idx = (annotation_img[...] == label_idx)
         display_img[idx] = color_list[label_idx]
 
+    # visualize the specific label
+    # idx = (annotation_img[...] == annotation_class_dict["Pants"])
+    # display_img[idx] = color_list[annotation_class_dict["Pants"]]
+
     return display_img
+
+
+def find_bbox(color_img):
+
+    img = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
+    cv2.imshow("black and white", img)
+
+    ret, thresh = cv2.threshold(img, 10, 255, 0)
+    cv2.imshow("thresh", thresh)
+
+    im2, contours, hierarchy = cv2.findContours(thresh, 1, 2)
+
+    cv2.imshow("im2", im2)
+    cv2.waitKey()
+
+    if(len(contours) > 0):
+        cnt = contours[0]
+        M = cv2.moments(cnt)
+        print 'M =', M
+
 
 loop_idx = 0
 display_img = []
@@ -55,7 +89,11 @@ for png in lib_annotation_filelist:
 
     print 'img.shape =', img.shape
 
-    display_img.append(visualize_annotation_labels(img))
+    result_img = visualize_annotation_labels(img)
+
+    display_img.append(result_img)
+
+    find_bbox(result_img)
 
     print 'filename =', png
 

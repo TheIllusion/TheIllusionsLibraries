@@ -1,8 +1,10 @@
 import cv2
 import numpy as np
 import glob
+import os
 
-lip_annotation_pngs = '/Users/Illusion/Temp/lip_annotation/*.png'
+lip_annotation_pngs = '/Users/Illusion/Documents/Data_public_set/LIP/TrainVal_parsing_annotations/TrainVal_parsing_annotations/val_segmentations/*.png'
+lip_img_path = '/Users/Illusion/Documents/Data_public_set/LIP/TrainVal_images/val_images/'
 
 lib_annotation_filelist = glob.glob(lip_annotation_pngs)
 
@@ -51,13 +53,13 @@ def visualize_annotation_labels(annotation_img):
     print 'display_img.shape =', display_img.shape
 
     # visualize all categories
-    for label_idx in range(0, 20):
-        idx = (annotation_img[...] == label_idx)
-        display_img[idx] = color_list[label_idx]
+    # for label_idx in range(0, 20):
+    #     idx = (annotation_img[...] == label_idx)
+    #     display_img[idx] = color_list[label_idx]
 
     # visualize the specific label
-    # idx = (annotation_img[...] == annotation_class_dict["Pants"])
-    # display_img[idx] = color_list[annotation_class_dict["Pants"]]
+    idx = (annotation_img[...] == annotation_class_dict["Pants"])
+    display_img[idx] = color_list[annotation_class_dict["Pants"]]
 
     return display_img
 
@@ -67,18 +69,31 @@ def find_bbox(color_img):
     img = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
     cv2.imshow("black and white", img)
 
-    ret, thresh = cv2.threshold(img, 10, 255, 0)
+    ret, thresh = cv2.threshold(img, 5, 255, 0)
     cv2.imshow("thresh", thresh)
 
     im2, contours, hierarchy = cv2.findContours(thresh, 1, 2)
 
-    cv2.imshow("im2", im2)
-    cv2.waitKey()
+    #cv2.imshow("im2", im2)
+    #cv2.waitKey()
 
     if(len(contours) > 0):
-        cnt = contours[0]
-        M = cv2.moments(cnt)
-        print 'M =', M
+
+        # Find the index of the largest contour
+        areas = [cv2.contourArea(c) for c in contours]
+        max_index = np.argmax(areas)
+        cnt = contours[max_index]
+
+        # show bounding rectangle
+        x, y, w, h = cv2.boundingRect(cnt)
+        # color_img = cv2.rectangle(color_img, (x, y), (x + w, y + h), (255, 255, 255), 3)
+        # cv2.imshow("bounding rectangle", color_img)
+        # cv2.waitKey()
+
+        return True, x, y, w, h
+
+    else:
+        return False, 0, 0, 0, 0
 
 
 loop_idx = 0
@@ -86,6 +101,10 @@ display_img = []
 
 for png in lib_annotation_filelist:
     img = cv2.imread(png, cv2.IMREAD_UNCHANGED)
+    original_img = cv2.imread(os.path.join(lip_img_path, os.path.basename(png)[:-4] + '.jpg'))
+
+    if (type(img) is not np.ndarray) or (type(original_img) is not np.ndarray):
+        continue
 
     print 'img.shape =', img.shape
 
@@ -93,7 +112,12 @@ for png in lib_annotation_filelist:
 
     display_img.append(result_img)
 
-    find_bbox(result_img)
+    ret, x, y, w, h = find_bbox(result_img)
+
+    if ret == True:
+        extracted_img = original_img[y:y+h, x:x+w]
+        cv2.imshow("extracted_img", extracted_img)
+        cv2.waitKey()
 
     print 'filename =', png
 

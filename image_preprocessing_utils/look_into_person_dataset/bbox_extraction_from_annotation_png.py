@@ -43,11 +43,13 @@ annotation_class_dict = {"Background": 0, "Hat": 1, "Hair": 2, "Glove": 3, "Sung
                          "Jumpsuits": 10, "Scarf": 11, "Skirt": 12, "Face": 13, "Left-arm": 14, \
                          "Right-arm": 15, "Left-leg": 16, "Right-leg": 17, "Left-shoe": 18, "Right-shoe": 19}
 
+desired_classes = ["Hat", "Glove", "Sunglasses", "Upper-clothes", "Dress", "Coat", "Socks", "Pants", \
+                   "Jumpsuits", "Scarf", "Skirt", "Left-shoe", "Right-shoe"]
 
 # for key in annotation_class_dict:
 #     print 'key =', key, ' :  value =', annotation_class_dict[key]
 
-def visualize_annotation_labels(annotation_img):
+def visualize_annotation_labels(annotation_img, class_key_info):
 
     display_img = np.zeros((annotation_img.shape[0], annotation_img.shape[1], 3), np.uint8)
     print 'display_img.shape =', display_img.shape
@@ -58,8 +60,11 @@ def visualize_annotation_labels(annotation_img):
     #     display_img[idx] = color_list[label_idx]
 
     # visualize the specific label
-    idx = (annotation_img[...] == annotation_class_dict["Pants"])
-    display_img[idx] = color_list[annotation_class_dict["Pants"]]
+    #idx = (annotation_img[...] == annotation_class_dict["Pants"])
+    idx = (annotation_img[...] == annotation_class_dict[class_key_info])
+
+    #display_img[idx] = color_list[annotation_class_dict["Pants"]]
+    display_img[idx] = [255,255,255]
 
     return display_img
 
@@ -67,12 +72,18 @@ def visualize_annotation_labels(annotation_img):
 def find_bbox(color_img):
 
     img = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
-    cv2.imshow("black and white", img)
+    #cv2.imshow("black and white", img)
 
-    ret, thresh = cv2.threshold(img, 5, 255, 0)
-    cv2.imshow("thresh", thresh)
+    ret, thresh = cv2.threshold(img, 20, 255, 0)
+    #cv2.imshow("thresh", thresh)
 
-    im2, contours, hierarchy = cv2.findContours(thresh, 1, 2)
+    # dilation (3 times)
+    kernel = np.ones((5, 5), np.uint8)
+    dilation = cv2.dilate(thresh, kernel, iterations=3)
+
+    #cv2.imshow("dilation", dilation)
+
+    im2, contours, hierarchy = cv2.findContours(dilation, 1, 2)
 
     #cv2.imshow("im2", im2)
     #cv2.waitKey()
@@ -97,7 +108,6 @@ def find_bbox(color_img):
 
 
 loop_idx = 0
-display_img = []
 
 for png in lib_annotation_filelist:
     img = cv2.imread(png, cv2.IMREAD_UNCHANGED)
@@ -108,27 +118,33 @@ for png in lib_annotation_filelist:
 
     print 'img.shape =', img.shape
 
-    result_img = visualize_annotation_labels(img)
+    extracted_obj_list = []
+    each_obj = []
 
-    display_img.append(result_img)
+    for class_key_info in desired_classes:
+        result_img = visualize_annotation_labels(img.copy(), class_key_info)
 
-    ret, x, y, w, h = find_bbox(result_img)
+        ret, x, y, w, h = find_bbox(result_img)
 
-    if ret == True:
-        extracted_img = original_img[y:y+h, x:x+w]
-        cv2.imshow("extracted_img", extracted_img)
-        cv2.waitKey()
+        if ret == True:
+            extracted_img = original_img[y:y+h, x:x+w]
 
-    print 'filename =', png
+            # save the information (img, coordinates, class info)
+            each_obj = []
+            each_obj.append(extracted_img)
+            each_obj.append({"x": x, "y": y, "w": w, "h": h})
+            each_obj.append(annotation_class_dict[class_key_info])
 
-    window_name_annotation = 'annotaion_' + str(loop_idx)
-    window_name_display = 'annotaion_display_' + str(loop_idx)
+            extracted_obj_list.append(each_obj)
 
-    #cv2.imshow(window_name_annotation, img)
-    cv2.imshow(window_name_display, display_img[loop_idx])
-    cv2.waitKey()
-    #cv2.destroyWindow(window_name_annotation)
-    cv2.destroyWindow(window_name_display)
+            # debug purposes only
+            # cv2.imshow(class_key_info + " extracted_img", extracted_img)
+            # cv2.imshow(class_key_info, result_img)
+            # cv2.waitKey()
+            # cv2.destroyWindow(class_key_info)
+            # cv2.destroyWindow(class_key_info + " extracted_img")
+
+        print 'filename =', png
 
     loop_idx += 1
 

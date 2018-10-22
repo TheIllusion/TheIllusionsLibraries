@@ -119,7 +119,6 @@ for png in lib_annotation_filelist:
     print 'img.shape =', img.shape
 
     extracted_obj_list = []
-    each_obj = []
 
     for class_key_info in desired_classes:
         result_img = visualize_annotation_labels(img.copy(), class_key_info)

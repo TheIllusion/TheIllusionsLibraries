@@ -32,7 +32,7 @@ face_rest_api_address.append('http://10.161.31.27:8989/face-v2')
 #hand_img_path = '/Users/Illusion/Documents/Palm_Data/random_hands/IMG_0703.jpg'
 
 #12' Macbook
-hand_img_path = '/Users/Illusion/Documents/rk.jpg'
+hand_img_path = '/Users/Illusion/Documents/rk_hand.jpg'
 face_img_path = '/Users/Illusion/Documents/rk_face.jpg'
 
 #Macbook Pro

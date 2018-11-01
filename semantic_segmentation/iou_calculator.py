@@ -12,9 +12,13 @@ PIXEL_THRESHOLD = 130
 #GT_IMAGE_DIRECTORY = '/Users/Illusion/Temp/seg_test/seg_gt/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Temp/seg_test/seg_modified/'
 
+# XGAN Cartoon Segmentation Experiments
+GT_IMAGE_DIRECTORY = '/Users/Illusion/Temp/test_8_padding_iter_40000/'
+FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Temp/test_8_padding_iter_50000/'
+
 # Custom Network (250x250)
 # without cloth
-GT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_test_set/resized_250_250_for_custom_nn/gt_image_without_cloth/'
+#GT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_test_set/resized_250_250_for_custom_nn/gt_image_without_cloth/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/custom_net_v1/forward_result/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/custom_net_v1_without_augmentation/results/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_and_lfw_aug/'
@@ -23,7 +27,7 @@ GT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/custom_unet_and_tiramisu/tiramisu_lfw_added_zero_centr_lr_0_0003/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Downloads/tiramisu_lfw_added_zero_centr_lr_0_0002_iter2760000_ensembels_with_eval/'
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/result_deeplab_v3/'
-FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/result_deeplab_v3_ensemble_6_models/'
+#FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/result_deeplab_v3_ensemble_6_models/'
 
 # pink to blue by photoshop
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data/hair_semantic_segmentation/feedforward_result/forward_result_until_0823_background_and_geometry_aug_pink_to_blue/'
@@ -66,8 +70,13 @@ answer_classes['background'] = [1, 0, 0]
 #answer_classes['cloth'] = [1, 0, 1]
 
 # input size
+'''
 INPUT_GT_IMAGE_SIZE_WIDTH = 256
 INPUT_GT_IMAGE_SIZE_HEIGHT = 256
+'''
+
+INPUT_GT_IMAGE_SIZE_WIDTH = 64
+INPUT_GT_IMAGE_SIZE_HEIGHT = 64
 
 def load_file_names():
     try:

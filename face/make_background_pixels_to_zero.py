@@ -5,9 +5,15 @@ import cv2
 import os
 import glob
 
+'''
 INPUT_DIRECTORY = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/original_all/"
 ANSWER_DIRECTORY = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/seg_result_until_20170911/"
 OUTPUT_DIRECTORY = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/official_training_set/background_erased_images/"
+'''
+
+INPUT_DIRECTORY = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/lfw/lfw_funneled_jpg_images/"
+ANSWER_DIRECTORY = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/lfw/parts_lfw_funneled_gt_jpg_images/"
+OUTPUT_DIRECTORY = "/Users/Illusion/Documents/Data/hair_semantic_segmentation/lfw_background_erased_images_for_xgan/"
 
 HIGH_PIXEL_THRESHOLD = 200
 LOW_PIXEL_THRESHOLD = 50
@@ -18,6 +24,9 @@ if __name__ == "__main__":
 
     os.chdir(ANSWER_DIRECTORY)
     jpg_files = glob.glob( '*.jpg' )
+
+    if not os.path.exists(OUTPUT_DIRECTORY):
+        os.mkdir(OUTPUT_DIRECTORY)
 
     for jpg_file in jpg_files:
 

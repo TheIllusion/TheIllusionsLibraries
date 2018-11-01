@@ -72,16 +72,16 @@ def visualize_annotation_labels(annotation_img, class_key_info):
 def find_bbox(color_img):
 
     img = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
-    #cv2.imshow("black and white", img)
+    cv2.imshow("black and white", img)
 
     ret, thresh = cv2.threshold(img, 20, 255, 0)
-    #cv2.imshow("thresh", thresh)
+    cv2.imshow("thresh", thresh)
 
     # dilation (3 times)
     kernel = np.ones((5, 5), np.uint8)
     dilation = cv2.dilate(thresh, kernel, iterations=3)
 
-    #cv2.imshow("dilation", dilation)
+    cv2.imshow("dilation", dilation)
 
     im2, contours, hierarchy = cv2.findContours(dilation, 1, 2)
 
@@ -97,9 +97,9 @@ def find_bbox(color_img):
 
         # show bounding rectangle
         x, y, w, h = cv2.boundingRect(cnt)
-        # color_img = cv2.rectangle(color_img, (x, y), (x + w, y + h), (255, 255, 255), 3)
-        # cv2.imshow("bounding rectangle", color_img)
-        # cv2.waitKey()
+        color_img = cv2.rectangle(color_img, (x, y), (x + w, y + h), (255, 255, 255), 3)
+        cv2.imshow("bounding rectangle", color_img)
+        #cv2.waitKey()
 
         return True, x, y, w, h
 
@@ -112,6 +112,8 @@ loop_idx = 0
 for png in lib_annotation_filelist:
     img = cv2.imread(png, cv2.IMREAD_UNCHANGED)
     original_img = cv2.imread(os.path.join(lip_img_path, os.path.basename(png)[:-4] + '.jpg'))
+
+    cv2.imshow("original img", original_img)
 
     if (type(img) is not np.ndarray) or (type(original_img) is not np.ndarray):
         continue
@@ -137,11 +139,12 @@ for png in lib_annotation_filelist:
             extracted_obj_list.append(each_obj)
 
             # debug purposes only
-            # cv2.imshow(class_key_info + " extracted_img", extracted_img)
-            # cv2.imshow(class_key_info, result_img)
-            # cv2.waitKey()
-            # cv2.destroyWindow(class_key_info)
-            # cv2.destroyWindow(class_key_info + " extracted_img")
+            cv2.imshow(class_key_info + " extracted_img", extracted_img)
+            cv2.imshow(class_key_info, result_img)
+            cv2.waitKey()
+            #cv2.destroyWindow(class_key_info)
+            #cv2.destroyWindow(class_key_info + " extracted_img")
+            cv2.destroyAllWindows()
 
         print 'filename =', png
 

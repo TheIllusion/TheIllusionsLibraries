@@ -5,7 +5,7 @@ import glob
 import cv2
 import numpy as np
 
-PIXEL_THRESHOLD = 130
+PIXEL_THRESHOLD = 70
 #PIXEL_THRESHOLD = 160
 
 # paths (filenames in GT_IMAGE_DIRECTORY and FEEDFORWARD_IMAGE_DIRECTORY must be the same)
@@ -13,8 +13,8 @@ PIXEL_THRESHOLD = 130
 #FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Temp/seg_test/seg_modified/'
 
 # XGAN Cartoon Segmentation Experiments
-GT_IMAGE_DIRECTORY = '/Users/Illusion/Temp/test_8_padding_iter_40000/'
-FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Temp/test_8_padding_iter_50000/'
+GT_IMAGE_DIRECTORY = '/Users/Illusion/Documents/Data_public_set/cartoon_set/cartoonset10k_rk/val_rk/label/'
+FEEDFORWARD_IMAGE_DIRECTORY = '/Users/Illusion/Downloads/test_12_lfw_dataset/test_12_lfw_dataset_iter_4000/'
 
 # Custom Network (250x250)
 # without cloth

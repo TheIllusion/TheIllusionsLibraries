@@ -9,6 +9,8 @@ import shutil
 WORKING_DIRECTORY = '/Users/Illusion/Temp/data1/dataset/gsshop/바보사랑/패션잡화_의류/패션잡화/'
 DESTINATION_DIRECTORY = '/Users/Illusion/Temp/user_images/'
 
+WHILE_PIXEL_PORTION_THRESHOLD_PERCENT = 15
+
 WHITE_PIXELS = [255, 255, 255]
 
 if not os.path.exists(DESTINATION_DIRECTORY):
@@ -30,7 +32,7 @@ for img in img_list:
     other_pix_cnt = np.count_nonzero(np.invert(white_pix_idx))
     white_pix_portion = 100 * float(white_pix_cnt) / (white_pix_cnt + other_pix_cnt)
 
-    if white_pix_portion < 15:
+    if white_pix_portion < WHILE_PIXEL_PORTION_THRESHOLD_PERCENT:
         # this might be an user image
         shutil.copyfile(img, os.path.join(DESTINATION_DIRECTORY, os.path.basename(img)))
 

@@ -9,7 +9,7 @@ import shutil
 WORKING_DIRECTORY = '/Users/Illusion/Temp/data1/dataset/gsshop/바보사랑/패션잡화_의류/패션잡화/'
 DESTINATION_DIRECTORY = '/Users/Illusion/Temp/user_images/'
 
-WHILE_PIXEL_PORTION_THRESHOLD_PERCENT = 15
+WHILE_PIXEL_PORTION_THRESHOLD_PERCENT = 5
 
 WHITE_PIXELS = [255, 255, 255]
 

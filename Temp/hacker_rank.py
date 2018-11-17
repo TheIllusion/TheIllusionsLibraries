@@ -5,18 +5,32 @@ import os
 import random
 import re
 import sys
-
+from datetime import timedelta, date, datetime
 # Complete the time_delta function below.
 def time_delta(t1, t2):
+
+    day1 = datetime(2015, 5, 10, 13, 54, 36, 0, )
+    day2 = datetime(2015, 5, 10, 13, 54, 36, 0, datetime.timezone(timedelta(hours=0)))
+
+    if day1 > day2:
+        delta = day1 - day2
+    else:
+        delta = day2 - day1
+
+    print int(delta.total_seconds())
+
     t1_list = t1.split()
     t2_list = t2.split()
 
-    t1_time_zone = t1_list[5]
-    t2_time_zone = t2_list[5]
-
-    print 't1_time_zone:', t1_time_zone
-    print 't2_time_zone:', t2_time_zone
     return '100'
+
+'''
+2
+Sun 10 May 2015 13:54:36 -0700
+Sun 10 May 2015 13:54:36 -0000
+Sat 02 May 2015 19:54:36 +0530
+Fri 01 May 2015 13:54:36 -0000
+'''
 
 if __name__ == '__main__':
     #fptr = open(os.environ['OUTPUT_PATH'], 'w')
@@ -31,11 +45,3 @@ if __name__ == '__main__':
         delta = time_delta(t1, t2)
 
         print delta + '\n'
-
-'''
-2
-Sun 10 May 2015 13:54:36 -0700
-Sun 10 May 2015 13:54:36 -0000
-Sat 02 May 2015 19:54:36 +0530
-Fri 01 May 2015 13:54:36 -0000
-'''

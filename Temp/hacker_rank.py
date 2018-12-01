@@ -1,69 +1,82 @@
-#!/bin/python
+# Enter your code here. Read input from STDIN. Print output to STDOUT
 
-import math
-import os
-import random
-import re
-import sys
-#from itertools import groupby
+input_file = 'C:/Users/rokky/Desktop/Temp/inputs.txt'
 
-if __name__ == '__main__':
-    s = raw_input()
-    #s = sys.stdin.readline()
+file = open(input_file, 'r')
 
-    # input = list(s)
+#test_cases = int(raw_input())
 
-    char_dict = {}
-    value_list = set()
+test_cases = int(file.readline().split()[0])
+
+def erase_one_element(current_sidelength, inputs):
+    # print 'inputs =', inputs
+
+    if current_sidelength < max(inputs[0], inputs[len(inputs) - 1]):
+        print 'current_sidelength=', current_sidelength
+        print 'inputs[0], inputs[-1]', inputs[0], inputs[-1]
+        return current_sidelength, inputs
+
+    updated_sidelength = max(inputs[0], inputs[len(inputs) - 1])
+
+    if len(inputs) <= 1:
+        return updated_sidelength, []
+
+    if inputs[0] > inputs[len(inputs) - 1]:
+        #updated_inputs = inputs[1:]
+        inputs.pop(0)
+    else:
+        #updated_inputs = inputs[:-1]
+        inputs.pop()
+
     '''
-    for k, i in groupby(s):
-        # print list(k)[0], len(list(i))
-        val = len(list(i))
-        char = list(k)[0]
-        char_dict[char] = val
-        value_list.add(val)
+    if inputs[0] > inputs[len(inputs)-1]:
+        updated_sidelength = inputs[0]
+        updated_inputs = inputs[1:]
+    else:
+        updated_sidelength = inputs[len(inputs)-1]
+        updated_inputs = inputs[:-1]
     '''
 
-    for char in s:
-        if not (char in char_dict.keys()):
-            char_dict[char] = 1
-        else:
-            char_dict[char] += 1
+    # print 'updated inputs =', updated_inputs
 
-    for key in char_dict:
-        value_list.add(char_dict[key])
+    updated_inputs = inputs
+    return updated_sidelength, updated_inputs
 
-    value_list = list(value_list)
-    value_list.sort(reverse=True)
 
-    # starts from the maximum value
-    chosen_keys = []
-    idx = 0
-    for current_max in value_list:
-        # print 'current_max=', current_max
-        for key in char_dict.keys():
-            if char_dict[key] == current_max:
-                chosen_keys.append(key)
+for i in range(test_cases):
+    #num = int(raw_input())
+    #print 'i =', i
 
-        chosen_keys.sort()
+    num = int(file.readline().split()[0])
 
-        for k in chosen_keys:
-            print k, char_dict[k]
-            idx += 1
-            # print 'idx=', idx
-            if idx == 3:
-                break
+    #inputs = map(int, raw_input().split())
+    inputs = map(int, file.readline().split())
 
-        chosen_keys = []
+    current_sidelength = max(inputs[0], inputs[-1])
+    #print 'start sidelength =', current_sidelength
+    #print 'two values =', inputs[0], inputs[-1]
 
-        if idx == 3:
+    if current_sidelength < max(inputs):
+        print 'No'
+        continue
+
+    for j in range(len(inputs)):
+
+        prev_inputs_len = len(inputs)
+        updated_sidelength, updated_inputs = erase_one_element(current_sidelength, inputs)
+
+        if len(updated_inputs) == 0:
+            break
+        if len(updated_inputs) == prev_inputs_len:
+            print 'current inputs size =', len(inputs)
+            print 'No'
             break
 
-    # print chosen_keys
+        inputs = updated_inputs
+        current_sidelength = updated_sidelength
 
-    #print char_dict
-    #print value_list
+    if len(updated_inputs) == 0:
+        print 'Yes'
+    # print inputs
 
-
-
-
+file.close()

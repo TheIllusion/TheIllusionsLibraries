@@ -1,4 +1,5 @@
 import torch
+from torch import autograd
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
@@ -11,7 +12,7 @@ from logger import Logger
 is_gpu_mode = True
 
 # batch size
-BATCH_SIZE = 60
+BATCH_SIZE = 100
 TOTAL_ITERATION = 1000000
 
 # learning rate
@@ -214,6 +215,60 @@ class Discriminator(nn.Module):
 
         return out
 
+    def calculate_gradient_penalty(self, real_images, fake_images, batch_size):        
+        ###################################################################################
+        # WGAN-GP. Gradient Penalty.
+        # Ref: https://github.com/Zeleni9/pytorch-wgan/blob/master/models/wgan_gradient_penalty.py#L291
+    
+        lambda_term = 10
+        
+        #eta = torch.FloatTensor(self.batch_size,1,1,1).uniform_(0,1)
+        #eta = eta.expand(self.batch_size, real_images.size(1), real_images.size(2), real_images.size(3))
+        
+        eta = torch.FloatTensor(batch_size,1,1,1).uniform_(0,1)
+        eta = eta.expand(batch_size, real_images.size(1), real_images.size(2), real_images.size(3))
+        
+        '''
+        if self.cuda:
+            eta = eta.cuda(self.cuda_index)
+        else:
+            eta = eta
+        '''
+        eta = eta.cuda()
+        
+        interpolated = eta * real_images + ((1 - eta) * fake_images)
+
+        '''
+        if self.cuda:
+            interpolated = interpolated.cuda(self.cuda_index)
+        else:
+            interpolated = interpolated
+        '''
+        interpolated = interpolated.cuda()
+        
+        # define it to calculate gradient
+        interpolated = Variable(interpolated, requires_grad=True)
+
+        # calculate probability of interpolated examples
+        #prob_interpolated = self.D(interpolated)
+        prob_interpolated = self.forward(interpolated)
+
+        # calculate gradients of probabilities with respect to examples
+        '''
+        gradients = autograd.grad(outputs=prob_interpolated, inputs=interpolated,
+                               grad_outputs=torch.ones(
+                                   prob_interpolated.size()).cuda(self.cuda_index) if self.cuda else torch.ones(
+                                   prob_interpolated.size()),
+                               create_graph=True, retain_graph=True)[0]
+        '''
+        gradients = autograd.grad(outputs=prob_interpolated, 
+                                  inputs=interpolated,
+                                  grad_outputs=torch.ones(prob_interpolated.size()).cuda(),
+                                  create_graph=True, retain_graph=True)[0]
+        
+        grad_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * lambda_term
+        return grad_penalty
+
 ################################################################################
 # Modules borrowed from DRIT
 
@@ -244,7 +299,6 @@ class INSResBlock(nn.Module):
         return out
 
 ###################################################################################
-
 
 if __name__ == "__main__":
     print 'main'
@@ -319,26 +373,6 @@ if __name__ == "__main__":
         # feedforward the inputs. discriminator
         output_disc_real = disc_model(inputs)
         output_disc_fake = disc_model(outputs_gen)
-
-        # loss functions (vanilla gan)
-        '''
-        loss_real_d = F.binary_cross_entropy(output_disc_real, ones_label)
-        loss_fake_d = F.binary_cross_entropy(output_disc_fake, zeros_label)
-        loss_disc_total = loss_real_d + loss_fake_d
-
-        loss_gen = F.binary_cross_entropy(output_disc_fake, ones_label)
-
-        # loss_disc_total = -torch.mean(torch.log(output_disc_real) + torch.log(1. - output_disc_fake))
-        # loss_gen = -torch.mean(torch.log(output_disc_fake))
-        '''
-
-        # lsgan loss for the discriminator
-        '''
-        loss_disc_total = 0.5 * (torch.mean((output_disc_real - 1) ** 2) + torch.mean(output_disc_fake ** 2))
-
-        # lsgan loss for the generator
-        loss_gen = 0.5 * torch.mean((output_disc_fake - 1) ** 2)
-        '''
         
         # wasserstein gan loss 
         loss_disc_total = -(torch.mean(output_disc_real) - torch.mean(output_disc_fake))
@@ -352,14 +386,21 @@ if __name__ == "__main__":
         # Backward pass: compute gradient of the loss with respect to model parameters
         loss_disc_total.backward(retain_graph=True)
 
-        # Calling the step function on an Optimizer makes an update to its parameters
-        optimizer_disc.step()
-
+        # disable for wgan-gp
+        '''
         # weight clamping
         # (ref: https://wiseodd.github.io/techblog/2017/02/04/wasserstein-gan/)
         for param in disc_model.parameters():
             param.data.clamp_(-0.01, 0.01)
-    
+        '''
+        
+        # gradient penalty
+        grad_penalty = disc_model.calculate_gradient_penalty(inputs, outputs_gen, batch_size=BATCH_SIZE)
+        grad_penalty.backward(retain_graph=True)
+        
+        # Calling the step function on an Optimizer makes an update to its parameters
+        optimizer_disc.step()
+        
         # generator
         optimizer_gen.zero_grad()
         loss_gen.backward()
@@ -371,6 +412,7 @@ if __name__ == "__main__":
             print 'iterations = ', str(i)
             print 'loss(generator)     = ', str(loss_gen)
             print 'loss(discriminator) = ', str(loss_disc_total)
+            print 'grad_penalty =', grad_penalty
             print '-----------------------------------------------'
             print '(discriminator out-real) = ', output_disc_real[0]
             print '(discriminator out-fake) = ', output_disc_fake[0]

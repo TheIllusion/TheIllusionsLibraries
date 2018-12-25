@@ -3,8 +3,8 @@ import os, glob, random, re, time, threading
 import cv2
 
 # t005 
-INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/tiny_dataset/faces/"
-# INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/temp/original_resized_face/"
+#INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/tiny_dataset/faces/"
+INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/temp/original_resized_face/"
 
 IS_TRAINING = True
 

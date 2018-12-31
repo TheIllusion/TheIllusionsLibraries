@@ -2,9 +2,9 @@ import os
 import re
 import shutil
 
-PATH = '/Users/Illusion/Downloads/sample_results/'
+PATH = '/Users/Illusion/Downloads/sample_results_3/'
 #PATH = '/Users/Illusion/Temp/output/'
-OUTPUT_PATH = '/Users/Illusion/Downloads/sample_results_modified/'
+OUTPUT_PATH = '/Users/Illusion/Downloads/sample_results_filename_modified/'
 
 if not os.path.exists(OUTPUT_PATH):
     os.mkdir(OUTPUT_PATH)

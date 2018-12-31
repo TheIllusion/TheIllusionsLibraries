@@ -28,6 +28,8 @@ MODEL_SAVING_FREQUENCY = 10000
 # t005
 MODEL_SAVING_DIRECTORY = "//home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/checkpoints/"
 
+#TF_BOARD_DIRECTOR = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/tfboard_2/"
+
 TF_BOARD_DIRECTOR = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/tfboard/"
 
 RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/gen_images/'
@@ -221,6 +223,7 @@ class Discriminator(nn.Module):
         # Ref: https://github.com/Zeleni9/pytorch-wgan/blob/master/models/wgan_gradient_penalty.py#L291
     
         lambda_term = 10
+        #lambda_term = 500
         
         #eta = torch.FloatTensor(self.batch_size,1,1,1).uniform_(0,1)
         #eta = eta.expand(self.batch_size, real_images.size(1), real_images.size(2), real_images.size(3))
@@ -312,14 +315,14 @@ if __name__ == "__main__":
         # gen_model = torch.nn.DataParallel(gen_model).cuda()
         # disc_model = torch.nn.DataParallel(disc_model).cuda()
 
-    '''
     optimizer_gen = torch.optim.Adam(gen_model.parameters(), lr=LEARNING_RATE_GENERATOR)
     optimizer_disc = torch.optim.Adam(disc_model.parameters(), lr=LEARNING_RATE_DISCRIMINATOR)
-    '''
-    
+   
+    ''' 
     # use RMSprop instead of Adam for WGAN
     optimizer_gen = torch.optim.RMSprop(gen_model.parameters(), lr=LEARNING_RATE_GENERATOR)
     optimizer_disc = torch.optim.RMSprop(disc_model.parameters(), lr=LEARNING_RATE_DISCRIMINATOR)
+    '''
 
     # read imgs
     image_buff_read_index = 0
@@ -385,6 +388,8 @@ if __name__ == "__main__":
 
         # Backward pass: compute gradient of the loss with respect to model parameters
         loss_disc_total.backward(retain_graph=True)
+        
+        optimizer_disc.step()
 
         # disable for wgan-gp
         '''
@@ -395,10 +400,11 @@ if __name__ == "__main__":
         '''
         
         # gradient penalty
-        grad_penalty = disc_model.calculate_gradient_penalty(inputs, outputs_gen, batch_size=BATCH_SIZE)
+        grad_penalty = disc_model.calculate_gradient_penalty(inputs.data, \
+                                                             outputs_gen.data, \
+                                                             batch_size=BATCH_SIZE)
+        optimizer_disc.zero_grad()
         grad_penalty.backward(retain_graph=True)
-        
-        # Calling the step function on an Optimizer makes an update to its parameters
         optimizer_disc.step()
         
         # generator

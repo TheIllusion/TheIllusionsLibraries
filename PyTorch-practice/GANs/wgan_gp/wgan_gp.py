@@ -16,8 +16,8 @@ BATCH_SIZE = 100
 TOTAL_ITERATION = 1000000
 
 # learning rate
-LEARNING_RATE_GENERATOR = 0.1 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 0.1 * 1e-4
+LEARNING_RATE_GENERATOR = 2 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
 
 # zero centered
 # MEAN_VALUE_FOR_ZERO_CENTERED = 128
@@ -28,9 +28,9 @@ MODEL_SAVING_FREQUENCY = 10000
 # t005
 MODEL_SAVING_DIRECTORY = "//home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/checkpoints/"
 
-#TF_BOARD_DIRECTOR = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/tfboard_2/"
+TF_BOARD_DIRECTOR = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/tfboard_2/"
 
-TF_BOARD_DIRECTOR = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/tfboard/"
+#TF_BOARD_DIRECTOR = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/tfboard/"
 
 RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/gen_images/'
 
@@ -216,62 +216,30 @@ class Discriminator(nn.Module):
         out = x
 
         return out
-
-    def calculate_gradient_penalty(self, real_images, fake_images, batch_size):        
-        ###################################################################################
-        # WGAN-GP. Gradient Penalty.
-        # Ref: https://github.com/Zeleni9/pytorch-wgan/blob/master/models/wgan_gradient_penalty.py#L291
     
+    # from ganimation
+    def calculate_gradient_penalty(self, real_images, fake_images, batch_size):       
         lambda_term = 10
-        #lambda_term = 500
-        
-        #eta = torch.FloatTensor(self.batch_size,1,1,1).uniform_(0,1)
-        #eta = eta.expand(self.batch_size, real_images.size(1), real_images.size(2), real_images.size(3))
-        
-        eta = torch.FloatTensor(batch_size,1,1,1).uniform_(0,1)
-        eta = eta.expand(batch_size, real_images.size(1), real_images.size(2), real_images.size(3))
-        
-        '''
-        if self.cuda:
-            eta = eta.cuda(self.cuda_index)
-        else:
-            eta = eta
-        '''
-        eta = eta.cuda()
-        
-        interpolated = eta * real_images + ((1 - eta) * fake_images)
+        # interpolate sample
+        alpha = torch.rand(batch_size, 1, 1, 1).cuda().expand_as(real_images)
+        interpolated = Variable(alpha * real_images.data + (1 - alpha) * fake_images.data, requires_grad=True)
+        interpolated_prob = self.forward(interpolated)
 
-        '''
-        if self.cuda:
-            interpolated = interpolated.cuda(self.cuda_index)
-        else:
-            interpolated = interpolated
-        '''
-        interpolated = interpolated.cuda()
-        
-        # define it to calculate gradient
-        interpolated = Variable(interpolated, requires_grad=True)
+        # compute gradients
+        grad = torch.autograd.grad(outputs=interpolated_prob,
+                                   inputs=interpolated,
+                                   grad_outputs=torch.ones(interpolated_prob.size()).cuda(),
+                                   retain_graph=True,
+                                   create_graph=True,
+                                   only_inputs=True)[0]
 
-        # calculate probability of interpolated examples
-        #prob_interpolated = self.D(interpolated)
-        prob_interpolated = self.forward(interpolated)
+        # penalize gradients
+        grad = grad.view(grad.size(0), -1)
+        grad_l2norm = torch.sqrt(torch.sum(grad ** 2, dim=1))
+        grad_penalty = torch.mean((grad_l2norm - 1) ** 2) * lambda_term
 
-        # calculate gradients of probabilities with respect to examples
-        '''
-        gradients = autograd.grad(outputs=prob_interpolated, inputs=interpolated,
-                               grad_outputs=torch.ones(
-                                   prob_interpolated.size()).cuda(self.cuda_index) if self.cuda else torch.ones(
-                                   prob_interpolated.size()),
-                               create_graph=True, retain_graph=True)[0]
-        '''
-        gradients = autograd.grad(outputs=prob_interpolated, 
-                                  inputs=interpolated,
-                                  grad_outputs=torch.ones(prob_interpolated.size()).cuda(),
-                                  create_graph=True, retain_graph=True)[0]
-        
-        grad_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * lambda_term
         return grad_penalty
-
+    
 ################################################################################
 # Modules borrowed from DRIT
 
@@ -400,8 +368,8 @@ if __name__ == "__main__":
         '''
         
         # gradient penalty
-        grad_penalty = disc_model.calculate_gradient_penalty(inputs.data, \
-                                                             outputs_gen.data, \
+        grad_penalty = disc_model.calculate_gradient_penalty(inputs, \
+                                                             outputs_gen, \
                                                              batch_size=BATCH_SIZE)
         optimizer_disc.zero_grad()
         grad_penalty.backward(retain_graph=True)

@@ -15,12 +15,17 @@ is_gpu_mode = True
 BATCH_SIZE = 100
 TOTAL_ITERATION = 1000000
 
-# learning rate
-LEARNING_RATE_GENERATOR = 0.5 * 1e-4
+# learning rate (seems to be an optimal choice for single alternate training)
+#LEARNING_RATE_GENERATOR = 0.5 * 1e-4
+#LEARNING_RATE_DISCRIMINATOR = 0.1 * 1e-4
+
+# learning rate (for multiple critic updates)
+LEARNING_RATE_GENERATOR = 2.0 * 1e-4
 LEARNING_RATE_DISCRIMINATOR = 0.1 * 1e-4
+CRITIC_MULTIPLE_UPDATES = 5
 
 # zero centered
-# MEAN_VALUE_FOR_ZERO_CENTERED = 128
+MEAN_VALUE_FOR_ZERO_CENTERED = 128
 
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 10000
@@ -328,59 +333,80 @@ if __name__ == "__main__":
             if image_buff_read_index >= data_loader.image_buffer_size:
                 image_buff_read_index = 0
 
+                
+        for critic_iter in range(CRITIC_MULTIPLE_UPDATES):
+            
+            # random noise z
+            noise_z = torch.randn(BATCH_SIZE, 3, 4, 4)
+
+            if is_gpu_mode:
+                inputs = Variable(torch.from_numpy(input_img).float().cuda())
+                noise_z = Variable(noise_z.cuda())
+            else:
+                inputs = Variable(torch.from_numpy(input_img).float())
+                noise_z = Variable(noise_z)
+
+            # feedforward the inputs. generator
+            outputs_gen = gen_model(noise_z)
+            
+            # pseudo zero-center
+            inputs = inputs - MEAN_VALUE_FOR_ZERO_CENTERED
+            ouputs_gen = outputs_gen - MEAN_VALUE_FOR_ZERO_CENTERED
+
+            # feedforward the inputs. discriminator
+            output_disc_real = disc_model(inputs)
+            output_disc_fake = disc_model(outputs_gen)
+
+            # wasserstein gan loss 
+            loss_disc_total = -(torch.mean(output_disc_real) - torch.mean(output_disc_fake))
+
+            # Before the backward pass, use the optimizer object to zero all of the
+            # gradients for the variables it will update (which are the learnable weights
+            # of the model)
+            optimizer_disc.zero_grad()
+
+            # Backward pass: compute gradient of the loss with respect to model parameters
+            loss_disc_total.backward(retain_graph=True)
+
+            optimizer_disc.step()
+
+            # disable for wgan-gp
+            '''
+            # weight clamping
+            # (ref: https://wiseodd.github.io/techblog/2017/02/04/wasserstein-gan/)
+            for param in disc_model.parameters():
+                param.data.clamp_(-0.01, 0.01)
+            '''
+
+            # gradient penalty
+            grad_penalty = disc_model.calculate_gradient_penalty(inputs, \
+                                                                 outputs_gen, \
+                                                                 batch_size=BATCH_SIZE)
+            optimizer_disc.zero_grad()
+            grad_penalty.backward(retain_graph=True)
+            optimizer_disc.step()
+        
+        # generator update
+        optimizer_gen.zero_grad()        
         # random noise z
         noise_z = torch.randn(BATCH_SIZE, 3, 4, 4)
 
         if is_gpu_mode:
-            inputs = Variable(torch.from_numpy(input_img).float().cuda())
             noise_z = Variable(noise_z.cuda())
         else:
-            inputs = Variable(torch.from_numpy(input_img).float())
             noise_z = Variable(noise_z)
 
         # feedforward the inputs. generator
-        outputs_gen = gen_model(noise_z)
-
-        # feedforward the inputs. discriminator
-        output_disc_real = disc_model(inputs)
+        outputs_gen = gen_model(noise_z)   
+        # pseudo zero-center
+        ouputs_gen = outputs_gen - MEAN_VALUE_FOR_ZERO_CENTERED
+        
         output_disc_fake = disc_model(outputs_gen)
-        
-        # wasserstein gan loss 
-        loss_disc_total = -(torch.mean(output_disc_real) - torch.mean(output_disc_fake))
         loss_gen = -torch.mean(output_disc_fake)
-        
-        # Before the backward pass, use the optimizer object to zero all of the
-        # gradients for the variables it will update (which are the learnable weights
-        # of the model)
-        optimizer_disc.zero_grad()
-
-        # Backward pass: compute gradient of the loss with respect to model parameters
-        loss_disc_total.backward(retain_graph=True)
-        
-        optimizer_disc.step()
-
-        # disable for wgan-gp
-        '''
-        # weight clamping
-        # (ref: https://wiseodd.github.io/techblog/2017/02/04/wasserstein-gan/)
-        for param in disc_model.parameters():
-            param.data.clamp_(-0.01, 0.01)
-        '''
-        
-        # gradient penalty
-        grad_penalty = disc_model.calculate_gradient_penalty(inputs, \
-                                                             outputs_gen, \
-                                                             batch_size=BATCH_SIZE)
-        optimizer_disc.zero_grad()
-        grad_penalty.backward(retain_graph=True)
-        optimizer_disc.step()
-        
-        # generator
-        optimizer_gen.zero_grad()
         loss_gen.backward()
         optimizer_gen.step()
 
-        if i % 100 == 0:
+        if i % 10 == 0:
             print '-----------------------------------------------'
             print '-----------------------------------------------'
             print 'iterations = ', str(i)

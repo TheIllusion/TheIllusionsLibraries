@@ -19,10 +19,18 @@ TOTAL_ITERATION = 1000000
 #LEARNING_RATE_GENERATOR = 0.5 * 1e-4
 #LEARNING_RATE_DISCRIMINATOR = 0.1 * 1e-4
 
-# learning rate (for multiple critic updates)
-LEARNING_RATE_GENERATOR = 2.0 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 0.1 * 1e-4
-CRITIC_MULTIPLE_UPDATES = 5
+# also successful (the hyper-parameter suggested in TTUR paper)
+#LEARNING_RATE_GENERATOR = 3 * 1e-4
+#LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
+
+# reliable settings
+#LEARNING_RATE_GENERATOR = 3 * 1e-4
+#LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
+
+# learning rate (for multiple critic updates) 
+LEARNING_RATE_GENERATOR = 3 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
+CRITIC_MULTIPLE_UPDATES = 1
 
 # zero centered
 MEAN_VALUE_FOR_ZERO_CENTERED = 128
@@ -282,6 +290,10 @@ if __name__ == "__main__":
     gen_model = Generator()
     disc_model = Discriminator()
 
+    #gpu_list = [0,1,2]
+    #gen_model = nn.DataParallel(_gen_model, device_ids=gpu_list, dim=0)
+    #disc_model = nn.DataParallel(_disc_model, device_ids=gpu_list, dim=0)
+    
     if is_gpu_mode:
         gen_model.cuda()
         disc_model.cuda()
@@ -310,31 +322,31 @@ if __name__ == "__main__":
     for i in range(TOTAL_ITERATION):
 
         exit_notification = False
+       
+        for critic_iter in range(CRITIC_MULTIPLE_UPDATES):
+            
+            # get image from dataset
+            for j in range(BATCH_SIZE):
+                data_loader.is_main_alive = True
 
-        for j in range(BATCH_SIZE):
-            data_loader.is_main_alive = True
+                while data_loader.buff_status[image_buff_read_index] == 'empty':
+                    if exit_notification == True:
+                        break
+                    
+                    time.sleep(1)
 
-            while data_loader.buff_status[image_buff_read_index] == 'empty':
+                    if data_loader.buff_status[image_buff_read_index] == 'filled':
+                        break
+
                 if exit_notification == True:
                     break
 
-                time.sleep(1)
-                if data_loader.buff_status[image_buff_read_index] == 'filled':
-                    break
+                np.copyto(input_img[j], data_loader.input_buff[image_buff_read_index])
+                data_loader.buff_status[image_buff_read_index] = 'empty'
+                image_buff_read_index = image_buff_read_index + 1
 
-            if exit_notification == True:
-                break
-
-            np.copyto(input_img[j], data_loader.input_buff[image_buff_read_index])
-
-            data_loader.buff_status[image_buff_read_index] = 'empty'
-
-            image_buff_read_index = image_buff_read_index + 1
-            if image_buff_read_index >= data_loader.image_buffer_size:
-                image_buff_read_index = 0
-
-                
-        for critic_iter in range(CRITIC_MULTIPLE_UPDATES):
+                if image_buff_read_index >= data_loader.image_buffer_size:
+                    image_buff_read_index = 0
             
             # random noise z
             noise_z = torch.randn(BATCH_SIZE, 3, 4, 4)
@@ -351,8 +363,8 @@ if __name__ == "__main__":
             
             # pseudo zero-center
             inputs = inputs - MEAN_VALUE_FOR_ZERO_CENTERED
-            ouputs_gen = outputs_gen - MEAN_VALUE_FOR_ZERO_CENTERED
-
+            outputs_gen = outputs_gen - MEAN_VALUE_FOR_ZERO_CENTERED
+            
             # feedforward the inputs. discriminator
             output_disc_real = disc_model(inputs)
             output_disc_fake = disc_model(outputs_gen)
@@ -399,14 +411,14 @@ if __name__ == "__main__":
         # feedforward the inputs. generator
         outputs_gen = gen_model(noise_z)   
         # pseudo zero-center
-        ouputs_gen = outputs_gen - MEAN_VALUE_FOR_ZERO_CENTERED
+        outputs_gen = outputs_gen - MEAN_VALUE_FOR_ZERO_CENTERED
         
         output_disc_fake = disc_model(outputs_gen)
         loss_gen = -torch.mean(output_disc_fake)
         loss_gen.backward()
         optimizer_gen.step()
 
-        if i % 10 == 0:
+        if i % 30 == 0:
             print '-----------------------------------------------'
             print '-----------------------------------------------'
             print 'iterations = ', str(i)
@@ -414,8 +426,8 @@ if __name__ == "__main__":
             print 'loss(discriminator) = ', str(loss_disc_total)
             print 'grad_penalty =', grad_penalty
             print '-----------------------------------------------'
-            print '(discriminator out-real) = ', output_disc_real[0]
-            print '(discriminator out-fake) = ', output_disc_fake[0]
+            print '(discriminator out-real) = ', output_disc_real[0:4]
+            print '(discriminator out-fake) = ', output_disc_fake[0:4]
 
             # tf-board (scalar)
             logger.scalar_summary('loss-generator', loss_gen, i)
@@ -423,8 +435,12 @@ if __name__ == "__main__":
             # logger.scalar_summary('disc-out-for-real', output_disc_real[0], i)
             # logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], i)
 
+            inputs = inputs + MEAN_VALUE_FOR_ZERO_CENTERED
+            outputs_gen = outputs_gen + MEAN_VALUE_FOR_ZERO_CENTERED
+            
             # tf-board (images - first 10 batches)
             output_imgs_temp = outputs_gen.cpu().data.numpy()[0:6]
+            
             input_imgs_temp = inputs.cpu().data.numpy()[0:4]
             # logger.an_image_summary('generated', output_img, i)
 

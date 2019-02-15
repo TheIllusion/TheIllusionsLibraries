@@ -1,3 +1,5 @@
+# using python3 and torchgan (run within docker image)
+
 import torch
 from torch import autograd
 from torch.autograd import Variable
@@ -32,8 +34,9 @@ TOTAL_ITERATION = 100000
 #LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
 
 # learning rate (for multiple critic updates) 
-LEARNING_RATE_GENERATOR = 3 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
+# SAGAN paper: By default, the learning rate for the discriminator is 0.0004 and the learning rate for the generator is 0.0001
+LEARNING_RATE_GENERATOR = 1 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 4 * 1e-4
 CRITIC_MULTIPLE_UPDATES = 1
 
 # zero centered
@@ -42,16 +45,18 @@ MEAN_VALUE_FOR_ZERO_CENTERED = 128
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 10000
 
-# t005
-MODEL_SAVING_DIRECTORY = "//home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/checkpoints_sngan/"
+#TEST_NAME = 'sngan_with_batch_norm_2'
+TEST_NAME = 'sngan_also_on_gen_2'
 
-TF_BOARD_DIRECTOR = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/tfboard_sngan/"
+# t005
+MODEL_SAVING_DIRECTORY = "/root/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/checkpoints_" + TEST_NAME + '/'
+
+TF_BOARD_DIRECTOR = "/root/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/tfboard_" + TEST_NAME + '/'
 
 #TF_BOARD_DIRECTOR = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/tfboard/"
 
-RESULT_IMAGE_DIRECTORY = '/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/gen_images_sngan/'
+RESULT_IMAGE_DIRECTORY = "/root/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/gen_images_" + TEST_NAME + '/'
 
-'''
 if not os.path.exists(RESULT_IMAGE_DIRECTORY):
     os.mkdir(RESULT_IMAGE_DIRECTORY)
 
@@ -60,7 +65,6 @@ if not os.path.exists(MODEL_SAVING_DIRECTORY):
 
 if not os.path.exists(TF_BOARD_DIRECTOR):
     os.mkdir(TF_BOARD_DIRECTOR)
-'''
 
 # tensor-board logger
 logger = Logger(TF_BOARD_DIRECTOR)
@@ -72,12 +76,12 @@ class TransitionDown(nn.Module):
         # self.drop_out = nn.Dropout2d(p=0.2)
 
         # GAN's doesn't work well with stride=2
-        self.conv = nn.Conv2d(in_channels=in_channels, out_channels=out_channels,
-                              kernel_size=3, padding=1, stride=1, bias=False)
-
+        self.conv = SpectralNorm2d(nn.Conv2d(in_channels=in_channels, out_channels=out_channels,
+                              kernel_size=3, padding=1, stride=1, bias=False))
+        
         # weight initialization
-        torch.nn.init.xavier_uniform(self.conv.weight)
-
+        #torch.nn.init.xavier_uniform(self.conv.weight)
+        
         self.batch_norm = nn.BatchNorm2d(out_channels)
 
         self.maxpool = nn.MaxPool2d((3, 3), stride=1)
@@ -85,7 +89,8 @@ class TransitionDown(nn.Module):
     def forward(self, x):
         # x = F.max_pool2d(input=x, kernel_size=2)
         # x = self.drop_out(x)
-        x = F.relu(self.conv(x))
+        x = self.conv(x)
+        x = F.relu(x)
         x = self.batch_norm(x)
 
         x = F.max_pool2d(input=x, kernel_size=2)
@@ -111,12 +116,12 @@ class TransitionUp(nn.Module):
         dilation (int or tuple, optional): Spacing between kernel elements
         '''
 
-        self.transpoed_conv = nn.ConvTranspose2d(in_channels=in_channels, out_channels=out_channels,
+        self.transpoed_conv = SpectralNorm2d(nn.ConvTranspose2d(in_channels=in_channels, out_channels=out_channels,
                                                  kernel_size=kernel_size, stride=stride, padding=1, output_padding=0,
-                                                 bias=False)
+                                                 bias=False))
 
         # weight initialization
-        torch.nn.init.xavier_uniform(self.transpoed_conv.weight)
+        #torch.nn.init.xavier_uniform(self.transpoed_conv.weight)
 
     def forward(self, x):
         x = self.transpoed_conv(x)
@@ -200,10 +205,10 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # input image will have the size of 64x64x3
-        self.first_conv_layer = SpectralNorm2d(TransitionDown(in_channels=3, out_channels=128, kernel_size=3))
-        self.second_conv_layer = SpectralNorm2d(TransitionDown(in_channels=128, out_channels=256, kernel_size=3))
-        self.third_conv_layer = SpectralNorm2d(TransitionDown(in_channels=256, out_channels=512, kernel_size=3))
-        self.fourth_conv_layer = SpectralNorm2d(TransitionDown(in_channels=512, out_channels=512, kernel_size=3))
+        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=128, kernel_size=3)
+        self.second_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
+        self.third_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
+        self.fourth_conv_layer = TransitionDown(in_channels=512, out_channels=512, kernel_size=3)
 
         self.fc1 = nn.Linear(4 * 4 * 512, 100)
         self.fc2 = nn.Linear(100, 1)
@@ -375,8 +380,8 @@ if __name__ == "__main__":
             output_disc_real = disc_model(inputs)
             output_disc_fake = disc_model(outputs_gen)
 
-            # wasserstein gan loss 
-            loss_disc_total = -(torch.mean(output_disc_real) - torch.mean(output_disc_fake))
+            # wasserstein gan hinge loss 
+            loss_disc_total = nn.ReLU()(1.0 - output_disc_real).mean() + nn.ReLU()(1.0 + output_disc_fake).mean()
 
             # Before the backward pass, use the optimizer object to zero all of the
             # gradients for the variables it will update (which are the learnable weights
@@ -432,7 +437,7 @@ if __name__ == "__main__":
             print ('iterations = ', str(i))
             print ('loss(generator)     = ', str(loss_gen))
             print ('loss(discriminator) = ', str(loss_disc_total))
-            print ('grad_penalty =', grad_penalty)
+            #print ('grad_penalty =', grad_penalty)
             print ('-----------------------------------------------')
             print ('(discriminator out-real) = ', output_disc_real[0:4])
             print ('(discriminator out-fake) = ', output_disc_fake[0:4])

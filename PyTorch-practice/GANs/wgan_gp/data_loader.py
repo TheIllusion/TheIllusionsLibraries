@@ -3,12 +3,15 @@ import os, glob, random, re, time, threading
 import cv2
 
 # t005 
-INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/tiny_dataset/faces/"
+#INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/tiny_dataset/faces/"
 #INPUT_IMAGE_DIRECTORY_PATH = "/home1/irteamsu/rklee/temp/original_resized_face/"
+
+# for docker
+INPUT_IMAGE_DIRECTORY_PATH = "/tbt005_home/rklee/tiny_dataset/faces/"
 
 IS_TRAINING = True
 
-print 'data loader for vanilla/lsgan'
+print ('data loader for vanilla/lsgan')
 
 ##############################################################################################
 # Image Buffer Management
@@ -34,7 +37,7 @@ for i in range(image_buffer_size):
 current_buff_index = 0
 lineIdx = 0
 
-print 'Load the file list...'
+print ('Load the file list...')
 
 # load the filelist
 # os.chdir(ANSWER_IMAGE_DIRECTORY_PATH)
@@ -46,7 +49,7 @@ max_training_index = len(jpg_files)
 
 exit_notification = False
 
-print 'Buffer init'
+print ('Buffer init')
 
 
 def image_buffer_loader():
@@ -54,7 +57,7 @@ def image_buffer_loader():
     global lineIdx
     global exit_notification
 
-    print 'image_buffer_loader'
+    print ('image_buffer_loader')
 
     epoch = 0
 
@@ -73,7 +76,7 @@ def image_buffer_loader():
             if lineIdx >= max_training_index:
                 lineIdx = 0
 
-            print 'skip this jpg file. continue.'
+            print ('skip this jpg file. continue.')
             continue
 
         training_file_name = filename
@@ -90,7 +93,7 @@ def image_buffer_loader():
                 break
 
         if exit_notification == True:
-            print 'Exit(1)'
+            print ('Exit(1)')
             break
 
         # Input Image
@@ -102,7 +105,7 @@ def image_buffer_loader():
             if lineIdx >= max_training_index:
                 lineIdx = 0
 
-            print 'skip this jpg file. continue.'
+            print ('skip this jpg file. continue.')
             continue
 
         '''
@@ -141,13 +144,13 @@ def image_buffer_loader():
         buff_status[current_buff_index] = 'filled'
 
         if lineIdx % 1000 == 0:
-            print 'training_jpg_line_idx =', str(lineIdx), 'epoch =', str(epoch)
+            print ('training_jpg_line_idx =', str(lineIdx), 'epoch =', str(epoch))
 
         lineIdx = lineIdx + 1
         if lineIdx >= max_training_index:
             lineIdx = 0
             epoch = epoch + 1
-            print 'epoch = ', str(epoch)
+            print ('epoch = ', str(epoch))
 
         current_buff_index = current_buff_index + 1
         if current_buff_index >= image_buffer_size:
@@ -163,11 +166,11 @@ def main_alive_checker():
 
     while True:
         if is_main_alive == False:
-            # wait for the 7 secs for last chance
-            time.sleep(7)
+            # wait for the 10 secs for last chance
+            time.sleep(10)
             if is_main_alive == False:
                 exit_notification = True
-                print 'Exit(2)'
+                print ('Exit(2)')
                 break
             else:
                 is_main_alive = False
@@ -177,10 +180,10 @@ def main_alive_checker():
 
 # Launch image buffer loader
 
-print 'IS_TRAINING =', IS_TRAINING
+print ('IS_TRAINING =', IS_TRAINING)
 
 if IS_TRAINING:
-    print 'launch threads'
+    print ('launch threads')
     timer = threading.Timer(1, image_buffer_loader)
     timer.start()
 

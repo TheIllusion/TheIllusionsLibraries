@@ -20,7 +20,7 @@ INPUT_IMAGE_WIDTH = 65
 INPUT_IMAGE_HEIGHT = 65
 
 # image buffers
-image_buffer_size = 600
+image_buffer_size = 800
 
 # OpenCV format
 # input_buff = np.empty(shape=(image_buffer_size, INPUT_IMAGE_WIDTH, INPUT_IMAGE_HEIGHT, 3))
@@ -166,8 +166,8 @@ def main_alive_checker():
 
     while True:
         if is_main_alive == False:
-            # wait for the 10 secs for last chance
-            time.sleep(10)
+            # wait for the 20 secs for last chance
+            time.sleep(20)
             if is_main_alive == False:
                 exit_notification = True
                 print ('Exit(2)')

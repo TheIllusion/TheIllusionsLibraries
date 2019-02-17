@@ -18,7 +18,7 @@ from torchgan.layers.spectralnorm import SpectralNorm2d
 is_gpu_mode = True
 
 # batch size
-BATCH_SIZE = 100
+BATCH_SIZE = 400
 TOTAL_ITERATION = 100000
 
 # learning rate (seems to be an optimal choice for single alternate training)
@@ -46,7 +46,7 @@ MEAN_VALUE_FOR_ZERO_CENTERED = 128
 MODEL_SAVING_FREQUENCY = 10000
 
 #TEST_NAME = 'sngan_with_batch_norm_2'
-TEST_NAME = 'sngan_also_on_gen_2'
+TEST_NAME = 'sngan_light_weight_gen'
 
 # t005
 MODEL_SAVING_DIRECTORY = "/root/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/checkpoints_" + TEST_NAME + '/'
@@ -56,6 +56,9 @@ TF_BOARD_DIRECTOR = "/root/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/t
 #TF_BOARD_DIRECTOR = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/tfboard/"
 
 RESULT_IMAGE_DIRECTORY = "/root/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/gen_images_" + TEST_NAME + '/'
+
+# multi gpu
+device_ids = [0,1,2,3]
 
 if not os.path.exists(RESULT_IMAGE_DIRECTORY):
     os.mkdir(RESULT_IMAGE_DIRECTORY)
@@ -300,10 +303,15 @@ if __name__ == "__main__":
 
     gen_model = Generator()
     disc_model = Discriminator()
-
-    #gpu_list = [0,1,2]
-    #gen_model = nn.DataParallel(_gen_model, device_ids=gpu_list, dim=0)
-    #disc_model = nn.DataParallel(_disc_model, device_ids=gpu_list, dim=0)
+    
+    # multi gpu
+    device = torch.device("cuda:{:d}".format(device_ids[0] if device_ids else 0))
+    
+    gen_model = nn.DataParallel(gen_model)
+    disc_model = nn.DataParallel(disc_model)
+    
+    gen_model.to(device)
+    disc_model.to(device)
     
     if is_gpu_mode:
         gen_model.cuda()
@@ -365,10 +373,13 @@ if __name__ == "__main__":
             if is_gpu_mode:
                 inputs = Variable(torch.from_numpy(input_img).float().cuda())
                 noise_z = Variable(noise_z.cuda())
+                # multi gpu
+                inputs = inputs.to(device)
+                noise_z = noise_z.to(device)
             else:
                 inputs = Variable(torch.from_numpy(input_img).float())
                 noise_z = Variable(noise_z)
-
+            
             # feedforward the inputs. generator
             outputs_gen = gen_model(noise_z)
             

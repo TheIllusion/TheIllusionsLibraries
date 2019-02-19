@@ -16,16 +16,24 @@ from torchgan.layers.spectralnorm import SpectralNorm2d
 #from torchgan.trainer import Trainer
 from torch.utils.data import Dataset, DataLoader
 import custom_pytorch_dataloader
-from custom_pytorch_dataloader import FaceDataset
+from custom_pytorch_dataloader import FaceDataset, Rescale, RandomCrop, ToTensor
+from torchvision import transforms
 
 INPUT_IMAGE_DIRECTORY_PATH = "/tbt005_home/rklee/tiny_dataset/faces/"
+#INPUT_IMAGE_DIRECTORY_PATH = "/tbt005_home/rklee/temp/original_resized_face/"
 
 # gpu mode
 is_gpu_mode = True
 
+# multi gpu
+device_count = 4
+device_ids = range(device_count)
+#num_workers = 4 * device_count
+num_workers = 8
+
 # batch size
 #BATCH_SIZE = 600
-BATCH_SIZE = 200
+BATCH_SIZE = 96 * device_count
 TOTAL_ITERATION = 100000
 
 # learning rate (seems to be an optimal choice for single alternate training)
@@ -42,18 +50,19 @@ TOTAL_ITERATION = 100000
 
 # learning rate (for multiple critic updates) 
 # SAGAN paper: By default, the learning rate for the discriminator is 0.0004 and the learning rate for the generator is 0.0001
-LEARNING_RATE_GENERATOR = 1 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 4 * 1e-4
+LEARNING_RATE_GENERATOR = 5 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 CRITIC_MULTIPLE_UPDATES = 1
 
 # zero centered
-MEAN_VALUE_FOR_ZERO_CENTERED = 128
+#MEAN_VALUE_FOR_ZERO_CENTERED = 128
+MEAN_VALUE_FOR_ZERO_CENTERED = 0.5
 
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 10000
 
 #TEST_NAME = 'sngan_with_batch_norm_2'
-TEST_NAME = 'sngan_light_weight_gen_temp'
+TEST_NAME = 'sngan_light_weight_gen_temp_larger_set'
 
 # t005
 MODEL_SAVING_DIRECTORY = "/root/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/checkpoints_" + TEST_NAME + '/'
@@ -75,9 +84,6 @@ if not os.path.exists(TF_BOARD_DIRECTOR):
 
 # tensor-board logger
 logger = Logger(TF_BOARD_DIRECTOR)
-
-# multi gpu
-device_ids = [2,3]
 
 class TransitionDown(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size):
@@ -156,12 +162,12 @@ class Generator(nn.Module):
         # output feature map will have the size of 16x16x3
         self.second_deconv = TransitionUp(in_channels=256, out_channels=128, stride=2, kernel_size=4)
         self.second_batch_norm = nn.InstanceNorm2d(128)
-        self.decA2 = INSResBlock(128, 128)
+        #self.decA2 = INSResBlock(128, 128)
 
         # output feature map will have the size of 32x32x3
         self.third_deconv = TransitionUp(in_channels=128, out_channels=64, stride=2, kernel_size=4)
         self.third_batch_norm = nn.InstanceNorm2d(64)
-        self.decA3 = INSResBlock(64, 64)
+        #self.decA3 = INSResBlock(64, 64)
 
         # output feature map will have the size of 64x64x3
         self.fourth_deconv = TransitionUp(in_channels=64, out_channels=32, stride=2, kernel_size=4)
@@ -184,12 +190,12 @@ class Generator(nn.Module):
         x = self.second_deconv(x)
         x = self.second_batch_norm(x)
         x = F.leaky_relu(x)
-        x = self.decA2(x)
+        #x = self.decA2(x)
 
         x = self.third_deconv(x)
         x = self.third_batch_norm(x)
         x = F.leaky_relu(x)
-        x = self.decA3(x)
+        #x = self.decA3(x)
 
         x = self.fourth_deconv(x)
         x = self.fourth_batch_norm(x)
@@ -199,7 +205,7 @@ class Generator(nn.Module):
         #tanh_out = nn.functional.tanh(x)
 
         #out = (tanh_out + 1) * 255 / 2
-        out = sigmoid_out * 255
+        out = sigmoid_out
         
         # print 'out.shape =', out.shape
 
@@ -339,16 +345,22 @@ if __name__ == "__main__":
     # answer_img = np.empty(shape=(BATCH_SIZE, 3, data_loader.INPUT_IMAGE_WIDTH, data_loader.INPUT_IMAGE_HEIGHT))
 
     # opencv style
+    '''
     output_img_opencv = np.empty(shape=(custom_pytorch_dataloader.INPUT_IMAGE_WIDTH, 
                                         custom_pytorch_dataloader.INPUT_IMAGE_HEIGHT, 
                                         3))
+    '''
     
     # dataset
-    transformed_dataset = FaceDataset(root_dir=INPUT_IMAGE_DIRECTORY_PATH)
+    transformed_dataset = FaceDataset(root_dir=INPUT_IMAGE_DIRECTORY_PATH, \
+                                      transform=transforms.Compose([
+                              Rescale(custom_pytorch_dataloader.INPUT_IMAGE_WIDTH+15),
+                              RandomCrop(custom_pytorch_dataloader.INPUT_IMAGE_WIDTH),
+                              ToTensor()]))
     
     # data_loader
     dataloader = DataLoader(transformed_dataset, batch_size=BATCH_SIZE,
-                        shuffle=True, num_workers=16)
+                        shuffle=False, num_workers=num_workers)
 
     #for i in range(TOTAL_ITERATION):
     
@@ -358,6 +370,7 @@ if __name__ == "__main__":
         
         if exit_flag == True:
             break
+            
         for img_idx, inputs in enumerate(dataloader):
             
             i += 1
@@ -369,34 +382,9 @@ if __name__ == "__main__":
 
             for critic_iter in range(CRITIC_MULTIPLE_UPDATES):
 
-                # get image from dataset
-                '''
-                for j in range(BATCH_SIZE):
-                    data_loader.is_main_alive = True
-
-                    while data_loader.buff_status[image_buff_read_index] == 'empty':
-                        if exit_notification == True:
-                            break
-
-                        time.sleep(1)
-
-                        if data_loader.buff_status[image_buff_read_index] == 'filled':
-                            break
-
-                    if exit_notification == True:
-                        break
-
-                    np.copyto(input_img[j], data_loader.input_buff[image_buff_read_index])
-                    data_loader.buff_status[image_buff_read_index] = 'empty'
-                    image_buff_read_index = image_buff_read_index + 1
-
-                    if image_buff_read_index >= data_loader.image_buffer_size:
-                        image_buff_read_index = 0
-                '''
-
                 # random noise z
                 noise_z = torch.randn(BATCH_SIZE, 3, 4, 4)
-
+                
                 inputs = inputs['image']  
 
                 if is_gpu_mode:
@@ -422,7 +410,8 @@ if __name__ == "__main__":
                 output_disc_fake = disc_model(outputs_gen)
 
                 # wasserstein gan hinge loss 
-                loss_disc_total = nn.ReLU()(1.0 - output_disc_real).mean() + nn.ReLU()(1.0 + output_disc_fake).mean()
+                loss_disc_total = nn.ReLU()(1.0 - output_disc_real).mean() \
+                                  + nn.ReLU()(1.0 + output_disc_fake).mean()
 
                 # Before the backward pass, use the optimizer object to zero all of the
                 # gradients for the variables it will update (which are the learnable weights
@@ -499,8 +488,8 @@ if __name__ == "__main__":
                 # logger.an_image_summary('generated', output_img, i)
 
                 # rgb to bgr
-                output_imgs_temp = output_imgs_temp[:, [2, 1, 0], ...]
-                input_imgs_temp = input_imgs_temp[:, [2, 1, 0], ...]
+                #output_imgs_temp = output_imgs_temp[:, [2, 1, 0], ...]
+                #input_imgs_temp = input_imgs_temp[:, [2, 1, 0], ...]
 
                 logger.image_summary('generated', output_imgs_temp, i)
                 logger.image_summary('real', input_imgs_temp, i)

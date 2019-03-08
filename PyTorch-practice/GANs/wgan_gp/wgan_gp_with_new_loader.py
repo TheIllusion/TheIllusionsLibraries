@@ -32,8 +32,8 @@ TOTAL_ITERATION = 1000000
 #LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
 
 # learning rate (for multiple critic updates) 
-LEARNING_RATE_GENERATOR = 2 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
+LEARNING_RATE_GENERATOR = 4 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 2 * 1e-4
 CRITIC_MULTIPLE_UPDATES = 1
 
 # zero centered
@@ -130,28 +130,28 @@ class Generator(nn.Module):
         """
         super(Generator, self).__init__()
 
-        # output feature map will have the size of 8x8x3
-        self.first_deconv = TransitionUp(in_channels=3, out_channels=256, stride=2, kernel_size=4)
+        self.dense = nn.Linear(100, 512 * 4 * 4)
+        self.dense_batch_norm = nn.BatchNorm1d(512*4*4)
+        nn.init.xavier_uniform(self.dense.weight.data, 1.)
+        
+        self.first_deconv = TransitionUp(in_channels=512, out_channels=256, stride=2, kernel_size=4)
         #self.first_batch_norm = nn.BatchNorm2d(256)
         self.first_batch_norm = nn.InstanceNorm2d(256)
-        self.decA1 = INSResBlock(256, 256)
+        #self.decA1 = INSResBlock(256, 256)
         
-        # output feature map will have the size of 16x16x3
         self.second_deconv = TransitionUp(in_channels=256, out_channels=128, stride=2, kernel_size=4)
         self.second_batch_norm = nn.InstanceNorm2d(128)
-        self.decA2 = INSResBlock(128, 128)
+        #self.decA2 = INSResBlock(128, 128)
 
-        # output feature map will have the size of 32x32x3
         self.third_deconv = TransitionUp(in_channels=128, out_channels=64, stride=2, kernel_size=4)
         self.third_batch_norm = nn.InstanceNorm2d(64)
         self.decA3 = INSResBlock(64, 64)
 
-        # output feature map will have the size of 64x64x3
-        self.fourth_deconv = TransitionUp(in_channels=64, out_channels=32, stride=2, kernel_size=4)
+        self.fourth_deconv = TransitionUp(in_channels=64, out_channels=64, stride=2, kernel_size=4)
         self.fourth_batch_norm = nn.InstanceNorm2d(32)
 
         # output feature map will have the size of 64x64x3
-        self.fifth_deconv = TransitionUp(in_channels=32, out_channels=3, stride=1, kernel_size=4)
+        self.fifth_deconv = TransitionUp(in_channels=64, out_channels=3, stride=1, kernel_size=4)
 
     def forward(self, x):
         """
@@ -159,15 +159,20 @@ class Generator(nn.Module):
         a Variable of output data. We can use Modules defined in the constructor as
         well as arbitrary operators on Variables.
         """
+        
+        x = self.dense(x)
+        x = self.dense_batch_norm(x)
+        x = x.view(-1, 512, 4, 4)
+        
         x = self.first_deconv(x)
         x = self.first_batch_norm(x)
         x = F.leaky_relu(x)
-        x = self.decA1(x)
+        #x = self.decA1(x)
 
         x = self.second_deconv(x)
         x = self.second_batch_norm(x)
         x = F.leaky_relu(x)
-        x = self.decA2(x)
+        #x = self.decA2(x)
 
         x = self.third_deconv(x)
         x = self.third_batch_norm(x)
@@ -198,10 +203,10 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         # input image will have the size of 64x64x3
-        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=128, kernel_size=3)
-        self.second_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
-        self.third_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
-        self.fourth_conv_layer = TransitionDown(in_channels=512, out_channels=512, kernel_size=3)
+        self.first_conv_layer = TransitionDown(in_channels=3, out_channels=64, kernel_size=3)
+        self.second_conv_layer = TransitionDown(in_channels=64, out_channels=128, kernel_size=3)
+        self.third_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
+        self.fourth_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
 
         self.fc1 = nn.Linear(4 * 4 * 512, 1)
 
@@ -233,6 +238,8 @@ class Discriminator(nn.Module):
         lambda_term = 10
         # interpolate sample
         alpha = torch.rand(batch_size, 1, 1, 1).cuda().expand_as(real_images)
+        #print 'real_images.shape =', real_images.shape
+        #print 'fake_images.shape =', fake_images.shape
         interpolated = Variable(alpha * real_images.data + (1 - alpha) * fake_images.data, requires_grad=True)
         interpolated_prob = self.forward(interpolated)
 
@@ -330,7 +337,7 @@ if __name__ == "__main__":
     
     # data_loader
     dataloader = DataLoader(transformed_dataset, batch_size=BATCH_SIZE,
-                        shuffle=True, num_workers=4)
+                        shuffle=True, num_workers=2)
 
     #for i in range(TOTAL_ITERATION):
     
@@ -369,7 +376,8 @@ if __name__ == "__main__":
 
                 # random noise z
                 inputs = inputs['image']  
-                noise_z = torch.randn(inputs.shape[0], 3, 4, 4)
+                #noise_z = torch.randn(inputs.shape[0], 3, 4, 4)
+                noise_z = torch.randn(inputs.shape[0], 100)
 
                 if is_gpu_mode:
                     #inputs = Variable(torch.from_numpy(inputs).float().cuda())
@@ -391,7 +399,11 @@ if __name__ == "__main__":
                 output_disc_fake = disc_model(outputs_gen)
 
                 # wasserstein gan loss 
-                loss_disc_total = -(torch.mean(output_disc_real) - torch.mean(output_disc_fake))
+                #loss_disc_total = -(torch.mean(output_disc_real) - torch.mean(output_disc_fake))
+                
+                # wasserstein gan hinge loss 
+                loss_disc_total = nn.ReLU()(1.0 - output_disc_real).mean() \
+                                  + nn.ReLU()(1.0 + output_disc_fake).mean()
 
                 # Before the backward pass, use the optimizer object to zero all of the
                 # gradients for the variables it will update (which are the learnable weights
@@ -415,6 +427,9 @@ if __name__ == "__main__":
                 grad_penalty = disc_model.calculate_gradient_penalty(inputs, \
                                                                      outputs_gen, \
                                                                      batch_size=inputs.shape[0])
+                
+                grad_penalty *= 0.1
+                
                 optimizer_disc.zero_grad()
                 grad_penalty.backward(retain_graph=True)
                 optimizer_disc.step()
@@ -422,7 +437,8 @@ if __name__ == "__main__":
             # generator update
             optimizer_gen.zero_grad()        
             # random noise z
-            noise_z = torch.randn(inputs.shape[0], 3, 4, 4)
+            #noise_z = torch.randn(inputs.shape[0], 3, 4, 4)
+            noise_z = torch.randn(inputs.shape[0], 100)
 
             if is_gpu_mode:
                 noise_z = Variable(noise_z.cuda())

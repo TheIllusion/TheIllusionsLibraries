@@ -40,7 +40,7 @@ num_workers = 4 * device_count
 
 # batch size
 #BATCH_SIZE = 64
-BATCH_SIZE = 128 * device_count
+BATCH_SIZE = 64 * device_count
 TOTAL_ITERATION = 100000
 
 # learning rate (seems to be an optimal choice for single alternate training)
@@ -246,17 +246,18 @@ class Discriminator(nn.Module):
         self.self_attention = SelfAttention2d(128)
         
         self.second_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
-        self.third_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
-        self.fourth_conv_layer = TransitionDown(in_channels=512, out_channels=512, kernel_size=3)
+        self.third_conv_layer = TransitionDown(in_channels=256, out_channels=256, kernel_size=3)
+        self.fourth_conv_layer = TransitionDown(in_channels=256, out_channels=256, kernel_size=3)
 
-        self.fc1 = nn.Linear(4 * 4 * 512, 2)
-        self.fc2 = nn.Linear(2, 1)
+        self.fc1 = nn.Linear(4 * 4 * 256, 1)
+        self.fc2 = nn.Linear(1, 1)
 
         torch.nn.init.xavier_uniform(self.fc1.weight.data, 1.)
         torch.nn.init.xavier_uniform(self.fc2.weight.data, 1.)
         
         self.fc1 = SpectralNorm2d(self.fc1)
-        self.fc2 = SpectralNorm2d(self.fc2)
+        #self.fc2 = SpectralNorm2d(self.fc2)
+        self.fc2 = self.fc2
 
     def forward(self, x):
         """
@@ -271,7 +272,7 @@ class Discriminator(nn.Module):
         x = self.third_conv_layer(x)
         x = self.fourth_conv_layer(x)
 
-        x = x.view(-1, 4 * 4 * 512)
+        x = x.view(-1, 4 * 4 * 256)
         x = F.relu(self.fc1(x))
         
         # disable relu at the last layer

@@ -23,8 +23,8 @@ from torchvision import transforms
 
 #TEST_NAME = 'sngan_with_batch_norm_2'
 #TEST_NAME = 'sngan_light_weight_gen_temp_larger_set'
-TEST_NAME = 'sngan_tuned'
-#TEST_NAME = 'sagan_actual'
+#TEST_NAME = 'sagan'
+TEST_NAME = 'sagan_actual'
 
 INPUT_IMAGE_DIRECTORY_PATH = "/tbt005_home/rklee/tiny_dataset/faces/"
 #INPUT_IMAGE_DIRECTORY_PATH = "/tbt005_home/rklee/temp/original_resized_face/"
@@ -33,14 +33,14 @@ INPUT_IMAGE_DIRECTORY_PATH = "/tbt005_home/rklee/tiny_dataset/faces/"
 is_gpu_mode = True
 
 # multi gpu
-device_count = 2
+device_count = 4
 device_ids = range(device_count)
 num_workers = 4 * device_count
 #num_workers = 8
 
 # batch size
 #BATCH_SIZE = 64
-BATCH_SIZE = 128 * device_count
+BATCH_SIZE = 64 * device_count
 TOTAL_ITERATION = 100000
 
 # learning rate (seems to be an optimal choice for single alternate training)
@@ -57,8 +57,8 @@ TOTAL_ITERATION = 100000
 
 # learning rate (for multiple critic updates) 
 # SAGAN paper: By default, the learning rate for the discriminator is 0.0004 and the learning rate for the generator is 0.0001
-LEARNING_RATE_GENERATOR = 2 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 4 * 1e-4
+LEARNING_RATE_GENERATOR = 4 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 CRITIC_MULTIPLE_UPDATES = 1
 
 # zero centered
@@ -181,7 +181,7 @@ class Generator(nn.Module):
         self.third_deconv = TransitionUp(in_channels=128, out_channels=64, stride=2, kernel_size=4)
         self.third_batch_norm = nn.InstanceNorm2d(64)
         
-        #self.self_attention = SelfAttention2d(64)
+        self.self_attention = SelfAttention2d(64)
         #self.decA3 = INSResBlock(64, 64)
 
         # output feature map will have the size of 64x64x3
@@ -214,7 +214,7 @@ class Generator(nn.Module):
         x = self.third_batch_norm(x)
         x = F.leaky_relu(x)
         
-        #x = self.self_attention(x)
+        x = self.self_attention(x)
         #x = self.decA3(x)
 
         x = self.fourth_deconv(x)
@@ -243,7 +243,7 @@ class Discriminator(nn.Module):
         # input image will have the size of 64x64x3
         self.first_conv_layer = TransitionDown(in_channels=3, out_channels=128, kernel_size=3)
         
-        #self.self_attention = SelfAttention2d(128)
+        self.self_attention = SelfAttention2d(128)
         
         self.second_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
         self.third_conv_layer = TransitionDown(in_channels=256, out_channels=256, kernel_size=3)
@@ -257,6 +257,7 @@ class Discriminator(nn.Module):
         
         self.fc1 = SpectralNorm2d(self.fc1)
         #self.fc2 = SpectralNorm2d(self.fc2)
+        self.fc2 = self.fc2
 
     def forward(self, x):
         """
@@ -266,7 +267,7 @@ class Discriminator(nn.Module):
         """
 
         x = self.first_conv_layer(x)
-        #x = self.self_attention(x)
+        x = self.self_attention(x)
         x = self.second_conv_layer(x)
         x = self.third_conv_layer(x)
         x = self.fourth_conv_layer(x)

@@ -8,14 +8,15 @@ import numpy as np
 #import data_loader
 from torch.utils.data import Dataset, DataLoader
 import custom_pytorch_dataloader
-from custom_pytorch_dataloader import FaceDataset
+from custom_pytorch_dataloader import FaceDataset, Rescale, RandomCrop, ToTensor
+from torchvision import transforms
 from logger import Logger
 
 # gpu mode
 is_gpu_mode = True
 
 # batch size
-BATCH_SIZE = 100
+BATCH_SIZE = 64
 TOTAL_ITERATION = 1000000
 
 # learning rate (seems to be an optimal choice for single alternate training)
@@ -31,8 +32,8 @@ TOTAL_ITERATION = 1000000
 #LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
 
 # learning rate (for multiple critic updates) 
-LEARNING_RATE_GENERATOR = 3 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
+LEARNING_RATE_GENERATOR = 2 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 CRITIC_MULTIPLE_UPDATES = 1
 
 # zero centered
@@ -250,6 +251,7 @@ class Discriminator(nn.Module):
 
         return grad_penalty
     
+    
 ################################################################################
 # Modules borrowed from DRIT
 
@@ -317,155 +319,161 @@ if __name__ == "__main__":
     output_img_opencv = np.empty(shape=(custom_pytorch_dataloader.INPUT_IMAGE_WIDTH, custom_pytorch_dataloader.INPUT_IMAGE_HEIGHT, 3))
     
     # dataset
-    transformed_dataset = FaceDataset(root_dir='/home1/irteamsu/rklee/tiny_dataset/faces/')
+    #transformed_dataset = FaceDataset(root_dir='/home1/irteamsu/rklee/tiny_dataset/faces/')
+    
+    # dataset
+    transformed_dataset = FaceDataset(root_dir='/home1/irteamsu/rklee/tiny_dataset/faces/', \
+                                      transform=transforms.Compose([
+                                      Rescale(custom_pytorch_dataloader.INPUT_IMAGE_WIDTH+5),
+                                      RandomCrop(custom_pytorch_dataloader.INPUT_IMAGE_WIDTH),
+                                      ToTensor()]))
     
     # data_loader
     dataloader = DataLoader(transformed_dataset, batch_size=BATCH_SIZE,
                         shuffle=True, num_workers=4)
 
     #for i in range(TOTAL_ITERATION):
-    for i, inputs in enumerate(dataloader):
-
-        if i == TOTAL_ITERATION:
-            break
-
-        exit_notification = False
-       
-        for critic_iter in range(CRITIC_MULTIPLE_UPDATES):
+    
+    total_idx = 0
+    while True:
+        for i, inputs in enumerate(dataloader):
             
-            # get image from dataset
-            '''
-            for j in range(BATCH_SIZE):
-                data_loader.is_main_alive = True
+            total_idx += 1
 
-                while data_loader.buff_status[image_buff_read_index] == 'empty':
+            for critic_iter in range(CRITIC_MULTIPLE_UPDATES):
+
+                # get image from dataset
+                '''
+                for j in range(BATCH_SIZE):
+                    data_loader.is_main_alive = True
+
+                    while data_loader.buff_status[image_buff_read_index] == 'empty':
+                        if exit_notification == True:
+                            break
+
+                        time.sleep(1)
+
+                        if data_loader.buff_status[image_buff_read_index] == 'filled':
+                            break
+
                     if exit_notification == True:
                         break
-                    
-                    time.sleep(1)
 
-                    if data_loader.buff_status[image_buff_read_index] == 'filled':
-                        break
+                    np.copyto(input_img[j], data_loader.input_buff[image_buff_read_index])
+                    data_loader.buff_status[image_buff_read_index] = 'empty'
+                    image_buff_read_index = image_buff_read_index + 1
 
-                if exit_notification == True:
-                    break
+                    if image_buff_read_index >= data_loader.image_buffer_size:
+                        image_buff_read_index = 0
+                '''
 
-                np.copyto(input_img[j], data_loader.input_buff[image_buff_read_index])
-                data_loader.buff_status[image_buff_read_index] = 'empty'
-                image_buff_read_index = image_buff_read_index + 1
+                # random noise z
+                inputs = inputs['image']  
+                noise_z = torch.randn(inputs.shape[0], 3, 4, 4)
 
-                if image_buff_read_index >= data_loader.image_buffer_size:
-                    image_buff_read_index = 0
-            '''
-            
+                if is_gpu_mode:
+                    #inputs = Variable(torch.from_numpy(inputs).float().cuda())
+                    inputs = Variable(inputs.float().cuda())
+                    noise_z = Variable(noise_z.cuda())
+                else:
+                    #inputs = Variable(torch.from_numpy(inputs).float())
+                    noise_z = Variable(noise_z)
+
+                # feedforward the inputs. generator
+                outputs_gen = gen_model(noise_z)
+
+                # pseudo zero-center
+                inputs = inputs - MEAN_VALUE_FOR_ZERO_CENTERED
+                outputs_gen = outputs_gen - MEAN_VALUE_FOR_ZERO_CENTERED
+
+                # feedforward the inputs. discriminator
+                output_disc_real = disc_model(inputs)
+                output_disc_fake = disc_model(outputs_gen)
+
+                # wasserstein gan loss 
+                loss_disc_total = -(torch.mean(output_disc_real) - torch.mean(output_disc_fake))
+
+                # Before the backward pass, use the optimizer object to zero all of the
+                # gradients for the variables it will update (which are the learnable weights
+                # of the model)
+                optimizer_disc.zero_grad()
+
+                # Backward pass: compute gradient of the loss with respect to model parameters
+                loss_disc_total.backward(retain_graph=True)
+
+                optimizer_disc.step()
+
+                # disable for wgan-gp
+                '''
+                # weight clamping
+                # (ref: https://wiseodd.github.io/techblog/2017/02/04/wasserstein-gan/)
+                for param in disc_model.parameters():
+                    param.data.clamp_(-0.01, 0.01)
+                '''
+
+                # gradient penalty
+                grad_penalty = disc_model.calculate_gradient_penalty(inputs, \
+                                                                     outputs_gen, \
+                                                                     batch_size=inputs.shape[0])
+                optimizer_disc.zero_grad()
+                grad_penalty.backward(retain_graph=True)
+                optimizer_disc.step()
+
+            # generator update
+            optimizer_gen.zero_grad()        
             # random noise z
-            noise_z = torch.randn(BATCH_SIZE, 3, 4, 4)
-                        
-            inputs = inputs['image']  
-  
+            noise_z = torch.randn(inputs.shape[0], 3, 4, 4)
+
             if is_gpu_mode:
-                #inputs = Variable(torch.from_numpy(inputs).float().cuda())
-                inputs = Variable(inputs.float().cuda())
                 noise_z = Variable(noise_z.cuda())
             else:
-                #inputs = Variable(torch.from_numpy(inputs).float())
                 noise_z = Variable(noise_z)
-            
+
             # feedforward the inputs. generator
-            outputs_gen = gen_model(noise_z)
-            
+            outputs_gen = gen_model(noise_z)   
             # pseudo zero-center
-            inputs = inputs - MEAN_VALUE_FOR_ZERO_CENTERED
             outputs_gen = outputs_gen - MEAN_VALUE_FOR_ZERO_CENTERED
-            
-            # feedforward the inputs. discriminator
-            output_disc_real = disc_model(inputs)
-            output_disc_fake = disc_model(outputs_gen)
 
-            # wasserstein gan loss 
-            loss_disc_total = -(torch.mean(output_disc_real) - torch.mean(output_disc_fake))
+            output_disc_fake_2 = disc_model(outputs_gen)
+            loss_gen = -torch.mean(output_disc_fake_2)
+            loss_gen.backward()
+            optimizer_gen.step()
 
-            # Before the backward pass, use the optimizer object to zero all of the
-            # gradients for the variables it will update (which are the learnable weights
-            # of the model)
-            optimizer_disc.zero_grad()
+            if total_idx % 30 == 0:
+                print '-----------------------------------------------'
+                print '-----------------------------------------------'
+                print 'iterations = ', str(total_idx)
+                print 'loss(generator)     = ', str(loss_gen)
+                print 'loss(discriminator) = ', str(loss_disc_total)
+                print 'grad_penalty =', grad_penalty
+                print '-----------------------------------------------'
+                print '(discriminator out-real) = ', output_disc_real[0:4]
+                print '(discriminator out-fake) = ', output_disc_fake[0:4]
+                print '(discriminator out-fake2) = ', output_disc_fake_2[0:4]
 
-            # Backward pass: compute gradient of the loss with respect to model parameters
-            loss_disc_total.backward(retain_graph=True)
+                # tf-board (scalar)
+                logger.scalar_summary('loss-generator', loss_gen, total_idx)
+                logger.scalar_summary('loss-discriminator', loss_disc_total, total_idx)
+                # logger.scalar_summary('disc-out-for-real', output_disc_real[0], total_idx)
+                # logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], total_idx)
 
-            optimizer_disc.step()
+                inputs = inputs + MEAN_VALUE_FOR_ZERO_CENTERED
+                outputs_gen = outputs_gen + MEAN_VALUE_FOR_ZERO_CENTERED
 
-            # disable for wgan-gp
-            '''
-            # weight clamping
-            # (ref: https://wiseodd.github.io/techblog/2017/02/04/wasserstein-gan/)
-            for param in disc_model.parameters():
-                param.data.clamp_(-0.01, 0.01)
-            '''
+                # tf-board (images - first 10 batches)
+                output_imgs_temp = outputs_gen.cpu().data.numpy()[0:6]
 
-            # gradient penalty
-            grad_penalty = disc_model.calculate_gradient_penalty(inputs, \
-                                                                 outputs_gen, \
-                                                                 batch_size=BATCH_SIZE)
-            optimizer_disc.zero_grad()
-            grad_penalty.backward(retain_graph=True)
-            optimizer_disc.step()
-        
-        # generator update
-        optimizer_gen.zero_grad()        
-        # random noise z
-        noise_z = torch.randn(BATCH_SIZE, 3, 4, 4)
+                input_imgs_temp = inputs.cpu().data.numpy()[0:4]
+                # logger.an_image_summary('generated', output_img, i)
 
-        if is_gpu_mode:
-            noise_z = Variable(noise_z.cuda())
-        else:
-            noise_z = Variable(noise_z)
+                # rgb to bgr
+                #output_imgs_temp = output_imgs_temp[:, [2, 1, 0], ...]
+                #input_imgs_temp = input_imgs_temp[:, [2, 1, 0], ...]
 
-        # feedforward the inputs. generator
-        outputs_gen = gen_model(noise_z)   
-        # pseudo zero-center
-        outputs_gen = outputs_gen - MEAN_VALUE_FOR_ZERO_CENTERED
-        
-        output_disc_fake_2 = disc_model(outputs_gen)
-        loss_gen = -torch.mean(output_disc_fake_2)
-        loss_gen.backward()
-        optimizer_gen.step()
+                logger.image_summary('generated', output_imgs_temp, total_idx)
+                logger.image_summary('real', input_imgs_temp, total_idx)
 
-        if i % 30 == 0:
-            print '-----------------------------------------------'
-            print '-----------------------------------------------'
-            print 'iterations = ', str(i)
-            print 'loss(generator)     = ', str(loss_gen)
-            print 'loss(discriminator) = ', str(loss_disc_total)
-            print 'grad_penalty =', grad_penalty
-            print '-----------------------------------------------'
-            print '(discriminator out-real) = ', output_disc_real[0:4]
-            print '(discriminator out-fake) = ', output_disc_fake[0:4]
-            print '(discriminator out-fake2) = ', output_disc_fake_2[0:4]
-
-            # tf-board (scalar)
-            logger.scalar_summary('loss-generator', loss_gen, i)
-            logger.scalar_summary('loss-discriminator', loss_disc_total, i)
-            # logger.scalar_summary('disc-out-for-real', output_disc_real[0], i)
-            # logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], i)
-
-            inputs = inputs + MEAN_VALUE_FOR_ZERO_CENTERED
-            outputs_gen = outputs_gen + MEAN_VALUE_FOR_ZERO_CENTERED
-            
-            # tf-board (images - first 10 batches)
-            output_imgs_temp = outputs_gen.cpu().data.numpy()[0:6]
-            
-            input_imgs_temp = inputs.cpu().data.numpy()[0:4]
-            # logger.an_image_summary('generated', output_img, i)
-
-            # rgb to bgr
-            output_imgs_temp = output_imgs_temp[:, [2, 1, 0], ...]
-            input_imgs_temp = input_imgs_temp[:, [2, 1, 0], ...]
-
-            logger.image_summary('generated', output_imgs_temp, i)
-            logger.image_summary('real', input_imgs_temp, i)
-
-        # save the model
-        if i % MODEL_SAVING_FREQUENCY == 0:
-            torch.save(gen_model.state_dict(),
-                       MODEL_SAVING_DIRECTORY + 'wgan_gp_pytorch_iter_' + str(i) + '.pt')
+            # save the model
+            if total_idx % MODEL_SAVING_FREQUENCY == 0:
+                torch.save(gen_model.state_dict(),
+                           MODEL_SAVING_DIRECTORY + 'wgan_gp_pytorch_iter_' + str(total_idx) + '.pt')

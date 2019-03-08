@@ -202,11 +202,9 @@ class Discriminator(nn.Module):
         self.third_conv_layer = TransitionDown(in_channels=256, out_channels=512, kernel_size=3)
         self.fourth_conv_layer = TransitionDown(in_channels=512, out_channels=512, kernel_size=3)
 
-        self.fc1 = nn.Linear(4 * 4 * 512, 100)
-        self.fc2 = nn.Linear(100, 1)
+        self.fc1 = nn.Linear(4 * 4 * 512, 1)
 
         torch.nn.init.xavier_uniform(self.fc1.weight)
-        torch.nn.init.xavier_uniform(self.fc2.weight)
 
     def forward(self, x):
         """
@@ -221,13 +219,9 @@ class Discriminator(nn.Module):
         x = self.fourth_conv_layer(x)
 
         x = x.view(-1, 4 * 4 * 512)
-        x = F.relu(self.fc1(x))
         
         # disable relu at the last layer
-        x = self.fc2(x)
-
-        # disable sigmoid for wasserstein gan
-        #out = nn.functional.sigmoid(x)
+        x = self.fc1(x)
         
         out = x
 
@@ -432,8 +426,8 @@ if __name__ == "__main__":
         # pseudo zero-center
         outputs_gen = outputs_gen - MEAN_VALUE_FOR_ZERO_CENTERED
         
-        output_disc_fake = disc_model(outputs_gen)
-        loss_gen = -torch.mean(output_disc_fake)
+        output_disc_fake_2 = disc_model(outputs_gen)
+        loss_gen = -torch.mean(output_disc_fake_2)
         loss_gen.backward()
         optimizer_gen.step()
 
@@ -447,6 +441,7 @@ if __name__ == "__main__":
             print '-----------------------------------------------'
             print '(discriminator out-real) = ', output_disc_real[0:4]
             print '(discriminator out-fake) = ', output_disc_fake[0:4]
+            print '(discriminator out-fake2) = ', output_disc_fake_2[0:4]
 
             # tf-board (scalar)
             logger.scalar_summary('loss-generator', loss_gen, i)

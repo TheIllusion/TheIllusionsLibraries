@@ -19,7 +19,8 @@ def count_pixel_dist(img):
 if __name__ == '__main__':
 
     #image = cv2.imread('/Users/Illusion/Documents/rk_face.jpg', cv2.IMREAD_COLOR)
-    image = cv2.imread('/Users/Illusion/Pictures/mcdonald.png', cv2.IMREAD_COLOR)
+    #image = cv2.imread('/Users/Illusion/Pictures/mcdonald.png', cv2.IMREAD_COLOR)
+    image = cv2.imread('/Users/Illusion/Downloads/000020_0.png', cv2.IMREAD_COLOR)
 
     if type(image) is not np.ndarray:
         print 'cannot read file'

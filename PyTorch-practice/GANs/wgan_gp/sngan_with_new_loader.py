@@ -23,8 +23,11 @@ from torchvision import transforms
 
 #TEST_NAME = 'sngan_with_batch_norm_2'
 #TEST_NAME = 'sngan_light_weight_gen_temp_larger_set'
-TEST_NAME = 'sngan_tuned'
-#TEST_NAME = 'sagan_actual'
+#TEST_NAME = 'sngan_tuned'
+#TEST_NAME = 'sngan_tuned_with_scheduler'
+#TEST_NAME = 'sagan_both_gen_and_disc'
+#TEST_NAME = 'sngan_network_tuned_2'
+TEST_NAME = 'sagan_network_tuned_2'
 
 INPUT_IMAGE_DIRECTORY_PATH = "/tbt005_home/rklee/tiny_dataset/faces/"
 #INPUT_IMAGE_DIRECTORY_PATH = "/tbt005_home/rklee/temp/original_resized_face/"
@@ -33,14 +36,17 @@ INPUT_IMAGE_DIRECTORY_PATH = "/tbt005_home/rklee/tiny_dataset/faces/"
 is_gpu_mode = True
 
 # multi gpu
-device_count = 2
+device_count = 1
 device_ids = range(device_count)
 num_workers = 4 * device_count
 #num_workers = 8
 
-# batch size
-#BATCH_SIZE = 64
-BATCH_SIZE = 128 * device_count
+# batch size for SNGAN
+#BATCH_SIZE = 128 * device_count
+
+# batch size for SAGAN
+BATCH_SIZE = 64
+
 TOTAL_ITERATION = 100000
 
 # learning rate (seems to be an optimal choice for single alternate training)
@@ -55,15 +61,19 @@ TOTAL_ITERATION = 100000
 #LEARNING_RATE_GENERATOR = 3 * 1e-4
 #LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
 
+# SNGAN
+#LEARNING_RATE_GENERATOR = 2 * 1e-4
+#LEARNING_RATE_DISCRIMINATOR = 0.5 * 1e-4
+
+# SNGAN
+#LEARNING_RATE_GENERATOR = 1 * 1e-4
+#LEARNING_RATE_DISCRIMINATOR = 2 * 1e-4
+
 # learning rate (for multiple critic updates) 
 # SAGAN paper: By default, the learning rate for the discriminator is 0.0004 and the learning rate for the generator is 0.0001
-LEARNING_RATE_GENERATOR = 2 * 1e-4
-LEARNING_RATE_DISCRIMINATOR = 4 * 1e-4
+LEARNING_RATE_GENERATOR = 1 * 1e-4
+LEARNING_RATE_DISCRIMINATOR = 1 * 1e-4
 CRITIC_MULTIPLE_UPDATES = 1
-
-# zero centered
-#MEAN_VALUE_FOR_ZERO_CENTERED = 128
-MEAN_VALUE_FOR_ZERO_CENTERED = 0.5
 
 # model saving (iterations)
 MODEL_SAVING_FREQUENCY = 10000
@@ -71,7 +81,9 @@ MODEL_SAVING_FREQUENCY = 10000
 # t005
 MODEL_SAVING_DIRECTORY = "/root/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/checkpoints_" + TEST_NAME + '/'
 
-TF_BOARD_DIRECTOR = "/root/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/tfboard_" + TEST_NAME + '/'
+#TF_BOARD_DIRECTOR = "/root/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/tfboard_" + TEST_NAME + '/'
+
+TF_BOARD_DIRECTOR = '/root/cp-vton/tensorboard/sngan_tanh_' + TEST_NAME + '/'
 
 #TF_BOARD_DIRECTOR = "/home1/irteamsu/rklee/TheIllusionsLibraries/PyTorch-practice/GANs/wgan_gp/tfboard/"
 
@@ -165,6 +177,8 @@ class Generator(nn.Module):
         
         self.dense = nn.Linear(100, 512 * 4 * 4)
         nn.init.xavier_uniform(self.dense.weight.data, 1.)
+        
+        self.dense_batch_norm = nn.InstanceNorm2d(512)
 
         # output feature map will have the size of 8x8x3
         self.first_deconv = TransitionUp(in_channels=512, out_channels=256, stride=2, kernel_size=4)
@@ -181,7 +195,9 @@ class Generator(nn.Module):
         self.third_deconv = TransitionUp(in_channels=128, out_channels=64, stride=2, kernel_size=4)
         self.third_batch_norm = nn.InstanceNorm2d(64)
         
-        #self.self_attention = SelfAttention2d(64)
+        # self attention layer
+        self.self_attention = SelfAttention2d(64)
+        
         #self.decA3 = INSResBlock(64, 64)
 
         # output feature map will have the size of 64x64x3
@@ -200,6 +216,9 @@ class Generator(nn.Module):
         
         x = self.dense(x)
         x = x.view(-1, 512, 4, 4)
+        x = self.dense_batch_norm(x)
+        x = F.leaky_relu(x)
+        
         x = self.first_deconv(x)
         x = self.first_batch_norm(x)
         x = F.leaky_relu(x)
@@ -214,18 +233,22 @@ class Generator(nn.Module):
         x = self.third_batch_norm(x)
         x = F.leaky_relu(x)
         
-        #x = self.self_attention(x)
+        # self-attention layer
+        x = self.self_attention(x)
+        
         #x = self.decA3(x)
 
         x = self.fourth_deconv(x)
         x = self.fourth_batch_norm(x)
+        x = F.leaky_relu(x)
                         
         x = self.fifth_deconv(x)
-        sigmoid_out = nn.functional.sigmoid(x)
-        #tanh_out = nn.functional.tanh(x)
+        #sigmoid_out = nn.functional.sigmoid(x)
+        tanh_out = nn.functional.tanh(x)
 
         #out = (tanh_out + 1) * 255 / 2
-        out = sigmoid_out
+        #out = sigmoid_out
+        out = tanh_out
         
         # print 'out.shape =', out.shape
 
@@ -243,20 +266,18 @@ class Discriminator(nn.Module):
         # input image will have the size of 64x64x3
         self.first_conv_layer = TransitionDown(in_channels=3, out_channels=128, kernel_size=3)
         
-        #self.self_attention = SelfAttention2d(128)
+        # self attention layer
+        self.self_attention = SelfAttention2d(128)
         
         self.second_conv_layer = TransitionDown(in_channels=128, out_channels=256, kernel_size=3)
         self.third_conv_layer = TransitionDown(in_channels=256, out_channels=256, kernel_size=3)
         self.fourth_conv_layer = TransitionDown(in_channels=256, out_channels=256, kernel_size=3)
 
         self.fc1 = nn.Linear(4 * 4 * 256, 1)
-        self.fc2 = nn.Linear(1, 1)
 
         torch.nn.init.xavier_uniform(self.fc1.weight.data, 1.)
-        torch.nn.init.xavier_uniform(self.fc2.weight.data, 1.)
         
         self.fc1 = SpectralNorm2d(self.fc1)
-        #self.fc2 = SpectralNorm2d(self.fc2)
 
     def forward(self, x):
         """
@@ -266,17 +287,17 @@ class Discriminator(nn.Module):
         """
 
         x = self.first_conv_layer(x)
-        #x = self.self_attention(x)
+        
+        # self attention layer
+        x = self.self_attention(x)
+        
         x = self.second_conv_layer(x)
         x = self.third_conv_layer(x)
         x = self.fourth_conv_layer(x)
 
         x = x.view(-1, 4 * 4 * 256)
-        x = F.relu(self.fc1(x))
+        x = self.fc1(x)
         
-        # disable relu at the last layer
-        x = self.fc2(x)
-
         # disable sigmoid for wasserstein gan
         #out = nn.functional.sigmoid(x)
         
@@ -357,6 +378,10 @@ if __name__ == "__main__":
 
     optimizer_gen = torch.optim.Adam(gen_model.parameters(), lr=LEARNING_RATE_GENERATOR)
     optimizer_disc = torch.optim.Adam(disc_model.parameters(), lr=LEARNING_RATE_DISCRIMINATOR)
+    
+    # scheduler. use an exponentially decaying learning rate.
+    scheduler_gen = torch.optim .lr_scheduler.ExponentialLR(optimizer_gen, gamma=0.99)
+    scheduler_disc = torch.optim .lr_scheduler.ExponentialLR(optimizer_disc, gamma=0.99)
    
     ''' 
     # use RMSprop instead of Adam for WGAN
@@ -369,10 +394,10 @@ if __name__ == "__main__":
     
     # dataset
     transformed_dataset = FaceDataset(root_dir=INPUT_IMAGE_DIRECTORY_PATH, \
-                                      transform=transforms.Compose([
-                              Rescale(custom_pytorch_dataloader.INPUT_IMAGE_WIDTH+5),
-                              RandomCrop(custom_pytorch_dataloader.INPUT_IMAGE_WIDTH),
-                              ToTensor()]))
+                                  transform=transforms.Compose([
+                          Rescale(custom_pytorch_dataloader.INPUT_IMAGE_WIDTH+5),
+                          RandomCrop(custom_pytorch_dataloader.INPUT_IMAGE_WIDTH),
+                          ToTensor()]))
     
     # data_loader
     dataloader = DataLoader(transformed_dataset, batch_size=BATCH_SIZE,
@@ -415,18 +440,19 @@ if __name__ == "__main__":
                     #inputs = Variable(torch.from_numpy(input_img).float())
                     noise_z = Variable(noise_z)
 
+                # normalize input range [-1, +1]
+                inputs = (inputs - 0.5) * 2.0
                 # feedforward the inputs. generator
                 outputs_gen = gen_model(noise_z)
 
                 # pseudo zero-center
-                #print ('max inputs =', torch.max(inputs))
-                #print ('max ouputs_gen =', torch.max(outputs_gen))
-                #print ('min inputs =', torch.min(inputs))
-                #print ('min ouputs_gen =', torch.min(outputs_gen))
+                '''
+                print ('max inputs =', torch.max(inputs))
+                print ('max ouputs_gen =', torch.max(outputs_gen))
+                print ('min inputs =', torch.min(inputs))
+                print ('min ouputs_gen =', torch.min(outputs_gen))
+                '''
                 
-                inputs = inputs - MEAN_VALUE_FOR_ZERO_CENTERED
-                outputs_gen = outputs_gen - MEAN_VALUE_FOR_ZERO_CENTERED
-
                 # feedforward the inputs. discriminator
                 output_disc_real = disc_model(inputs)
                 output_disc_fake = disc_model(outputs_gen)
@@ -476,9 +502,13 @@ if __name__ == "__main__":
 
             # feedforward the inputs. generator
             outputs_gen = gen_model(noise_z)   
-            # pseudo zero-center
-            outputs_gen = outputs_gen - MEAN_VALUE_FOR_ZERO_CENTERED
-
+            
+            '''
+            print ('torch.max(outputs_gen) =', torch.max(outputs_gen))
+            print ('torch.min(outputs_gen) =', torch.min(outputs_gen))
+            print ('torch.mean(outputs_gen) =', torch.mean(outputs_gen))
+            '''
+            
             output_disc_fake = disc_model(outputs_gen)
             loss_gen = -torch.mean(output_disc_fake)
             loss_gen.backward()
@@ -501,9 +531,6 @@ if __name__ == "__main__":
                 # logger.scalar_summary('disc-out-for-real', output_disc_real[0], i)
                 # logger.scalar_summary('disc-out-for-fake', output_disc_fake[0], i)
 
-                inputs = inputs + MEAN_VALUE_FOR_ZERO_CENTERED
-                outputs_gen = outputs_gen + MEAN_VALUE_FOR_ZERO_CENTERED
-
                 # tf-board (images - first 10 batches)
                 output_imgs_temp = outputs_gen.cpu().data.numpy()[0:6]
 
@@ -520,5 +547,5 @@ if __name__ == "__main__":
             # save the model
             if i % MODEL_SAVING_FREQUENCY == 0:
                 torch.save(gen_model.state_dict(),
-                           MODEL_SAVING_DIRECTORY + 'sngan_iter_' + str(i) + '.pt')
+                           MODEL_SAVING_DIRECTORY + '_iter_' + str(i) + '.pt')
 

@@ -4,7 +4,10 @@ import numpy as np
 
 def count_pixel_dist(img):
 
+    print 'img.shape =', img.shape
+
     img2 = []
+
     for ch in img.tolist():
         for p in ch:
             #print tuple(p)
@@ -20,7 +23,7 @@ def count_pixel_dist(img):
 if __name__ == '__main__':
 
     #image = cv2.imread('/Users/Illusion/Documents/rk_face.jpg', cv2.IMREAD_COLOR)
-    #image = cv2.imread('/Users/Illusion/Pictures/mcdonald.png', cv2.IMREAD_COLOR)
+    #image = cv2.imread('/Users/Illusion/Temp/yonggu-61-003-172-02-f-whk-181213.jpg', cv2.IMREAD_COLOR)
     image = cv2.imread('/Users/Illusion/Temp/20_color_yonggu-61-003-172-02-f-whk-181213.png', cv2.IMREAD_COLOR)
 
     if type(image) is not np.ndarray:

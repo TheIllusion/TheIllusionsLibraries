@@ -4,23 +4,24 @@ import numpy as np
 
 def count_pixel_dist(img):
 
-    # flatten img to 1d
-    img = img.flatten()
+    img2 = []
+    for ch in img.tolist():
+        for p in ch:
+            #print tuple(p)
+            img2.append(tuple(p))
 
-    # convert to python list
-    img_as_python_list = img.tolist()
 
-    counted_dict = Counter(img_as_python_list)
+    counted_dict = Counter(img2)
 
-    # print the distributions of pixel values
-    for i in range(256):
-        print str(i) + ' :', counted_dict[i]
+    print counted_dict
+    print 'num of colors =', len(counted_dict)
+
 
 if __name__ == '__main__':
 
     #image = cv2.imread('/Users/Illusion/Documents/rk_face.jpg', cv2.IMREAD_COLOR)
     #image = cv2.imread('/Users/Illusion/Pictures/mcdonald.png', cv2.IMREAD_COLOR)
-    image = cv2.imread('/Users/Illusion/Downloads/000020_0.png', cv2.IMREAD_COLOR)
+    image = cv2.imread('/Users/Illusion/Temp/20_color_yonggu-61-003-172-02-f-whk-181213.png', cv2.IMREAD_COLOR)
 
     if type(image) is not np.ndarray:
         print 'cannot read file'

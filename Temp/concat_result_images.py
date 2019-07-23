@@ -9,9 +9,9 @@ import glob
 #ANSWER_DIRECTORY = "/Users/Illusion/Temp/output/"
 #OUTPUT_DIRECTORY = "/Users/Illusion/Temp/result_concat/"
 
-INPUT_DIRECTORY = "/home1/irteamsu/users/gihyeok/JPPNet_1224/LIP_JPPNet/datasets/examples/images/"
-ANSWER_DIRECTORY = "/home1/irteamsu/users/gihyeok/JPPNet_1224/LIP_JPPNet/output/parsing/val/"
-OUTPUT_DIRECTORY = "/home1/irteamsu/users/gihyeok/JPPNet_1224/LIP_JPPNet/output/parsing/concat_result/"
+INPUT_DIRECTORY = "/Volumes/Ext_850Ev/Comico/nico_ygjm_split_by_mh/val_set/grey_split/"
+ANSWER_DIRECTORY = "/Volumes/Ext_850Ev/Comico/nico_ygjm_split_by_mh/val_set/color_split/"
+OUTPUT_DIRECTORY = "/Volumes/Ext_850Ev/Comico/nico_ygjm_split_by_mh/val_set/pix2pix_full_colors/"
 
 if __name__ == "__main__":
 
@@ -31,7 +31,7 @@ if __name__ == "__main__":
             os.system("exit")
             #continue
 
-        png_file = jpg_file[:-4] + '_vis.png'
+        png_file = jpg_file[:-4] + '.jpg'
         answer_img = cv2.imread( ANSWER_DIRECTORY + png_file, cv2.IMREAD_COLOR)
         if (type(answer_img) is not np.ndarray):
             print jpg_file + ' load failed!'

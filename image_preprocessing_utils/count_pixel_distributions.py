@@ -22,7 +22,7 @@ def count_pixel_dist(img):
 if __name__ == '__main__':
 
     #image = cv2.imread('/Users/Illusion/Temp/aaa.jpg', cv2.IMREAD_COLOR)
-    image = cv2.imread('/Users/Illusion/Temp/30_colors/nicoic-c04-066-080-07-f-kgm-160827.jpg_03.jpg', cv2.IMREAD_COLOR)
+    image = cv2.imread('/Users/Illusion/Temp/30_colors/nicoic-05-066-104-04-f-knh-161011.jpg_02.jpg', cv2.IMREAD_COLOR)
     #image = cv2.imread('/Users/Illusion/Temp/yonggu-61-003-172-02-f-whk-181213.jpg', cv2.IMREAD_COLOR)
     #image = cv2.imread('/Users/Illusion/Temp/20_color_yonggu-61-003-172-02-f-whk-181213.png', cv2.IMREAD_COLOR)
 

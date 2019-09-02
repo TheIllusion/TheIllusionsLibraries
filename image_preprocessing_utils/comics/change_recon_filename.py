@@ -37,3 +37,5 @@ if __name__ == '__main__':
 
         #copyfile(file, os.path.join(OUTPUT_DIR, core_filename))
 
+    print 'finished'
+

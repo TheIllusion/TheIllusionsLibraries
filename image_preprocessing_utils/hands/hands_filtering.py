@@ -18,12 +18,20 @@ OUTPUT_DIR = '/Users/Illusion/Documents/Data/palm_data/personal_info_blurring_ex
 SINGLE_IMG_VIEW_FLAG = False
 
 # FILTER LIST
-EDGE_PRESERVING = False
-GUIDED = False
+EDGE_PRESERVING = True
+GUIDED = True
 BILATERAL = True
-L0_SMOOTHING = False
-BI_AND_LO = False
+L0_SMOOTHING = True
+BI_AND_LO = True
 
+# Text
+ADD_TEXT = True
+
+font                   = cv2.FONT_HERSHEY_SIMPLEX
+location = (10, 30)
+fontScale              = 0.7
+fontColor              = (255,255,255)
+lineType               = 2
 
 if __name__ == '__main__':
 
@@ -51,6 +59,9 @@ if __name__ == '__main__':
                 start_time = time.time()
                 # ximgproc::edgePreservingFilter(image, res, 9, 20);
                 edge_preserving_result = cv2.ximgproc.edgePreservingFilter(img, d=9, threshold=10)
+                if ADD_TEXT:
+                    cv2.putText(edge_preserving_result, 'Edge-Preserving Filter', location, font, fontScale, fontColor, lineType)
+
                 result_imgs.append(edge_preserving_result)
                 elapsed_time = time.time() - start_time
                 print 'Edge-preserving filter elapsed_time: ', elapsed_time
@@ -59,6 +70,9 @@ if __name__ == '__main__':
                 # Guided (Kaiming He)
                 start_time = time.time()
                 guided_result = cv2.ximgproc.guidedFilter(img.copy(), img, 8, 500)
+                if ADD_TEXT:
+                    cv2.putText(guided_result, 'Guided Filter', location, font, fontScale, fontColor, lineType)
+
                 result_imgs.append(guided_result)
                 elapsed_time = time.time() - start_time
                 print 'Guided filter elapsed_time: ', elapsed_time
@@ -67,16 +81,19 @@ if __name__ == '__main__':
                 # Bilateral
                 start_time = time.time()
                 bilateral_result = cv2.bilateralFilter(img, d=60, sigmaColor=90, sigmaSpace=40)
+                if ADD_TEXT:
+                    cv2.putText(bilateral_result, 'Bilateral Filter', location, font, fontScale, fontColor, lineType)
+
                 result_imgs.append(bilateral_result)
                 elapsed_time = time.time() - start_time
                 print 'Bilateral filter elapsed_time: ', elapsed_time
 
                 # stronger
-                start_time = time.time()
-                bilateral_result = cv2.bilateralFilter(img, d=60, sigmaColor=150, sigmaSpace=40)
-                result_imgs.append(bilateral_result)
-                elapsed_time = time.time() - start_time
-                print 'Bilateral filter elapsed_time: ', elapsed_time
+                # start_time = time.time()
+                # bilateral_result = cv2.bilateralFilter(img, d=60, sigmaColor=150, sigmaSpace=40)
+                # result_imgs.append(bilateral_result)
+                # elapsed_time = time.time() - start_time
+                # print 'Bilateral filter elapsed_time: ', elapsed_time
 
                 # stronger (using resize)
                 # start_time = time.time()
@@ -89,11 +106,11 @@ if __name__ == '__main__':
                 # print 'Bilateral filter elapsed_time: ', elapsed_time
 
                 # stronger
-                start_time = time.time()
-                bilateral_result = cv2.bilateralFilter(img, d=60, sigmaColor=220, sigmaSpace=40)
-                result_imgs.append(bilateral_result)
-                elapsed_time = time.time() - start_time
-                print 'Bilateral filter elapsed_time: ', elapsed_time
+                # start_time = time.time()
+                # bilateral_result = cv2.bilateralFilter(img, d=60, sigmaColor=220, sigmaSpace=40)
+                # result_imgs.append(bilateral_result)
+                # elapsed_time = time.time() - start_time
+                # print 'Bilateral filter elapsed_time: ', elapsed_time
 
                 # stronger (using resize)
                 # start_time = time.time()
@@ -111,6 +128,9 @@ if __name__ == '__main__':
                 l0_kappa = 1.5
                 start_time = time.time()
                 l0_result = cv2.ximgproc.l0Smooth(img, None, l0_lambda, l0_kappa)
+                if ADD_TEXT:
+                    cv2.putText(l0_result, 'L0-smoothing Filter', location, font, fontScale, fontColor, lineType)
+
                 result_imgs.append(l0_result)
                 elapsed_time = time.time() - start_time
                 print 'L0 filter elapsed_time: ', elapsed_time
@@ -119,6 +139,8 @@ if __name__ == '__main__':
                 # Bilateral + L0-smoothing
                 start_time = time.time()
                 bi_and_l0_result = cv2.ximgproc.l0Smooth(bilateral_result, None, l0_lambda, l0_kappa)
+                if ADD_TEXT:
+                    cv2.putText(bi_and_l0_result, '                + L0-smoothing', location, font, fontScale, fontColor, lineType)
                 result_imgs.append(bi_and_l0_result)
                 elapsed_time = time.time() - start_time
                 print 'L0(input:bilateral) filter elapsed_time: ', elapsed_time

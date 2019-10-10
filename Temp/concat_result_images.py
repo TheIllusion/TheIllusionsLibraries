@@ -9,9 +9,13 @@ import glob
 #ANSWER_DIRECTORY = "/Users/Illusion/Temp/output/"
 #OUTPUT_DIRECTORY = "/Users/Illusion/Temp/result_concat/"
 
-INPUT_DIRECTORY = "/Volumes/Ext_850Ev/Comico/nico_ygjm_split_by_mh/grey_split/"
-ANSWER_DIRECTORY = "/Volumes/Ext_850Ev/Comico/nico_ygjm_split_by_mh/23_colors/"
-OUTPUT_DIRECTORY = "/Volumes/Ext_850Ev/Comico/nico_ygjm_split_by_mh/pix2pix_23_colors/"
+#INPUT_DIRECTORY = "/Volumes/Ext_850Ev/Comico/nico_ygjm_split_by_mh/grey_split/"
+#ANSWER_DIRECTORY = "/Volumes/Ext_850Ev/Comico/nico_ygjm_split_by_mh/23_colors/"
+#OUTPUT_DIRECTORY = "/Volumes/Ext_850Ev/Comico/nico_ygjm_split_by_mh/pix2pix_23_colors/"
+
+INPUT_DIRECTORY = "/Volumes/Ext_850Ev/Comico/paired_data_partial/testA/"
+ANSWER_DIRECTORY = "/Volumes/Ext_850Ev/Comico/paired_data_partial/testB/"
+OUTPUT_DIRECTORY = "/Volumes/Ext_850Ev/Comico/paired_data_partial/testAB_concat/"
 
 if __name__ == "__main__":
 

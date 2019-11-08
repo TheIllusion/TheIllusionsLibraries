@@ -17,9 +17,9 @@ def convert_bdd_to_custom(line):
     elif words[0] == '6':
         words[0] = '5'
     elif words[0] == '8':
-        words[0] = '7'
+        words[0] = '6'
     elif words[0] == '9':
-        words[0] = '8'
+        words[0] = '7'
     else:
         return None
 
@@ -42,9 +42,9 @@ def convert_coco_to_custom(line):
     elif words[0] == '5':
         words[0] = '1'
     elif words[0] == '6':
-        words[0] = '7'
+        words[0] = '6'
     elif words[0] == '7':
-        words[0] = '8'
+        words[0] = '7'
     elif words[0] == '9':
         words[0] = '5'
     else:

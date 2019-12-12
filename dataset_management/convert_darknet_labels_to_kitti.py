@@ -17,7 +17,7 @@ def convert_dark_to_kitti(line):
         else:
             type = 'Truck'
 
-        truncated = '0.00'
+        truncated = '0.0'
         occluded = '0'
         alpha = '2.00'
         left = words[2] + '.00'

@@ -11,14 +11,19 @@ def convert_dark_to_kitti(line):
 
     if words[0] == 'car' or \
        words[0] == 'truck':
-        type = words[0]
+
+        if words[0] == 'car':
+            type = 'Car'
+        else:
+            type = 'Truck'
+
         truncated = '0.00'
         occluded = '0'
         alpha = '2.00'
-        left = words[2]
-        top = words[3]
-        right = words[4]
-        bottom = words[5]
+        left = words[2] + '.00'
+        top = words[3] + '.00'
+        right = words[4] + '.00'
+        bottom = words[5] + '.00'
         dim_h = '1.69'
         dim_w = '1.62'
         dim_l = '3.99'
@@ -26,6 +31,7 @@ def convert_dark_to_kitti(line):
         rem_1 = '2.74'
         rem_2 = '47.17'
         rem_3 = '1.69'
+        prob = str("{0:.2f}".format(float(words[1])))
 
         result_words.append(type)
         result_words.append(truncated)
@@ -42,6 +48,7 @@ def convert_dark_to_kitti(line):
         result_words.append(rem_1)
         result_words.append(rem_2)
         result_words.append(rem_3)
+        result_words.append(prob)
     else:
         return None
 

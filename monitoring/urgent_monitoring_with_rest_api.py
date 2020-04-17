@@ -19,15 +19,15 @@ FILE_PATH_FOR_ERROR_LOG = '/Users/Illusion/Temp/response_error.log'
 hand_rest_api_address = []
 face_rest_api_address = []
 
-hand_rest_api_address.append('http://10.165.128.51:8979/hand-v2')
-# hand_rest_api_address.append('http://10.161.31.22:8979/hand-v2')
-# hand_rest_api_address.append('http://10.161.31.26:8979/hand-v2')
-# hand_rest_api_address.append('http://10.161.31.27:8979/hand-v2')
+#hand_rest_api_address.append('http://10.165.128.51:8979/hand-v2')
+hand_rest_api_address.append('http://10.161.31.22:8979/hand-v2')
+hand_rest_api_address.append('http://10.161.31.26:8979/hand-v2')
+hand_rest_api_address.append('http://10.161.31.27:8979/hand-v2')
 
-face_rest_api_address.append('http://10.165.128.51:8989/face-v2')
-# face_rest_api_address.append('http://10.161.31.22:8989/face-v2')
-# face_rest_api_address.append('http://10.161.31.26:8989/face-v2')
-# face_rest_api_address.append('http://10.161.31.27:8989/face-v2')
+#face_rest_api_address.append('http://10.165.128.51:8989/face-v2')
+face_rest_api_address.append('http://10.161.31.22:8989/face-v2')
+face_rest_api_address.append('http://10.161.31.26:8989/face-v2')
+face_rest_api_address.append('http://10.161.31.27:8989/face-v2')
 
 #hand_img_path = '/Users/Illusion/Documents/Palm_Data/random_hands/IMG_0703.jpg'
 

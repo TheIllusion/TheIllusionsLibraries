@@ -13,6 +13,11 @@ FILE_PATH_FOR_ALL_LOG = '/Users/Illusion/Temp/response_all_log.txt'
 FILE_PATH_FOR_WARNING_LOG = '/Users/Illusion/Temp/response_warning.log'
 FILE_PATH_FOR_ERROR_LOG = '/Users/Illusion/Temp/response_error.log'
 
+#Macbook Pro 16'
+#FILE_PATH_FOR_ALL_LOG = '/Users/rokkyulee/Temp/response_all_log.txt'
+#FILE_PATH_FOR_WARNING_LOG = '/Users/rokkyulee/Temp/response_warning.log'
+#FILE_PATH_FOR_ERROR_LOG = '/Users/rokkyulee/Temp/response_error.log'
+
 #rest_api_address = 'http://vincent.nhnent.com:8979/hand'
 #hand_rest_api_address = 'http://10.165.128.51:8979/hand'
 
@@ -35,7 +40,11 @@ face_rest_api_address.append('http://10.161.31.27:8989/face-v2')
 hand_img_path = '/Users/Illusion/Documents/rk_hand.jpg'
 face_img_path = '/Users/Illusion/Documents/rk_face.jpg'
 
-#Macbook Pro
+#Macbook Pro 16'
+#hand_img_path = '/Users/rokkyulee/rk_hand.jpg'
+#face_img_path = '/Users/rokkyulee/rk_face.jpg'
+
+#Macbook Pro 13'
 #hand_img_path = '/Users/Illusion/Documents/Data/palm_data/test_set/crop_resize_512_512/rk.jpg'
 #face_img_path = '/Users/Illusion/Documents/Data/toast_faces/rk.jpg'
 
